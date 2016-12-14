@@ -1,0 +1,1 @@
+cmd_/root/KernelModules4RTAI/hbtracker/hbtracker.ko := ld -r -m elf_x86_64 -T /usr/src/linux-3.14.33-regular/scripts/module-common.lds --build-id  -o /root/KernelModules4RTAI/hbtracker/hbtracker.ko /root/KernelModules4RTAI/hbtracker/hbtracker.o /root/KernelModules4RTAI/hbtracker/hbtracker.mod.o

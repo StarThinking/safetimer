@@ -28,7 +28,7 @@ int main(int argc , char *argv[]) {
             path[last_c+1] = '/';
         sprintf(num_str, "%d", i);
         strcat(path, num_str);
-        printf("going to creat file %s\n", path);
+        //printf("going to creat file %s\n", path);
         if((fn = creat(path, PERMS)) == -1) {
             ret = -2;
             goto error;
@@ -42,6 +42,7 @@ int main(int argc , char *argv[]) {
             goto error;
         }
     }
+    printf("finish writing %d files on dir %s\n", file_num, path);
     return 0;
 
 error:
