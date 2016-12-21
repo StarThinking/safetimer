@@ -68,7 +68,8 @@ int main(int argc , char *argv[])
         if(ret != msg_size) printf("warning recv ret=%d\n", ret);
 	count++;
     }
-    printf("thoughput=%f\n", (double)count*(double)msg_size/(double)(current_time()-start_time));
+    double thput = (double)count*(double)msg_size/(double)(current_time()-start_time);
+    printf("thoughput=%d kb/s\n", (int)thput);
     close(sock);
     return 0;
 }

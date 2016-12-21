@@ -1,1 +1,1 @@
-kernel//root/KernelModules4RTAI/hbtracker/hbtracker.ko
+kernel//root/hb-latency/hb-receiver/hbtracker/hbtracker.ko

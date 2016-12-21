@@ -1,11 +1,11 @@
 dir=/root/hb-latency/file-workload/
-data_dir=/data/
+data_dir=/tmp/data/
 
-rm -rf /data/
-mkdir /data/
+rm -rf $data_dir
+mkdir $data_dir
 
-dir_num=300
-file_num=10000
+dir_num=1000
+file_num=1000
 
 cd $dir
 for((i=0; i<$dir_num; i++))

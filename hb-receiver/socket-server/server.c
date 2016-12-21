@@ -29,7 +29,7 @@ void * socket_thread(void *arg) {
         clock_gettime(CLOCK_MONOTONIC, &current_t);
         interval = BILLION * (current_t.tv_sec - last_t.tv_sec) + current_t.tv_nsec - last_t.tv_nsec;
         last_t = current_t;
-        printf("get hb, interval is %lu, latency is ns%lu\n", interval, interval-INETRVAL);
+        printf("[msx] interval between two hbs is %lu ns, latency is %lu ns\n", interval, interval-INETRVAL);
 	if(ret != MSGSIZE) printf("warning recv ret=%d\n", ret);
 	ret = send(connfd, buf, ret, 0);
 	if(ret <= 0){
