@@ -8,7 +8,7 @@ duration=30000
 
 echo "start $run run of test with client_num $client_num"
  
-ssh $server "cd $path; killall ./server; taskset 0x2 ./server $datasize" &
+ssh $server "cd $path; killall ./server; kill -9 $(lsof -i:5000 -t); taskset 0x2 ./server $datasize" &
 sleep 3
 
 ssh $client "cd $path; killall client; ./launch_client.sh $client_num $server $datasize $duration" &
