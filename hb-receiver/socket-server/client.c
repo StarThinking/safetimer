@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include<signal.h>
 
-#define MSGSIZE 1024
+#define MSGSIZE 10
 #define INETRVAL 200*1000*1000 // 200ms
 
 int sock;

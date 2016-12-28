@@ -10,7 +10,7 @@
 #include <time.h> 
 #include <pthread.h>
 
-#define MSGSIZE 1024
+#define MSGSIZE 10
 #define BILLION 1000000000L
 #define INETRVAL 200*1000*1000 // 200ms
 
