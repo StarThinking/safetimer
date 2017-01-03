@@ -22,7 +22,7 @@ sar -n DEV 1 20 > ./result/$client_num/server.net.$run &
 sleep 20
 sleep 2
 dmesg -c > ./result/$client_num/lat.$run
-scp $client:$path/cpu.tmp ./result/$client_num/client.cpu.$run 
-scp $client:$path/net.tmp ./result/$client_num/client.net.$run 
 
 sleep 10
+scp $client:$path/cpu.tmp ./result/$client_num/client.cpu.$run 
+scp $client:$path/net.tmp ./result/$client_num/client.net.$run 
