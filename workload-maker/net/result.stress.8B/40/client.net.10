@@ -1,0 +1,306 @@
+Linux 3.16.0-30-generic (node220-1) 	01/08/2017 	_x86_64_	(8 CPU)
+
+02:01:02 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:01:12 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:01:12 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:01:12 AM       em1      7.20 1379950.60      1.61  86247.61      0.00      0.00      0.50     70.65
+
+02:01:12 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:01:22 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:01:22 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:01:22 AM       em1      1.10 1488130.10      0.16  93008.12      0.00      0.00      0.60     76.19
+
+02:01:22 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:01:32 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:01:32 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:01:32 AM       em1      0.80 1488130.10      0.06  93008.14      0.00      0.00      0.60     76.19
+
+02:01:32 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:01:42 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:01:42 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:01:42 AM       em1      0.80 1488130.10      0.08  93008.13      0.00      0.00      0.50     76.19
+
+02:01:42 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:01:52 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:01:52 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:01:52 AM       em1      0.80 1488130.00      0.11  93008.12      0.00      0.00      0.60     76.19
+
+02:01:52 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:02:02 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:02 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:02 AM       em1      0.90 1488130.10      0.07  93008.13      0.00      0.00      0.60     76.19
+
+02:02:02 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:02:12 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:12 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:12 AM       em1      0.80 1488130.20      0.08  93008.14      0.00      0.00      0.60     76.19
+
+02:02:12 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:02:22 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:22 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:22 AM       em1      0.80 1488130.10      0.11  93008.13      0.00      0.00      0.60     76.19
+
+02:02:22 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:02:32 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:32 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:32 AM       em1      0.60 1488130.00      0.04  93008.12      0.00      0.00      0.60     76.19
+
+02:02:32 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:02:42 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:42 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:42 AM       em1      0.70 1488130.10      0.07  93008.13      0.00      0.00      0.50     76.19
+
+02:02:42 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:02:52 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:52 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:02:52 AM       em1      1.00 1488130.20      0.13  93008.14      0.00      0.00      0.60     76.19
+
+02:02:52 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:03:02 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:02 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:02 AM       em1      0.70 1488130.00      0.05  93008.13      0.00      0.00      0.60     76.19
+
+02:03:02 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:03:12 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:12 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:12 AM       em1      0.80 1488130.40      0.10  93008.14      0.00      0.00      0.50     76.19
+
+02:03:12 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:03:22 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:22 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:22 AM       em1      0.70 1488130.10      0.07  93008.13      0.00      0.00      0.60     76.19
+
+02:03:22 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:03:32 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:32 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:32 AM       em1      0.60 1488130.20      0.04  93008.13      0.00      0.00      0.60     76.19
+
+02:03:32 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:03:42 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:42 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:42 AM       em1      0.80 1488130.10      0.10  93008.14      0.00      0.00      0.50     76.19
+
+02:03:42 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:03:52 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:52 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:03:52 AM       em1      0.70 1488130.30      0.07  93008.14      0.00      0.00      0.60     76.19
+
+02:03:52 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:04:02 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:02 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:02 AM       em1      0.60 1488130.00      0.04  93008.13      0.00      0.00      0.60     76.19
+
+02:04:02 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:04:12 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:12 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:12 AM       em1      0.90 1488130.40      0.11  93008.14      0.00      0.00      0.60     76.19
+
+02:04:12 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:04:22 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:22 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:22 AM       em1      0.70 1488130.20      0.07  93008.13      0.00      0.00      0.60     76.19
+
+02:04:22 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:04:32 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:32 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:32 AM       em1      0.70 1488130.20      0.05  93008.14      0.00      0.00      0.60     76.19
+
+02:04:32 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:04:42 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:42 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:42 AM       em1      1.20 1488131.30      0.14  93008.21      0.00      0.00      0.50     76.19
+
+02:04:42 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:04:52 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:52 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:04:52 AM       em1      0.70 1488131.50      0.07  93008.23      0.00      0.00      0.60     76.19
+
+02:04:52 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:05:02 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:02 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:02 AM       em1      0.70 1488127.90      0.05  93007.99      0.00      0.00      0.60     76.19
+
+02:05:02 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:05:12 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:12 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:12 AM       em1      0.80 1488130.30      0.13  93008.14      0.00      0.00      0.50     76.19
+
+02:05:12 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:05:22 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:22 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:22 AM       em1      0.60 1488130.50      0.04  93008.16      0.00      0.00      0.60     76.19
+
+02:05:22 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:05:32 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:32 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:32 AM       em1      0.70 1488130.10      0.05  93008.14      0.00      0.00      0.60     76.19
+
+02:05:32 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:05:42 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:42 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:42 AM       em1      0.80 1488130.20      0.13  93008.13      0.00      0.00      0.50     76.19
+
+02:05:42 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:05:52 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:52 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:05:52 AM       em1      0.60 1488130.60      0.04  93008.16      0.00      0.00      0.60     76.19
+
+02:05:52 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:06:02 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:02 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:02 AM       em1      0.80 1488130.20      0.06  93008.13      0.00      0.00      0.70     76.19
+
+02:06:02 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:06:12 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:12 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:12 AM       em1      0.80 1488130.10      0.13  93008.14      0.00      0.00      0.50     76.19
+
+02:06:12 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:06:22 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:22 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:22 AM       em1      0.60 1488130.40      0.04  93008.15      0.00      0.00      0.60     76.19
+
+02:06:22 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:06:32 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:32 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:32 AM       em1      0.70 1488132.10      0.05  93008.14      0.00      0.00      0.60     76.19
+
+02:06:32 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:06:42 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:42 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:42 AM       em1      1.10 1488128.50      0.16  93008.14      0.00      0.00      0.50     76.19
+
+02:06:42 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:06:52 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:52 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:06:52 AM       em1      0.60 1488130.20      0.04  93008.14      0.00      0.00      0.60     76.19
+
+02:06:52 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:07:02 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:02 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:02 AM       em1      0.80 1488130.80      0.08  93008.16      0.00      0.00      0.60     76.19
+
+02:07:02 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:07:12 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:12 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:12 AM       em1      0.70 1488130.20      0.10  93008.14      0.00      0.00      0.50     76.19
+
+02:07:12 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:07:22 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:22 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:22 AM       em1      0.60 1488130.30      0.04  93008.15      0.00      0.00      0.60     76.19
+
+02:07:22 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:07:32 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:32 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:32 AM       em1      0.80 1488130.20      0.08  93008.14      0.00      0.00      0.60     76.19
+
+02:07:32 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:07:42 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:42 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:42 AM       em1      0.70 1488130.40      0.10  93008.15      0.00      0.00      0.50     76.19
+
+02:07:42 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:07:52 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:52 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:07:52 AM       em1      0.70 1488130.40      0.05  93008.15      0.00      0.00      0.70     76.19
+
+02:07:52 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:08:02 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:02 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:02 AM       em1      0.80 1488130.30      0.08  93008.14      0.00      0.00      0.60     76.19
+
+02:08:02 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:08:12 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:12 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:12 AM       em1      0.70 1488130.40      0.10  93008.14      0.00      0.00      0.50     76.19
+
+02:08:12 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:08:22 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:22 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:22 AM       em1      0.60 1488130.30      0.04  93008.15      0.00      0.00      0.60     76.19
+
+02:08:22 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:08:32 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:32 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:32 AM       em1      0.90 1488130.50      0.11  93008.16      0.00      0.00      0.60     76.19
+
+02:08:32 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:08:42 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:42 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:42 AM       em1      0.90 1488130.30      0.09  93008.14      0.00      0.00      0.50     76.19
+
+02:08:42 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:08:52 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:52 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:08:52 AM       em1      0.60 1488131.10      0.04  93008.20      0.00      0.00      0.60     76.19
+
+02:08:52 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:09:02 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:02 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:02 AM       em1      0.90 1488131.30      0.11  93008.20      0.00      0.00      0.60     76.19
+
+02:09:02 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:09:12 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:12 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:12 AM       em1      0.60 1488128.70      0.06  93008.04      0.00      0.00      0.50     76.19
+
+02:09:12 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:09:22 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:22 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:22 AM       em1      0.60 1488130.50      0.04  93008.16      0.00      0.00      0.60     76.19
+
+02:09:22 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:09:32 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:32 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:32 AM       em1      0.80 1488130.30      0.11  93008.14      0.00      0.00      0.60     76.19
+
+02:09:32 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:09:42 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:42 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:42 AM       em1      0.70 1488132.10      0.07  93008.25      0.00      0.00      0.50     76.19
+
+02:09:42 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:09:52 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:52 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:09:52 AM       em1      0.60 1488128.60      0.04  93008.04      0.00      0.00      0.60     76.19
+
+02:09:52 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:10:02 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:02 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:02 AM       em1      1.00 1488130.40      0.15  93008.16      0.00      0.00      0.70     76.19
+
+02:10:02 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:10:12 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:12 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:12 AM       em1      0.90 1486626.27      0.06  92914.31      0.00      0.00      0.50     76.12
+
+02:10:12 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:10:22 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:22 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:22 AM       em1      0.70 1488130.40      0.05  93008.14      0.00      0.00      0.60     76.19
+
+02:10:22 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:10:32 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:32 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:32 AM       em1      0.90 1488130.20      0.14  93008.15      0.00      0.00      0.60     76.19
+
+02:10:32 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:10:42 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:42 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:42 AM       em1      0.70 1488111.40      0.04  93006.98      0.00      0.00      0.50     76.19
+
+02:10:42 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:10:52 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:52 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:10:52 AM       em1      0.70 1488131.20      0.05  93008.20      0.00      0.00      0.60     76.19
+
+02:10:52 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:11:02 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:11:02 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:11:02 AM       em1      0.90 1488129.50      0.14  93008.10      0.00      0.00      0.60     76.19
+
+Average:        IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+Average:          em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+Average:           lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+Average:          em1      0.87 1486301.90      0.11  92893.88      0.00      0.00      0.57     76.10

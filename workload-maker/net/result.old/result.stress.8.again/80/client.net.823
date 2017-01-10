@@ -1,0 +1,11 @@
+Linux 3.16.0-30-generic (node220-1) 	01/06/2017 	_x86_64_	(8 CPU)
+
+09:34:58 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+09:34:59 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+09:34:59 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+09:34:59 PM       em1     15.00     16.00      4.57      3.61      0.00      0.00      1.00      0.00
+
+09:34:59 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+09:35:00 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+09:35:00 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+09:35:00 PM       em1      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00

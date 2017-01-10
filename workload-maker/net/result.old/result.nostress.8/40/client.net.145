@@ -1,0 +1,31 @@
+Linux 3.16.0-30-generic (node220-1) 	01/04/2017 	_x86_64_	(8 CPU)
+
+03:42:26 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+03:42:27 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:27 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:27 PM       em1     11.00 1488121.00      3.12  93008.08      0.00      0.00      1.00     76.19
+
+03:42:27 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+03:42:28 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:28 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:28 PM       em1      0.00 1488128.00      0.00  93008.12      0.00      0.00      0.00     76.19
+
+03:42:28 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+03:42:29 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:29 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:29 PM       em1     14.00  90247.00      1.12   5647.40      0.00      0.00      1.00      4.63
+
+03:42:29 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+03:42:30 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:30 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:30 PM       em1      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+
+03:42:30 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+03:42:31 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:31 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:31 PM       em1      2.00      0.00      0.39      0.00      0.00      0.00      1.00      0.00
+
+03:42:31 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+03:42:32 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:32 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+03:42:32 PM       em1      4.00      4.00      0.37      0.39      0.00      0.00      0.00      0.00

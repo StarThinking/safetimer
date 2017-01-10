@@ -1,0 +1,4 @@
+Linux 3.16.0-30-generic (node220-1) 	01/04/2017 	_x86_64_	(8 CPU)
+
+07:03:04 PM     CPU     %user     %nice   %system   %iowait    %steal     %idle
+07:03:05 PM     all      0.50      0.00      0.25      0.00      0.00     99.25

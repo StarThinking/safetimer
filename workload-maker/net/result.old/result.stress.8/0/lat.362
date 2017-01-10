@@ -1,0 +1,220 @@
+[1387289.669005] [msx] heartbeat comes from 10.0.0.13
+[1387289.669007] [msx] interval between two hbs is 200000070 ns, latency is 70 ns
+[1387289.869071] [msx] heartbeat comes from 10.0.0.13
+[1387289.869073] [msx] interval between two hbs is 199982622 ns, latency is -17378 ns
+[1387290.069166] [msx] heartbeat comes from 10.0.0.13
+[1387290.069167] [msx] interval between two hbs is 200010712 ns, latency is 10712 ns
+[1387290.269240] [msx] heartbeat comes from 10.0.0.13
+[1387290.269241] [msx] interval between two hbs is 199990578 ns, latency is -9422 ns
+[1387290.469336] [msx] heartbeat comes from 10.0.0.13
+[1387290.469337] [msx] interval between two hbs is 200012255 ns, latency is 12255 ns
+[1387290.669418] [msx] heartbeat comes from 10.0.0.13
+[1387290.669419] [msx] interval between two hbs is 199998497 ns, latency is -1503 ns
+[1387290.869485] [msx] heartbeat comes from 10.0.0.13
+[1387290.869486] [msx] interval between two hbs is 199984151 ns, latency is -15849 ns
+[1387291.069571] [msx] heartbeat comes from 10.0.0.13
+[1387291.069573] [msx] interval between two hbs is 200002586 ns, latency is 2586 ns
+[1387291.269662] [msx] heartbeat comes from 10.0.0.13
+[1387291.269663] [msx] interval between two hbs is 200007282 ns, latency is 7282 ns
+[1387291.469768] [msx] heartbeat comes from 10.0.0.13
+[1387291.469769] [msx] interval between two hbs is 200022013 ns, latency is 22013 ns
+[1387291.669841] [msx] heartbeat comes from 10.0.0.13
+[1387291.669843] [msx] interval between two hbs is 199990407 ns, latency is -9593 ns
+[1387291.869920] [msx] heartbeat comes from 10.0.0.13
+[1387291.869921] [msx] interval between two hbs is 199995079 ns, latency is -4921 ns
+[1387292.070009] [msx] heartbeat comes from 10.0.0.13
+[1387292.070010] [msx] interval between two hbs is 200004873 ns, latency is 4873 ns
+[1387292.270096] [msx] heartbeat comes from 10.0.0.13
+[1387292.270097] [msx] interval between two hbs is 200004252 ns, latency is 4252 ns
+[1387292.470184] [msx] heartbeat comes from 10.0.0.13
+[1387292.470185] [msx] interval between two hbs is 200004300 ns, latency is 4300 ns
+[1387292.670266] [msx] heartbeat comes from 10.0.0.13
+[1387292.670267] [msx] interval between two hbs is 199998374 ns, latency is -1626 ns
+[1387292.870322] [msx] heartbeat comes from 10.0.0.13
+[1387292.870323] [msx] interval between two hbs is 199972374 ns, latency is -27626 ns
+[1387293.070409] [msx] heartbeat comes from 10.0.0.13
+[1387293.070410] [msx] interval between two hbs is 200003691 ns, latency is 3691 ns
+[1387293.270493] [msx] heartbeat comes from 10.0.0.13
+[1387293.270494] [msx] interval between two hbs is 200000171 ns, latency is 171 ns
+[1387293.470579] [msx] heartbeat comes from 10.0.0.13
+[1387293.470580] [msx] interval between two hbs is 200002814 ns, latency is 2814 ns
+[1387293.670659] [msx] heartbeat comes from 10.0.0.13
+[1387293.670660] [msx] interval between two hbs is 199995973 ns, latency is -4027 ns
+[1387293.870734] [msx] heartbeat comes from 10.0.0.13
+[1387293.870735] [msx] interval between two hbs is 199991749 ns, latency is -8251 ns
+[1387294.070830] [msx] heartbeat comes from 10.0.0.13
+[1387294.070831] [msx] interval between two hbs is 200012537 ns, latency is 12537 ns
+[1387294.270914] [msx] heartbeat comes from 10.0.0.13
+[1387294.270915] [msx] interval between two hbs is 200000842 ns, latency is 842 ns
+[1387294.470999] [msx] heartbeat comes from 10.0.0.13
+[1387294.471000] [msx] interval between two hbs is 200000778 ns, latency is 778 ns
+[1387294.671082] [msx] heartbeat comes from 10.0.0.13
+[1387294.671084] [msx] interval between two hbs is 200000940 ns, latency is 940 ns
+[1387294.871139] [msx] heartbeat comes from 10.0.0.13
+[1387294.871141] [msx] interval between two hbs is 199972995 ns, latency is -27005 ns
+[1387295.071231] [msx] heartbeat comes from 10.0.0.13
+[1387295.071232] [msx] interval between two hbs is 200007909 ns, latency is 7909 ns
+[1387295.271318] [msx] heartbeat comes from 10.0.0.13
+[1387295.271319] [msx] interval between two hbs is 200003768 ns, latency is 3768 ns
+[1387295.471409] [msx] heartbeat comes from 10.0.0.13
+[1387295.471410] [msx] interval between two hbs is 200006845 ns, latency is 6845 ns
+[1387295.671486] [msx] heartbeat comes from 10.0.0.13
+[1387295.671487] [msx] interval between two hbs is 199993881 ns, latency is -6119 ns
+[1387295.871565] [msx] heartbeat comes from 10.0.0.13
+[1387295.871566] [msx] interval between two hbs is 199995529 ns, latency is -4471 ns
+[1387296.071646] [msx] heartbeat comes from 10.0.0.13
+[1387296.071647] [msx] interval between two hbs is 199997648 ns, latency is -2352 ns
+[1387296.271728] [msx] heartbeat comes from 10.0.0.13
+[1387296.271729] [msx] interval between two hbs is 199998546 ns, latency is -1454 ns
+[1387296.471823] [msx] heartbeat comes from 10.0.0.13
+[1387296.471824] [msx] interval between two hbs is 200011416 ns, latency is 11416 ns
+[1387296.671902] [msx] heartbeat comes from 10.0.0.13
+[1387296.671903] [msx] interval between two hbs is 199995497 ns, latency is -4503 ns
+[1387296.871986] [msx] heartbeat comes from 10.0.0.13
+[1387296.871987] [msx] interval between two hbs is 200000640 ns, latency is 640 ns
+[1387297.072081] [msx] heartbeat comes from 10.0.0.13
+[1387297.072084] [msx] interval between two hbs is 200012588 ns, latency is 12588 ns
+[1387297.272160] [msx] heartbeat comes from 10.0.0.13
+[1387297.272162] [msx] interval between two hbs is 199995222 ns, latency is -4778 ns
+[1387297.472247] [msx] heartbeat comes from 10.0.0.13
+[1387297.472249] [msx] interval between two hbs is 200003440 ns, latency is 3440 ns
+[1387297.672330] [msx] heartbeat comes from 10.0.0.13
+[1387297.672332] [msx] interval between two hbs is 199999537 ns, latency is -463 ns
+[1387297.872394] [msx] heartbeat comes from 10.0.0.13
+[1387297.872396] [msx] interval between two hbs is 199980228 ns, latency is -19772 ns
+[1387298.072494] [msx] heartbeat comes from 10.0.0.13
+[1387298.072496] [msx] interval between two hbs is 200016489 ns, latency is 16489 ns
+[1387298.272574] [msx] heartbeat comes from 10.0.0.13
+[1387298.272576] [msx] interval between two hbs is 199996234 ns, latency is -3766 ns
+[1387298.472662] [msx] heartbeat comes from 10.0.0.13
+[1387298.472663] [msx] interval between two hbs is 200003653 ns, latency is 3653 ns
+[1387298.672746] [msx] heartbeat comes from 10.0.0.13
+[1387298.672747] [msx] interval between two hbs is 200000699 ns, latency is 699 ns
+[1387298.872811] [msx] heartbeat comes from 10.0.0.13
+[1387298.872812] [msx] interval between two hbs is 199981705 ns, latency is -18295 ns
+[1387299.072897] [msx] heartbeat comes from 10.0.0.13
+[1387299.072898] [msx] interval between two hbs is 200002479 ns, latency is 2479 ns
+[1387299.272987] [msx] heartbeat comes from 10.0.0.13
+[1387299.272988] [msx] interval between two hbs is 200006017 ns, latency is 6017 ns
+[1387299.473070] [msx] heartbeat comes from 10.0.0.13
+[1387299.473071] [msx] interval between two hbs is 199999409 ns, latency is -591 ns
+[1387299.673153] [msx] heartbeat comes from 10.0.0.13
+[1387299.673154] [msx] interval between two hbs is 200000336 ns, latency is 336 ns
+[1387299.873223] [msx] heartbeat comes from 10.0.0.13
+[1387299.873224] [msx] interval between two hbs is 199986341 ns, latency is -13659 ns
+[1387300.073309] [msx] heartbeat comes from 10.0.0.13
+[1387300.073310] [msx] interval between two hbs is 200001954 ns, latency is 1954 ns
+[1387300.273402] [msx] heartbeat comes from 10.0.0.13
+[1387300.273403] [msx] interval between two hbs is 200010164 ns, latency is 10164 ns
+[1387300.473489] [msx] heartbeat comes from 10.0.0.13
+[1387300.473490] [msx] interval between two hbs is 200003270 ns, latency is 3270 ns
+[1387300.673574] [msx] heartbeat comes from 10.0.0.13
+[1387300.673575] [msx] interval between two hbs is 200001146 ns, latency is 1146 ns
+[1387300.873645] [msx] heartbeat comes from 10.0.0.13
+[1387300.873646] [msx] interval between two hbs is 199988018 ns, latency is -11982 ns
+[1387301.073731] [msx] heartbeat comes from 10.0.0.13
+[1387301.073732] [msx] interval between two hbs is 200002342 ns, latency is 2342 ns
+[1387301.273811] [msx] heartbeat comes from 10.0.0.13
+[1387301.273812] [msx] interval between two hbs is 199996417 ns, latency is -3583 ns
+[1387301.473902] [msx] heartbeat comes from 10.0.0.13
+[1387301.473903] [msx] interval between two hbs is 200007492 ns, latency is 7492 ns
+[1387301.673983] [msx] heartbeat comes from 10.0.0.13
+[1387301.673984] [msx] interval between two hbs is 199997295 ns, latency is -2705 ns
+[1387301.875073] [msx] heartbeat comes from 10.0.0.13
+[1387301.875074] [msx] interval between two hbs is 201006113 ns, latency is 1006113 ns
+[1387302.075164] [msx] heartbeat comes from 10.0.0.13
+[1387302.075165] [msx] interval between two hbs is 200007687 ns, latency is 7687 ns
+[1387302.275240] [msx] heartbeat comes from 10.0.0.13
+[1387302.275242] [msx] interval between two hbs is 199992937 ns, latency is -7063 ns
+[1387302.475331] [msx] heartbeat comes from 10.0.0.13
+[1387302.475332] [msx] interval between two hbs is 200007063 ns, latency is 7063 ns
+[1387302.675409] [msx] heartbeat comes from 10.0.0.13
+[1387302.675410] [msx] interval between two hbs is 199994690 ns, latency is -5310 ns
+[1387302.875470] [msx] heartbeat comes from 10.0.0.13
+[1387302.875472] [msx] interval between two hbs is 199977826 ns, latency is -22174 ns
+[1387303.075553] [msx] heartbeat comes from 10.0.0.13
+[1387303.075555] [msx] interval between two hbs is 199999495 ns, latency is -505 ns
+[1387303.275642] [msx] heartbeat comes from 10.0.0.13
+[1387303.275643] [msx] interval between two hbs is 200004774 ns, latency is 4774 ns
+[1387303.475724] [msx] heartbeat comes from 10.0.0.13
+[1387303.475725] [msx] interval between two hbs is 199999018 ns, latency is -982 ns
+[1387303.675812] [msx] heartbeat comes from 10.0.0.13
+[1387303.675813] [msx] interval between two hbs is 200004470 ns, latency is 4470 ns
+[1387303.875885] [msx] heartbeat comes from 10.0.0.13
+[1387303.875886] [msx] interval between two hbs is 199989113 ns, latency is -10887 ns
+[1387304.075971] [msx] heartbeat comes from 10.0.0.13
+[1387304.075972] [msx] interval between two hbs is 200002311 ns, latency is 2311 ns
+[1387304.276065] [msx] heartbeat comes from 10.0.0.13
+[1387304.276066] [msx] interval between two hbs is 200010727 ns, latency is 10727 ns
+[1387304.476151] [msx] heartbeat comes from 10.0.0.13
+[1387304.476152] [msx] interval between two hbs is 200002008 ns, latency is 2008 ns
+[1387304.676231] [msx] heartbeat comes from 10.0.0.13
+[1387304.676232] [msx] interval between two hbs is 199997429 ns, latency is -2571 ns
+[1387304.876310] [msx] heartbeat comes from 10.0.0.13
+[1387304.876312] [msx] interval between two hbs is 199995431 ns, latency is -4569 ns
+[1387305.076399] [msx] heartbeat comes from 10.0.0.13
+[1387305.076402] [msx] interval between two hbs is 200006587 ns, latency is 6587 ns
+[1387305.276476] [msx] heartbeat comes from 10.0.0.13
+[1387305.276479] [msx] interval between two hbs is 199993662 ns, latency is -6338 ns
+[1387305.476567] [msx] heartbeat comes from 10.0.0.13
+[1387305.476571] [msx] interval between two hbs is 200007911 ns, latency is 7911 ns
+[1387305.676646] [msx] heartbeat comes from 10.0.0.13
+[1387305.676648] [msx] interval between two hbs is 199994379 ns, latency is -5621 ns
+[1387305.876738] [msx] heartbeat comes from 10.0.0.13
+[1387305.876740] [msx] interval between two hbs is 200008313 ns, latency is 8313 ns
+[1387306.076820] [msx] heartbeat comes from 10.0.0.13
+[1387306.076822] [msx] interval between two hbs is 199998744 ns, latency is -1256 ns
+[1387306.276908] [msx] heartbeat comes from 10.0.0.13
+[1387306.276911] [msx] interval between two hbs is 200005113 ns, latency is 5113 ns
+[1387306.476988] [msx] heartbeat comes from 10.0.0.13
+[1387306.476991] [msx] interval between two hbs is 199996233 ns, latency is -3767 ns
+[1387306.677068] [msx] heartbeat comes from 10.0.0.13
+[1387306.677069] [msx] interval between two hbs is 199995280 ns, latency is -4720 ns
+[1387306.877137] [msx] heartbeat comes from 10.0.0.13
+[1387306.877138] [msx] interval between two hbs is 199984913 ns, latency is -15087 ns
+[1387307.077234] [msx] heartbeat comes from 10.0.0.13
+[1387307.077236] [msx] interval between two hbs is 200014604 ns, latency is 14604 ns
+[1387307.277313] [msx] heartbeat comes from 10.0.0.13
+[1387307.277314] [msx] interval between two hbs is 199995203 ns, latency is -4797 ns
+[1387307.477409] [msx] heartbeat comes from 10.0.0.13
+[1387307.477410] [msx] interval between two hbs is 200011696 ns, latency is 11696 ns
+[1387307.677484] [msx] heartbeat comes from 10.0.0.13
+[1387307.677485] [msx] interval between two hbs is 199991685 ns, latency is -8315 ns
+[1387307.877548] [msx] heartbeat comes from 10.0.0.13
+[1387307.877549] [msx] interval between two hbs is 199980420 ns, latency is -19580 ns
+[1387308.077646] [msx] heartbeat comes from 10.0.0.13
+[1387308.077647] [msx] interval between two hbs is 200014880 ns, latency is 14880 ns
+[1387308.277722] [msx] heartbeat comes from 10.0.0.13
+[1387308.277723] [msx] interval between two hbs is 199992072 ns, latency is -7928 ns
+[1387308.477817] [msx] heartbeat comes from 10.0.0.13
+[1387308.477818] [msx] interval between two hbs is 200012228 ns, latency is 12228 ns
+[1387308.677900] [msx] heartbeat comes from 10.0.0.13
+[1387308.677902] [msx] interval between two hbs is 199999833 ns, latency is -167 ns
+[1387308.877969] [msx] heartbeat comes from 10.0.0.13
+[1387308.877970] [msx] interval between two hbs is 199985160 ns, latency is -14840 ns
+[1387309.078053] [msx] heartbeat comes from 10.0.0.13
+[1387309.078054] [msx] interval between two hbs is 199999945 ns, latency is -55 ns
+[1387309.278138] [msx] heartbeat comes from 10.0.0.13
+[1387309.278139] [msx] interval between two hbs is 200001229 ns, latency is 1229 ns
+[1387309.478239] [msx] heartbeat comes from 10.0.0.13
+[1387309.478240] [msx] interval between two hbs is 200018280 ns, latency is 18280 ns
+[1387309.678324] [msx] heartbeat comes from 10.0.0.13
+[1387309.678325] [msx] interval between two hbs is 200001434 ns, latency is 1434 ns
+[1387309.878396] [msx] heartbeat comes from 10.0.0.13
+[1387309.878397] [msx] interval between two hbs is 199988319 ns, latency is -11681 ns
+[1387310.078483] [msx] heartbeat comes from 10.0.0.13
+[1387310.078484] [msx] interval between two hbs is 200003604 ns, latency is 3604 ns
+[1387310.278568] [msx] heartbeat comes from 10.0.0.13
+[1387310.278569] [msx] interval between two hbs is 200001074 ns, latency is 1074 ns
+[1387310.478651] [msx] heartbeat comes from 10.0.0.13
+[1387310.478652] [msx] interval between two hbs is 199999569 ns, latency is -431 ns
+[1387310.678733] [msx] heartbeat comes from 10.0.0.13
+[1387310.678734] [msx] interval between two hbs is 199998388 ns, latency is -1612 ns
+[1387310.878810] [msx] heartbeat comes from 10.0.0.13
+[1387310.878811] [msx] interval between two hbs is 199993516 ns, latency is -6484 ns
+[1387311.078889] [msx] heartbeat comes from 10.0.0.13
+[1387311.078891] [msx] interval between two hbs is 199996294 ns, latency is -3706 ns
+[1387311.278973] [msx] heartbeat comes from 10.0.0.13
+[1387311.278974] [msx] interval between two hbs is 200000165 ns, latency is 165 ns
+[1387311.479064] [msx] heartbeat comes from 10.0.0.13
+[1387311.479065] [msx] interval between two hbs is 200007174 ns, latency is 7174 ns

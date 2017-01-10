@@ -1,0 +1,26 @@
+Linux 3.16.0-30-generic (node220-1) 	01/04/2017 	_x86_64_	(8 CPU)
+
+02:17:14 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:17:15 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:17:15 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:17:15 PM       em1     24.00 1135399.00      3.49  70970.40      0.00      0.00      1.00     58.14
+
+02:17:15 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:17:16 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:17:16 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:17:16 PM       em1      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+
+02:17:16 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:17:17 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:17:17 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:17:17 PM       em1      1.00      0.00      0.06      0.00      0.00      0.00      1.00      0.00
+
+02:17:17 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:17:18 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:17:18 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:17:18 PM       em1      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+
+02:17:18 PM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+02:17:19 PM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:17:19 PM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+02:17:19 PM       em1      3.00      1.00      0.45      0.06      0.00      0.00      1.00      0.00

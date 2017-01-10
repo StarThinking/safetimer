@@ -1,0 +1,51 @@
+Linux 3.16.0-30-generic (node220-1) 	01/06/2017 	_x86_64_	(8 CPU)
+
+07:18:01 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+07:18:02 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:02 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:02 AM       em1      4.00 1488131.00      1.17  93008.24      0.00      0.00      0.00     76.19
+
+07:18:02 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+07:18:03 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:03 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:03 AM       em1     10.00 1488103.00      3.08  93008.52      0.00      0.00      1.00     76.19
+
+07:18:03 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+07:18:04 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:04 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:04 AM       em1      5.00 1488125.00      1.87  93008.29      0.00      0.00      0.00     76.19
+
+07:18:04 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+07:18:05 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:05 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:05 AM       em1      5.00 1488163.00      1.00  93010.19      0.00      0.00      2.00     76.19
+
+07:18:05 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+07:18:06 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:06 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:06 AM       em1      1.00 1488099.00      0.06  93006.12      0.00      0.00      0.00     76.19
+
+07:18:06 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+07:18:07 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:07 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:07 AM       em1     17.00 1462938.00      1.64  91440.89      0.00      0.00      1.00     74.91
+
+07:18:07 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+07:18:08 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:08 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:08 AM       em1      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+
+07:18:08 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+07:18:09 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:09 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:09 AM       em1      1.00      0.00      0.06      0.00      0.00      0.00      1.00      0.00
+
+07:18:09 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+07:18:10 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:10 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:10 AM       em1      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+
+07:18:10 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+07:18:11 AM       em2      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:11 AM        lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+07:18:11 AM       em1      1.00      0.00      0.06      0.00      0.00      0.00      1.00      0.00
