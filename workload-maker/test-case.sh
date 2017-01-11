@@ -1,57 +1,64 @@
 #!/bin/bash
 
-DIR=''
-RUN=0
-TIME=0
-CPU=false
-DISK=false
-NET=false
-HELP="Usage: ./test-case [OPTIONS] -d [DIR] -r [RUN_NUM] -t [SECOND] Options: -cpu, -disk, -net"
+dir=''
+run=0
+time=0
+cpu=false
+disk=false
+net=false
+server_type=regular
+help="Usage: ./test-case [OPTIONS] -d [dir] -r [run_num] -t [second] Options: -cpu, -disk, -net, --slow, --none"
 
 if [ $# == 0 ]
 then
-    echo "$HELP"
+    echo "$help"
     exit 
 fi
 
 while [ -n "$1" ]
 do
     case "$1" in
-        -d) DIR=$2
+        -d) dir=$2
             shift;;
         
-        -r) RUN=$2
+        -r) run=$2
             shift;;
 
-        -t) TIME=$2
+        -t) time=$2
             shift;;
             
-        -cpu) CPU=true
+        -cpu) cpu=true
             ;;
        
-        -disk) DISK=true
+        -disk) disk=true
             ;;
         
-        -net) NET=true
+        -net) net=true
             ;;
+        
+        --slow) server_type=slow
+            shift;;
+        
+        --none) server_type=none
+            shift;;
 
-        --help) echo $HELP
+        --help) echo $help
             exit;;
         
-        *) echo "Wrong Arguments! $HELP"
+        *) echo "Wrong Arguments! $help"
             exit;;
     esac
     shift
 done
 
-echo "Test Case: DIR=$DIR, RUN=$RUN, TIME=$TIME, CPU=$CPU, DISK=$DISK, NET=$NET" | tee ./$DIR/readme
+echo "Test Case: dir=$dir, run=$run, time=$time, cpu=$cpu, disk=$disk, net=$net, server_type=$server_type" | tee ./$dir/readme
 
 # cpu assignment
 echo "assign all net workloads to cpu1"
 /root/hb-latency/bin/set_netirq_tocpu1.sh
 
-for((r=1; r<=$RUN; r++))
+for((r=1; r<=$run; r++))
 do  
-    echo "Test Case Run $r: DIR=$DIR, RUN=$RUN, TIME=$TIME, CPU=$CPU, DISK=$DISK, NET=$NET"
-    ./test.sh $DIR $r $TIME $CPU $DISK $NET
+    echo "Test Case Run $r: dir=$dir, run=$run, time=$time, cpu=$cpu, disk=$disk, net=$net, server_type=$server_type"
+    ./test.sh $dir $r $time $cpu $disk $net $server_type
 done

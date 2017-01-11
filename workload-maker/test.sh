@@ -1,19 +1,21 @@
 #!/bin/bash
 
-source cpu_workload.sh
-source disk_workload.sh
-source net_workload.sh
+path=/root/hb-latency/workload-maker
 
-DIR=$1
-RUN=$2
-TIME=$3
-CPU=$4
-DISK=$5
-NET=$6 
-SAR_INT=10
-SAR_COUNT=$[$[$TIME / $SAR_INT] - 1]
+source $path/cpu_workload.sh
+source $path/disk_workload.sh
+source $path/net_workload.sh
 
-echo DIR = $DIR
+dir=$1
+run=$2
+time=$3
+cpu=$4
+disk=$5
+net=$6
+server_type=$7
+sar_int=10
+sar_count=$[$[$time / $sar_int] - 1]
+
 echo "workload cleanup"
 cpu_workload_cleanup
 disk_workload_cleanup
@@ -22,34 +24,33 @@ net_workload_cleanup
 dmesg -c > /dev/null
 
 # launch workload, remember that all the workloads on server side should be placed the 2nd cpu
-if [ $CPU == 'true' ]
+if [ $cpu == 'true' ]
 then
     cpu_workload_init
 fi
 
-if [ $DISK == 'true' ]
+if [ $disk == 'true' ]
 then
-    disk_workload_init
+    disk_workload_init $time
 fi
 
-if [ $NET == 'true' ]
+if [ $net == 'true' ]
 then
-    net_workload_init
+    net_workload_init $server_type
+    client_sar_init $sar_int $sar_count $dir $run
 fi
 
 echo "launch server sar monitor"
-sar -P 1 $SAR_INT $SAR_COUNT > ./$DIR/server.cpu.$RUN &
-sar -n DEV $SAR_INT $SAR_COUNT > ./$DIR/server.net.$RUN &
+sar -P 1 $sar_int $sar_count > $dir/server.cpu.$run &
+sar -n DEV $sar_int $sar_count > $dir/server.net.$run &
 
 echo "start recording"
 dmesg -c > /dev/null
 BUF_S=10
-sleep $[$TIME - $BUF_S]
-dmesg -c > ./$DIR/lat.$RUN
+sleep $[$time - $BUF_S]
+dmesg -c > $dir/lat.$run
 sleep $BUF_S
-
-echo "system calm down"
-sleep 60
+sleep $BUF_S
 
 echo "workload cleanup"
 cpu_workload_cleanup
@@ -57,5 +58,11 @@ disk_workload_cleanup
 net_workload_cleanup
 dmesg -c > /dev/null
 
-#ssh $client "cd $PATH; rm -rf cpu.tmp; touch cpu.tmp; sar -u $sar_interval $sar_count > cpu.tmp" &
-# ssh $client "cd $PATH; rm -rf net.tmp; touch net.tmp; sar -n DEV $sar_interval $sar_count > net.tmp" &
+echo "system calm down"
+sleep 30
+
+if [ $net == 'true' ]
+then
+    # scp monitor info from client
+    client_sar_collect
+fi

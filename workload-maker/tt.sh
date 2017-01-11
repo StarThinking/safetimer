@@ -1,5 +1,0 @@
-foo() {
-    killall server
-}
-
-
