@@ -37,21 +37,22 @@ do
             ;;
         
         --slow) server_type=slow
-            shift;;
+            ;;
         
         --none) server_type=none
-            shift;;
+            ;;
 
         --help) echo $help
             exit;;
         
         *) echo "Wrong Arguments! $help"
+            echo Wrong argument is $1
             exit;;
     esac
     shift
 done
 
-echo "Test Case: dir=$dir, run=$run, time=$time, cpu=$cpu, disk=$disk, net=$net, server_type=$server_type" | tee ./$dir/readme
+echo "Test Case: dir=$dir, run=$run, time=$time, cpu=$cpu, disk=$disk, net=$net, server_type=$server_type" | tee $dir/readme
 
 # cpu assignment
 echo "assign all net workloads to cpu1"

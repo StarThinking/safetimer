@@ -1,0 +1,208 @@
+
+Test Case: dir=/root/result-1.11/idle, run=5, time=1200, cpu=false, disk=false, net=false, server_type=regular
+assign all net workloads to cpu1
+02
+1
+02
+1
+02
+1
+02
+1
+02
+1
+Test Case Run 1: dir=/root/result-1.11/idle, run=5, time=1200, cpu=false, disk=false, net=false, server_type=regular
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+launch server sar monitor
+dir = /root/result-1.11/idle
+start recording
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+system calm down
+Test Case Run 2: dir=/root/result-1.11/idle, run=5, time=1200, cpu=false, disk=false, net=false, server_type=regular
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+launch server sar monitor
+dir = /root/result-1.11/idle
+start recording
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+system calm down
+Test Case Run 3: dir=/root/result-1.11/idle, run=5, time=1200, cpu=false, disk=false, net=false, server_type=regular
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+launch server sar monitor
+dir = /root/result-1.11/idle
+start recording
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+system calm down
+Test Case Run 4: dir=/root/result-1.11/idle, run=5, time=1200, cpu=false, disk=false, net=false, server_type=regular
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+launch server sar monitor
+dir = /root/result-1.11/idle
+start recording
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+system calm down
+Test Case Run 5: dir=/root/result-1.11/idle, run=5, time=1200, cpu=false, disk=false, net=false, server_type=regular
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+launch server sar monitor
+dir = /root/result-1.11/idle
+start recording
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+system calm down

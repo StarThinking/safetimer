@@ -12,17 +12,13 @@ net_workload_cleanup() {
     killall server; killall server_slow; kill -9 $(lsof -i:5000 -t);
     echo "killall client"
     local n=100
-    while [ $n -gt 2 ]
-    do
-        ssh $client "killall client"
-        sleep 1
-        n=`ssh $client "ps aux | grep client | wc -l"`
-    done
+    ssh $client "killall client"
     sleep 1
 }
 
 net_workload_init() {
     local server_type=$1
+    local time=$2
     echo "net_workload_init"
     echo "launch server $server_type"
     if [ $server_type == 'regular' ]
@@ -37,7 +33,7 @@ net_workload_init() {
     fi
     sleep 1
     echo "launch clients"
-    ssh $client "cd $path/net; ./launch_client.sh $client_num $server $datasize" &
+    ssh $client "cd $path/net; ./launch_client.sh $client_num $server $datasize $time" &
     sleep 2
 }
 
@@ -52,6 +48,8 @@ client_sar_init() {
 }
 
 client_sar_collect() {
-    ssh $client "cd $path/net; scp cpu.tmp $server:$dir/client.cpu.$run; client cpu sar finishes" 
-    ssh $client "cd $path/net; scp net.tmp $server:$dir/client.net.$run; client net sar finishes" 
+    ssh $client "cd $path/net; scp cpu.tmp $server:$dir/client.cpu.$run"
+    echo "client cpu sar finishes" 
+    ssh $client "cd $path/net; scp net.tmp $server:$dir/client.net.$run"
+    echo "client net sar finishes" 
 }

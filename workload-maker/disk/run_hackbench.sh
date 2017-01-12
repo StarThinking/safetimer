@@ -1,4 +1,4 @@
 while true
 do
-    hackbench
+    hackbench > /dev/null
 done

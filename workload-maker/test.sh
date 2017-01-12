@@ -36,11 +36,12 @@ fi
 
 if [ $net == 'true' ]
 then
-    net_workload_init $server_type
+    net_workload_init $server_type $time
     client_sar_init $sar_int $sar_count $dir $run
 fi
 
 echo "launch server sar monitor"
+echo "dir = $dir"
 sar -P 1 $sar_int $sar_count > $dir/server.cpu.$run &
 sar -n DEV $sar_int $sar_count > $dir/server.net.$run &
 

@@ -1,13 +1,14 @@
 num=$1
 server=$2
 datasize=$3
+duration=$4
 
 #killall ./client
 
 for((i=0; i<$num; i++))
 do
     echo start client $i
-    ./client $server $datasize &
+    timeout "$duration"s ./client $server $datasize &
     pids[$i]=$!
 done
 

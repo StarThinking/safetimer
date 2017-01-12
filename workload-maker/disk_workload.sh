@@ -21,18 +21,17 @@ disk_workload_cleanup() {
 disk_workload_init() {
     echo "disk_workload_init"
     local duration=$1
-    echo "launch wget hackbench bonnie for $duration s"
+    echo "launch wget+hackbench+bonnie for "$duration"s on ALL CPUs!"
 
     service apache2 restart
-    sleep 1
-    taskset 0x2 timeout "$duration"s $path/disk/run_wget.sh &
-    sleep 1
-
-    taskset 0x2 timeout "$duration"s $path/disk/run_hackbench.sh &
-    sleep 1
-
     mkdir ~/tmp
-    taskset 0x2 timeout "$duration"s $path/disk/run_bonnie++.sh &
     sleep 1
+
+    for((i=1; i<=8; i++))
+    do
+        taskset 0x$i timeout "$duration"s $path/disk/run_wget.sh &
+        taskset 0x$i timeout "$duration"s $path/disk/run_hackbench.sh &
+        taskset 0x$i timeout "$duration"s $path/disk/run_bonnie++.sh &
+    done
 }
 
