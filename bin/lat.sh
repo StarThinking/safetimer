@@ -15,8 +15,7 @@ valid_file_num=$file_num
 
 for((i=1; i<=$file_num; i++))
 do
-    lats=`tail -n +3 ${files[$i]} | grep latency | awk 'BEGIN{FS=",| "}{print ($13 >= 0) ? $13 : 0-$13}' | sort -rn`
-
+    lats=`tail -n +3 ${files[$i]} | grep latency | awk 'BEGIN{FS=",| "}{print ($13 >= 0) ? $14 : 0-$14}' | sort -rn`
     sum=0
     count=0
     max=0
@@ -29,6 +28,7 @@ do
 
     for lat in $lats
     do
+#        echo $lat
         count=$[$count + 1]
     done
     lat999_num=$[$count * 1 / 1000]

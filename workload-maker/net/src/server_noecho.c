@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
             break;
         }
         char str[INET_ADDRSTRLEN];
-        //printf("received packet from %s\n", inet_ntoa(client.sin_addr));
+//        printf("received packet from %s\n", inet_ntoa(client.sin_addr));
    /*     if(sendto(sock, buf, msg_size, 0, (struct sockaddr *) &client,
                     sizeof(client)) != msg_size) {
             close(sock);

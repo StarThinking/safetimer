@@ -206,3 +206,279 @@ kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill 
 killall client
 client: no process found
 system calm down
+Test Case: dir=/root/result, run=3, time=1200, cpu=false, disk=false, net=true, server_type=none
+assign all net workloads to cpu1
+02
+1
+02
+1
+02
+1
+02
+1
+02
+1
+Test Case Run 1: dir=/root/result, run=3, time=1200, cpu=false, disk=false, net=true, server_type=none
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+net_workload_init
+launch server none
+don't launch server!!
+launch clients
+start client 0
+start client 1
+start client 2
+start client 3
+start client 4
+start client 5
+start client 6
+start client 7
+start client 8
+start client 9
+start client 10
+start client 11
+start client 12
+start client 13
+start client 14
+start client 15
+start client 16
+start client 17
+start client 18
+start client 19
+start client 20
+start client 21
+start client 22
+start client 23
+start client 24
+start client 25
+start client 26
+start client 27
+start client 28
+start client 29
+start client 30
+start client 31
+start client 32
+start client 33
+start client 34
+start client 35
+start client 36
+start client 37
+start client 38
+start client 39
+client_sar_init
+launch server sar monitor
+dir = /root/result
+start recording
+all clients finish
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+system calm down
+client cpu sar finishes
+client net sar finishes
+Test Case Run 2: dir=/root/result, run=3, time=1200, cpu=false, disk=false, net=true, server_type=none
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+net_workload_init
+launch server none
+don't launch server!!
+launch clients
+start client 0
+start client 1
+start client 2
+start client 3
+start client 4
+start client 5
+start client 6
+start client 7
+start client 8
+start client 9
+start client 10
+start client 11
+start client 12
+start client 13
+start client 14
+start client 15
+client_sar_init
+launch server sar monitor
+dir = /root/result
+start recording
+start client 16
+start client 17
+start client 18
+start client 19
+start client 20
+start client 21
+start client 22
+start client 23
+start client 24
+start client 25
+start client 26
+start client 27
+start client 28
+start client 29
+start client 30
+start client 31
+start client 32
+start client 33
+start client 34
+start client 35
+start client 36
+start client 37
+start client 38
+start client 39
+all clients finish
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+system calm down
+client cpu sar finishes
+client net sar finishes
+Test Case Run 3: dir=/root/result, run=3, time=1200, cpu=false, disk=false, net=true, server_type=none
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+net_workload_init
+launch server none
+don't launch server!!
+launch clients
+start client 0
+start client 1
+start client 2
+start client 3
+start client 4
+start client 5
+start client 6
+start client 7
+start client 8
+start client 9
+start client 10
+start client 11
+start client 12
+start client 13
+start client 14
+start client 15
+client_sar_init
+launch server sar monitor
+dir = /root/result
+start recording
+Write failed: Broken pipe
+Connection closed by 10.0.0.11
+start client 16
+start client 17
+start client 18
+start client 19
+start client 20
+start client 21
+start client 22
+start client 23
+start client 24
+start client 25
+start client 26
+start client 27
+start client 28
+start client 29
+start client 30
+start client 31
+start client 32
+start client 33
+start client 34
+start client 35
+start client 36
+start client 37
+start client 38
+start client 39
+Write failed: Broken pipe
+workload cleanup
+cpu_workload_cleanup
+disk_workload_cleanup
+killall hackbench
+hackbench: no process found
+killall bonnie++
+bonnie++: no process found
+killall wget and apache2
+wget: no process found
+apache2: no process found
+net_workload_cleanup
+killall server
+server: no process found
+server_slow: no process found
+kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | jobspec ... or kill -l [sigspec]
+killall client
+client: no process found
+system calm down
+client cpu sar finishes
+client net sar finishes
+ssh_exchange_identification: read: Connection reset by peer
