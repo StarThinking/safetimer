@@ -13,7 +13,7 @@
 #include <stdbool.h>
 #include <semaphore.h>
 
-#define MSGSIZE 10
+#define MSGSIZE 8
 
 static long timeout_intvl_ms = 0;
 static bool expired = true;
