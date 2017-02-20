@@ -10,9 +10,10 @@
 #include <signal.h>
 
 #define MSGSIZE 10
-#define TIMEOUT_INTVL 10 // 10s
 
-int sock = 0;
+static int sock = 0;
+static long timeout_intvl_ms = 0;
+static char *receiver_ip = "";
 
 void sig_handler(int signo) {
       if (signo == SIGINT) {
@@ -23,8 +24,8 @@ void sig_handler(int signo) {
 
 struct timespec sleep_time() {
     struct timespec ts;
-    ts.tv_sec = TIMEOUT_INTVL;
-    ts.tv_nsec = 0;
+    ts.tv_sec = timeout_intvl_ms / 1000;
+    ts.tv_nsec = (timeout_intvl_ms % 1000) * 1.0e6;
     return ts;
 }
 
@@ -32,12 +33,13 @@ int main(int argc , char *argv[]) {
 
     signal(SIGINT, sig_handler);
     
-    if(argc!=2) {
-	printf("client [ip]\n");
+    if(argc != 3) {
+	printf("client [ip] [timeout ms]\n");
 	return -1;
     }
-    char *ip = argv[1];
-    printf("ip = %s, msg_size = %d\n", ip, MSGSIZE);
+    receiver_ip = argv[1];
+    timeout_intvl_ms = atoi(argv[2]);
+    printf("receiver_ip = %s, timeout = %ld ms, msg_size = %d\n", receiver_ip, timeout_intvl_ms, MSGSIZE);
 
     struct sockaddr_in server;
     char *buf = malloc(MSGSIZE); 
@@ -47,7 +49,7 @@ int main(int argc , char *argv[]) {
     }
     puts("Socket created");
      
-    server.sin_addr.s_addr = inet_addr(ip);
+    server.sin_addr.s_addr = inet_addr(receiver_ip);
     server.sin_family = AF_INET;
     server.sin_port = htons(5001);
 
