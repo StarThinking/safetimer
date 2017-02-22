@@ -19,7 +19,7 @@
 #define MSGSIZE 8
 
 //#define LOCAL
-#define REMOTE
+//#define REMOTE
 
 static long timeout_intvl_ms = 0;
 static bool expired = true;
@@ -51,7 +51,7 @@ struct timespec sleep_time(long sleep_t) {
 void *expirator(void *arg) {
     int sock = *(int *) arg;
     printf("[expirator] expirator thread created, local client sock = %d\n", sock);
-    long timeout_t;
+    long timeout_t, begin_t, end_t, process_t;
     struct timespec sleep_ts;
     timeout_t = next_timeout(now());
     char *buf = malloc(MSGSIZE);
@@ -62,20 +62,26 @@ void *expirator(void *arg) {
             nanosleep(&sleep_ts, NULL);
         }
         timeout_t = next_timeout(now());
-       
+
+        begin_t = now();
+#if defined(LOCAL) || defined(REMOTE)
         // send a packet to self
         int ret = send(sock, buf, MSGSIZE, 0);
         if(ret != MSGSIZE) {
             printf("[expirator] send incorrectly, ret = %d\n", ret);
             break;
         }
-
         // wait for semaphore
         printf("[expirator] wait for sem post by receiver\n");
         sem_wait(&sem); 
+#endif
+        end_t = now();
+        process_t = end_t - begin_t;
+        printf("[expirator] time to check expiration, waiting send-self time = %ld ms\n", process_t);
+        // extend timeout with waiting send-self time for compensation
+        timeout_t += process_t;
         
         // do expiration check
-        //printf("[expirator] it's time to check expiration\n");
         pthread_mutex_lock(&lock);
         if(expired == true) {
             printf("[expirator] expired!\n");
@@ -104,13 +110,12 @@ void *receiver(void *arg) {
             expired = false;
             pthread_mutex_unlock(&lock);
         }
-#ifdef LOCAL
+#if defined(LOCAL)
         else if(connfd == local_sendself_sock) { // packets from localhost
             printf("[receiver] received local send-self from %s and wake up expirator\n", LOCALIP);
             sem_post(&sem);
         }
-#endif
-#ifdef REMOTE
+#elif defined(REMOTE)
         else if(connfd == remote_sendself_sock) { // packets from remote_sendself_sock
             printf("[receiver] received remote send-self from %s and wake up expirator\n", REMOTEIP);
             sem_post(&sem);
@@ -146,16 +151,16 @@ int main(int argc, char *argv[]) {
 
     pthread_t expirator_tid;
     int sock = 0;
+#if defined(LOCAL)
     sock = socket(AF_INET, SOCK_STREAM, 0);
-#ifdef LOCAL
     if(connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         perror("connect failed. Error");
         return 1;
     } else {
         printf("[main] local send-self sock connected\n");
     }
-#endif
-#ifdef REMOTE
+#elif defined(REMOTE)
+    sock = socket(AF_INET, SOCK_STREAM, 0);
     if(connect(sock, (struct sockaddr *) &remote_addr, sizeof(remote_addr)) < 0) {
         perror("connect failed. Error");
         return 1;

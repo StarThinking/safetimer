@@ -8,8 +8,8 @@ disk_workload_cleanup() {
     echo "killall hackbench"
     killall hackbench
 
-    echo "killall bonnie++"
-    killall bonnie++
+#    echo "killall bonnie++"
+ #   killall bonnie++
     rm -rf ~/tmp
 
     echo "killall wget and apache2" 
@@ -31,7 +31,10 @@ disk_workload_init() {
     do
         taskset 0x$i timeout "$duration"s $path/disk/run_wget.sh &
         taskset 0x$i timeout "$duration"s $path/disk/run_hackbench.sh &
-        taskset 0x$i timeout "$duration"s $path/disk/run_bonnie++.sh &
+ #       taskset 0x$i timeout "$duration"s $path/disk/run_bonnie++.sh &
     done
 }
 
+disk_workload_cleanup
+disk_workload_init 30
+disk_workload_cleanup
