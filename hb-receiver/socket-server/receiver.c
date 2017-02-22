@@ -15,7 +15,8 @@
 
 #define LOCALIP "10.0.0.12"
 #define MSGSIZE 8
-#define LOCAL
+//#define LOCAL
+#define REMOTE
 
 static long timeout_intvl_ms = 0;
 static bool expired = true;
@@ -68,6 +69,9 @@ void *expirator(void *arg) {
         printf("[expirator] wait for sem post by receiver\n");
         sem_wait(&sem); 
 #endif
+#ifdef REMOTE
+        printf("[expirator] send a packet to remote send-self\n");
+#endif
 
         // do expiration check
         //printf("[expirator] it's time to check expiration\n");
@@ -105,6 +109,9 @@ void *receiver(void *arg) {
             sem_post(&sem);
         }
 #endif
+#ifdef  REMOTE
+        printf("[receiver] received remote send-self\n");
+#endif
     } 
 }
 
@@ -128,17 +135,20 @@ int main(int argc, char *argv[]) {
     serv_addr.sin_port = htons(5001); 
     bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)); 
     listen(listenfd, 10); 
-    
+
     pthread_t expirator_tid;
     int sock = 0;
 #ifdef LOCAL
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    if(connect(sock, (struct sockaddr *) &serv_addr , sizeof(serv_addr)) < 0) {
+    if(connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         perror("connect failed. Error");
         return 1;
     } else {
-        printf("[main] local send sock connected\n");
+        printf("[main] local send-self sock connected\n");
     }
+#endif
+#ifdef REMOTE
+    printf("[main] remote send-self sock connected\n");
 #endif
     // create expirator thread
     pthread_create(&expirator_tid, NULL, expirator, &sock);
