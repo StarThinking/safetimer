@@ -14,13 +14,18 @@
 #include <semaphore.h>
 
 #define LOCALIP "10.0.0.12"
+#define REMOTEIP "10.0.0.14"
+#define HBSENDERIP "10.0.0.13"
 #define MSGSIZE 8
+
 //#define LOCAL
 #define REMOTE
 
 static long timeout_intvl_ms = 0;
 static bool expired = true;
-static int local_client_sock;
+static int local_sendself_sock;
+static int remote_sendself_sock;
+static int hb_sender_sock;
 
 static pthread_mutex_t lock;
 static sem_t sem;
@@ -58,21 +63,17 @@ void *expirator(void *arg) {
         }
         timeout_t = next_timeout(now());
        
-#ifdef LOCAL
         // send a packet to self
         int ret = send(sock, buf, MSGSIZE, 0);
         if(ret != MSGSIZE) {
             printf("[expirator] send incorrectly, ret = %d\n", ret);
             break;
         }
+
         // wait for semaphore
         printf("[expirator] wait for sem post by receiver\n");
         sem_wait(&sem); 
-#endif
-#ifdef REMOTE
-        printf("[expirator] send a packet to remote send-self\n");
-#endif
-
+        
         // do expiration check
         //printf("[expirator] it's time to check expiration\n");
         pthread_mutex_lock(&lock);
@@ -97,20 +98,23 @@ void *receiver(void *arg) {
 	}
 	if(ret != MSGSIZE) printf("warning recv ret=%d\n", ret);
         
-        if(connfd != local_client_sock) { // packets from remote hosts
-            //printf("[receiver] receievd remote heartbeat from sock %d\n", connfd);
+        if(connfd == hb_sender_sock) { // packets from heartbeat sender
+            printf("[receiver] receievd heartbeat from %s\n", HBSENDERIP);
             pthread_mutex_lock(&lock);
             expired = false;
             pthread_mutex_unlock(&lock);
         }
 #ifdef LOCAL
-        else { // packets from localhost
-            printf("[receiver] received local heartbeat from sock %d and wake up expirator thread\n", connfd);
+        else if(connfd == local_sendself_sock) { // packets from localhost
+            printf("[receiver] received local send-self from %s and wake up expirator\n", LOCALIP);
             sem_post(&sem);
         }
 #endif
-#ifdef  REMOTE
-        printf("[receiver] received remote send-self\n");
+#ifdef REMOTE
+        else if(connfd == remote_sendself_sock) { // packets from remote_sendself_sock
+            printf("[receiver] received remote send-self from %s and wake up expirator\n", REMOTEIP);
+            sem_post(&sem);
+        }
 #endif
     } 
 }
@@ -125,7 +129,7 @@ int main(int argc, char *argv[]) {
     sem_init(&sem, 0, 0); 
     
     int listenfd = 0, connfd = 0;
-    struct sockaddr_in serv_addr; 
+    struct sockaddr_in serv_addr, remote_addr; 
 
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
     memset(&serv_addr, '0', sizeof(serv_addr));
@@ -135,11 +139,15 @@ int main(int argc, char *argv[]) {
     serv_addr.sin_port = htons(5001); 
     bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)); 
     listen(listenfd, 10); 
+    
+    remote_addr.sin_family = AF_INET;
+    remote_addr.sin_addr.s_addr = inet_addr(REMOTEIP);
+    remote_addr.sin_port = htons(5001); 
 
     pthread_t expirator_tid;
     int sock = 0;
-#ifdef LOCAL
     sock = socket(AF_INET, SOCK_STREAM, 0);
+#ifdef LOCAL
     if(connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         perror("connect failed. Error");
         return 1;
@@ -148,7 +156,12 @@ int main(int argc, char *argv[]) {
     }
 #endif
 #ifdef REMOTE
-    printf("[main] remote send-self sock connected\n");
+    if(connect(sock, (struct sockaddr *) &remote_addr, sizeof(remote_addr)) < 0) {
+        perror("connect failed. Error");
+        return 1;
+    } else {
+        printf("[main] remote send-self sock connected\n");
+    }
 #endif
     // create expirator thread
     pthread_create(&expirator_tid, NULL, expirator, &sock);
@@ -158,9 +171,13 @@ int main(int argc, char *argv[]) {
         unsigned int client_len = sizeof(client);
         connfd = accept(listenfd, (struct sockaddr*) &client, &client_len);
         printf("[main] client connection accepted, sock = %d, ip = %s\n", connfd, inet_ntoa(client.sin_addr));
-        // determine which is the local client sockfd
+        // determine sockfd-ip mapping
         if(strcmp(inet_ntoa(client.sin_addr), LOCALIP) == 0) {
-            local_client_sock = connfd;
+            local_sendself_sock = connfd;
+        } else if(strcmp(inet_ntoa(client.sin_addr), HBSENDERIP) == 0) {
+            hb_sender_sock = connfd;
+        } else if(strcmp(inet_ntoa(client.sin_addr), REMOTEIP) == 0) {
+            remote_sendself_sock = connfd;
         }
 	int *tmp = malloc(sizeof(int));
 	*tmp = connfd;
