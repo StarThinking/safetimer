@@ -25,6 +25,7 @@ int update_queue(struct queue *q, long t) {
     struct qnode *p = q->front;
     // find the first expiration time that is larger than t
     while(p != NULL && (p->timestamp < t)) {
+        printf("p->timestamp = %ld\n", p->timestamp);
         p = p->next;
     }
     

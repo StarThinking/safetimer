@@ -15,29 +15,24 @@
 #include "queue.h"
 
 #define LOCALIP "10.0.0.12"
-#define REMOTEIP "10.0.0.14"
 #define HBSENDERIP "10.0.0.13"
 #define MSGSIZE sizeof(long)
-//#define MSGSIZE 8
 
-//#define LOCAL
-//#define REMOTE
+#define FCFS
 
 static long timeout_intvl_ms = 0;
-//static bool expired = true;
 struct queue *queue;
-static int expired_num = 0;
-static int local_sendself_sock;
-static int remote_sendself_sock;
-static int hb_sender_sock;
-
 static pthread_mutex_t lock;
-static sem_t sem;
+static sem_t response;
+
+static int hb_sender_sock;
 static pthread_t expirator_tid;
-static pthread_t receiver_tids[5];
-static int connfds[5];
-static int listenfd = 0, connfd = 0;
+static int listenfd = 0;
+
 static int connfd_num = 0, receiver_num = 0;
+static int connfds[5];
+static pthread_t receiver_tids[5];
+static int expired_num = 0;
 
 void sig_handler(int signo) {
     if (signo == SIGINT) {
@@ -60,7 +55,7 @@ long now() {
 }
 
 long first_timeout(long now_ms) {   
-    return now_ms + timeout_intvl_ms;
+    return now_ms + 2*timeout_intvl_ms;
 }
 
 struct timespec sleep_time(long sleep_t) {
@@ -87,23 +82,17 @@ void *expirator(void *arg) {
         }
         timeout_t += timeout_intvl_ms;
 
-       // begin_t = now();
-#if defined(LOCAL) || defined(REMOTE)
-        // send a packet to self
+#ifdef FCFS
+        // send expiration msg
         int ret = send(sock, buf, MSGSIZE, 0);
         if(ret != MSGSIZE) {
             printf("[expirator] send incorrectly, ret = %d\n", ret);
             break;
         }
-        // wait for semaphore
-        printf("[expirator] wait for sem post by receiver\n");
-        sem_wait(&sem); 
+        // wait for responseaphore
+        printf("[expirator] wait for response post by receiver\n");
+        sem_wait(&response); 
 #endif
-        //end_t = now();
-        //process_t = end_t - begin_t;
-       // printf("[expirator] time to check expiration, waiting send-self time = %ld ms\n", process_t);
-        // extend timeout with waiting send-self time for compensation
-       // timeout_t += process_t;
         
         // do expiration check
         pthread_mutex_lock(&lock);
@@ -129,46 +118,47 @@ void *expirator(void *arg) {
 
 // thread for receiving heartbeat
 void *receiver(void *arg) {
-    //char *buf = malloc(MSGSIZE);
-    long now_t;
     int connfd = *(int *) arg;
+    long hb_timestamp;
     bool first_hb_received = false;
     int ret;
     while(1) {
-	int ret = recv(connfd, &now_t, MSGSIZE, 0);
-	//int ret = recv(connfd, buf, MSGSIZE, 0);
-	if(ret <= 0) {
-	    close(connfd);
-	    break;
-	}
-	if(ret != MSGSIZE) printf("warning recv ret=%d\n", ret);
-        
-        if(connfd == hb_sender_sock) { // packets from heartbeat sender
-            printf("[receiver] receievd heartbeat from %s, timestamp = %ld\n", HBSENDERIP, now_t);
-            //printf("[receiver] receievd heartbeat from %s\n", HBSENDERIP);
-            pthread_mutex_lock(&lock);
-            // record expired_num after first receiving hb
-            if(!first_hb_received) {
-                expired_num = 0;
-                first_hb_received = true;
+        if(connfd == hb_sender_sock) {
+            
+            // receive msg 
+            int ret = recv(connfd, &hb_timestamp, MSGSIZE, 0);
+	    if(ret <= 0) {
+	        close(connfd);
+	        break;
+	    }
+	    if(ret != MSGSIZE) printf("warning recv ret=%d\n", ret);
+       
+            // determine heartbeat or expiration response
+            if(hb_timestamp > 0) { // heartbeat
+                printf("[receiver] receievd heartbeat from %s, timestamp = %ld\n", HBSENDERIP, hb_timestamp);
+                
+                // record expired_num after first receiving hb
+                if(!first_hb_received) {
+                    expired_num = 0;
+                    first_hb_received = true;
+                 }
+                
+                // update queue
+                pthread_mutex_lock(&lock);
+                if((ret = update_queue(queue, hb_timestamp)) < 0) 
+                    printf("Error: wring update_queue ret value %d\n", ret);
+                pthread_mutex_unlock(&lock);
+            } 
+#ifdef FCFS   
+            else if(hb_timestamp == 0) { // expiration response
+                printf("[receiver] received expiration response from %s and wake up expirator\n", HBSENDERIP);
+                sem_post(&response);
             }
-            //expired = false;
-            ret = update_queue(queue, now_t);
-            if(ret < 0) 
-                printf("update_queue wrong with ret = %d\n", ret);
-            pthread_mutex_unlock(&lock);
-        }
-#if defined(LOCAL)
-        else if(connfd == local_sendself_sock) { // packets from localhost
-            printf("[receiver] received local send-self from %s and wake up expirator\n", LOCALIP);
-            sem_post(&sem);
-        }
-#elif defined(REMOTE)
-        else if(connfd == remote_sendself_sock) { // packets from remote_sendself_sock
-            printf("[receiver] received remote send-self from %s and wake up expirator\n", REMOTEIP);
-            sem_post(&sem);
-        }
 #endif
+            else {
+                printf("Error: wrong hb_timestamp value %ld\n", hb_timestamp);
+            }
+        }
     } 
 }
 
@@ -178,72 +168,62 @@ int main(int argc, char *argv[]) {
 
     if(argc != 2) {
         printf("./receiver [timeout ms]\n");
-	return 1;
+	return -1;
     }
 
-    queue = create_queue();
-
+    // init
     timeout_intvl_ms = atoi(argv[1]);
     printf("timeout = %ld ms\n", timeout_intvl_ms);
-    sem_init(&sem, 0, 0); 
+    sem_init(&response, 0, 0); 
+    queue = create_queue();
     
-    struct sockaddr_in serv_addr, remote_addr; 
-
+    // config local server
+    struct sockaddr_in serv_addr; 
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
-    memset(&serv_addr, '0', sizeof(serv_addr));
+    memset(&serv_addr, '0', sizeof(serv_addr)); 
     serv_addr.sin_family = AF_INET;
-    //serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_addr.s_addr = inet_addr(LOCALIP);
     serv_addr.sin_port = htons(5001); 
     bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)); 
     listen(listenfd, 10); 
     
-    remote_addr.sin_family = AF_INET;
-    remote_addr.sin_addr.s_addr = inet_addr(REMOTEIP);
-    remote_addr.sin_port = htons(5001); 
-
     int sock = 0;
-#if defined(LOCAL)
+#ifdef FCFS
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    if(connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        perror("connect failed. Error");
-        return 1;
-    } else {
-        printf("[main] local send-self sock connected\n");
-    }
-#elif defined(REMOTE)
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    
+    struct sockaddr_in remote_addr; 
+    remote_addr.sin_family = AF_INET;
+    remote_addr.sin_addr.s_addr = inet_addr(HBSENDERIP);
+    remote_addr.sin_port = htons(5001); 
+    
     if(connect(sock, (struct sockaddr *) &remote_addr, sizeof(remote_addr)) < 0) {
         perror("connect failed. Error");
-        return 1;
+        return -1;
     } else {
         printf("[main] remote send-self sock connected\n");
     }
 #endif
+    
     // create expirator thread
     pthread_create(&expirator_tid, NULL, expirator, &sock);
 
     while(1) {
         struct sockaddr_in client;
+	pthread_t receiver_tid;
+        int connfd;
         unsigned int client_len = sizeof(client);
+	int *tmp = malloc(sizeof(int));
+
         connfd = accept(listenfd, (struct sockaddr*) &client, &client_len);
-        connfds[connfd_num++] = connfd;
         printf("[main] client connection accepted, sock = %d, ip = %s\n", connfd, inet_ntoa(client.sin_addr));
         
         // determine sockfd-ip mapping
-        if(strcmp(inet_ntoa(client.sin_addr), LOCALIP) == 0) 
-            local_sendself_sock = connfd;
-        
         if(strcmp(inet_ntoa(client.sin_addr), HBSENDERIP) == 0) 
             hb_sender_sock = connfd;
         
-        if(strcmp(inet_ntoa(client.sin_addr), REMOTEIP) == 0) 
-            remote_sendself_sock = connfd;
-
-	int *tmp = malloc(sizeof(int));
 	*tmp = connfd;
-	pthread_t receiver_tid;
 	pthread_create(&receiver_tid, NULL, receiver, tmp);
         receiver_tids[receiver_num++] = receiver_tid;
+        connfds[connfd_num++] = connfd;
     }
 }
