@@ -28,13 +28,14 @@ int update_queue(struct queue *q, long t) {
         p = p->next;
     }
     
-    if(p == NULL) {
+    if(p != NULL) {
         printf("update heartbeat for expiration time %ld\n", p->timestamp);
         p->expired = false;
     } else {
         return -2;
     }
 
+    printf("return\n");
     return 0;
 }
 

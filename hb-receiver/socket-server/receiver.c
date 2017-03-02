@@ -16,7 +16,7 @@
 
 #define LOCALIP "10.0.0.12"
 #define REMOTEIP "10.0.0.14"
-#define HBSENDERIP "10.0.0.12"
+#define HBSENDERIP "10.0.0.13"
 #define MSGSIZE sizeof(long)
 //#define MSGSIZE 8
 
