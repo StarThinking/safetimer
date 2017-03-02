@@ -9,7 +9,8 @@
 #include <unistd.h>
 #include <signal.h>
 
-#define MSGSIZE 8
+//#define MSGSIZE 8
+#define MSGSIZE sizeof(long)
 
 static int sock = 0;
 static long timeout_intvl_ms = 0;
@@ -29,6 +30,12 @@ struct timespec sleep_time() {
     return ts;
 }
 
+long now() {
+    struct timespec spec;
+    clock_gettime(CLOCK_REALTIME, &spec);
+    return spec.tv_sec * 1000 + spec.tv_nsec/1.0e6;
+}
+
 int main(int argc , char *argv[]) {
 
     signal(SIGINT, sig_handler);
@@ -39,7 +46,7 @@ int main(int argc , char *argv[]) {
     }
     receiver_ip = argv[1];
     timeout_intvl_ms = atoi(argv[2]);
-    printf("receiver_ip = %s, timeout = %ld ms, msg_size = %d\n", receiver_ip, timeout_intvl_ms, MSGSIZE);
+    printf("receiver_ip = %s, timeout = %ld ms, msg_size = %lu\n", receiver_ip, timeout_intvl_ms, MSGSIZE);
 
     struct sockaddr_in server;
     char *buf = malloc(MSGSIZE); 
@@ -60,8 +67,10 @@ int main(int argc , char *argv[]) {
      
     puts("Connected\n");
     
-    while(1) {   
-        int ret = send(sock, buf, MSGSIZE, 0);
+    while(1) {  
+        long now_t = now();
+        int ret = send(sock, &now_t, sizeof(long), 0);
+        //int ret = send(sock, buf, MSGSIZE, 0);
         if(ret <= 0) {
             break;
         }
