@@ -19,14 +19,13 @@ __used
 __attribute__((section("__versions"))) = {
 	{ 0x710e0d3b, __VMLINUX_SYMBOL_STR(module_layout) },
 	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
-	{ 0xabc490aa, __VMLINUX_SYMBOL_STR(interval_ms) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
 };
 
 static const char __module_depends[]
 __used
 __attribute__((section(".modinfo"))) =
-"depends=hbtracker";
+"depends=";
 
 
 MODULE_INFO(srcversion, "73805897C24249EB2E0CC0E");

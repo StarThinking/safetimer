@@ -60,13 +60,22 @@ int main(int argc , char *argv[]) {
     server.sin_family = AF_INET;
     server.sin_port = htons(5001);
 
+/*    char *optval2 = "em1";
+    if(setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, optval2, 3) < 0)
+    {
+        printf("sock setsockopt failed\n");
+        close(sock);
+        exit(2);
+    }
+    puts("Setsockopted\n");
+*/
     if (connect(sock, (struct sockaddr *) &server , sizeof(server)) < 0) {
         perror("connect failed. Error");
         return 1;
-    }
-     
+    } 
     puts("Connected\n");
-    
+
+
     while(1) {  
         long now_t = now();
         int ret = send(sock, &now_t, sizeof(long), 0);

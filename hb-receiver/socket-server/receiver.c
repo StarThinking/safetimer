@@ -142,7 +142,9 @@ void *receiver(void *arg) {
 	    break;
 	}
 	if(ret != MSGSIZE) printf("warning recv ret=%d\n", ret);
-        
+            
+        printf("[receiver] received\n");
+
         if(connfd == hb_sender_sock) { // packets from heartbeat sender
             printf("[receiver] receievd heartbeat from %s, timestamp = %ld\n", HBSENDERIP, now_t);
             //printf("[receiver] receievd heartbeat from %s\n", HBSENDERIP);
@@ -195,10 +197,20 @@ int main(int argc, char *argv[]) {
     //serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_addr.s_addr = inet_addr(LOCALIP);
     serv_addr.sin_port = htons(5001); 
+    
+/*    char *optval2 = "em1";
+    if(setsockopt(listenfd, SOL_SOCKET, SO_BINDTODEVICE, optval2, 3) < 0)
+    {
+        printf("listenfd setsockopt failed\n");
+        close(listenfd);
+        exit(2);
+    }
+*/    
     bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)); 
+
     listen(listenfd, 10); 
     
-    remote_addr.sin_family = AF_INET;
+   /* remote_addr.sin_family = AF_INET;
     remote_addr.sin_addr.s_addr = inet_addr(REMOTEIP);
     remote_addr.sin_port = htons(5001); 
 
@@ -222,12 +234,21 @@ int main(int argc, char *argv[]) {
 #endif
     // create expirator thread
     pthread_create(&expirator_tid, NULL, expirator, &sock);
-
+*/
     while(1) {
         struct sockaddr_in client;
         unsigned int client_len = sizeof(client);
         connfd = accept(listenfd, (struct sockaddr*) &client, &client_len);
+    
+/*    char *optval2 = "em1";
+    if(setsockopt(connfd, SOL_SOCKET, SO_BINDTODEVICE, optval2, 3) < 0)
+    {
+        printf("connfd setsockopt failed\n");
+        close(connfd);
+        exit(2);
         connfds[connfd_num++] = connfd;
+    }*/
+
         printf("[main] client connection accepted, sock = %d, ip = %s\n", connfd, inet_ntoa(client.sin_addr));
         
         // determine sockfd-ip mapping
