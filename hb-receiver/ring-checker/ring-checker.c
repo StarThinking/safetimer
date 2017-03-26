@@ -5,12 +5,13 @@
 
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
+#include <uapi/linux/netfilter_ipv4.h>
 #include <net/ip.h>
 #include <linux/ktime.h>
 
 MODULE_LICENSE("GPL");
 
-static struct nf_hook_ops nfho; // struct holding set of hook function options
+static struct nf_hook_ops nfho0, nfho4; // struct holding set of hook function options
 
 /*hook function*/
 unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb, 
@@ -35,24 +36,34 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
             tcp_header = (struct tcphdr *)skb_transport_header(skb);
             src_port = (unsigned int)ntohs(tcp_header->source);
             dest_port = (unsigned int)ntohs(tcp_header->dest);
-        }
-
-        printk(KERN_DEBUG "[msx] src = %pI4 : %u, dst = %pI4 : %u, ring = %u, prot = %u\n", &src_ip, src_port, &dest_ip, dest_port, ring_id, ip_header->protocol);
+        } 
         
+        printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, ring = %u, prot = %u\n", ops->hooknum, &src_ip, src_port, &dest_ip, dest_port, ring_id, ip_header->protocol);
+
         return NF_ACCEPT; 
 }
 
 int init_module()
 {
-        nfho.hook = hook_func;        
-        nfho.hooknum = 0; // nfho.hooknum = NF_IP_POST_ROUTING;  
-        nfho.pf = PF_INET; // IPV4 packets
-        nfho.priority = NF_IP_PRI_FIRST; // set to highest priority over all other hook functions
-        nf_register_hook(&nfho);  
+        /* NF_IP_PRE_ROUTING hook */
+        nfho0.hook = hook_func;        
+        nfho0.hooknum = 0; // NF_IP_PRE_ROUTING 
+        nfho0.pf = PF_INET; // IPV4 packets
+//        nfho0.priority = NF_IP_PRI_FIRST; // set to highest priority over all other hook functions
+        nf_register_hook(&nfho0);  
+        
+        /* NF_IP_POST_ROUTING hook */
+        nfho4.hook = hook_func;        
+        nfho4.hooknum = 4; // NF_IP_POST_ROUTING 
+        nfho4.pf = PF_INET; // IPV4 packets
+  //      nfho4.priority = NF_IP_PRI_FIRST; // set to highest priority over all other hook functions
+        nf_register_hook(&nfho4);  
+        
         return 0; 
 }
 
 void cleanup_module()
 {
-        nf_unregister_hook(&nfho);   
+        nf_unregister_hook(&nfho0);   
+        nf_unregister_hook(&nfho4);   
 }
