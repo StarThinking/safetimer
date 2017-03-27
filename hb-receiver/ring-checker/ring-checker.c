@@ -26,7 +26,8 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
         unsigned int dest_ip = (unsigned int)ip_header->daddr;
         unsigned int src_port = 0, dest_port = 0;
 
-        unsigned int ring_id = skb->napi_id;
+        unsigned int napi_id = skb->napi_id;
+        unsigned int queue_mapping = skb->queue_mapping;
 
         if(ip_header->protocol == 17) { //  udp
             udp_header = (struct udphdr *)skb_transport_header(skb);
@@ -38,7 +39,7 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
             dest_port = (unsigned int)ntohs(tcp_header->dest);
         } 
         
-        printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, ring = %u, prot = %u\n", ops->hooknum, &src_ip, src_port, &dest_ip, dest_port, ring_id, ip_header->protocol);
+        printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, dev->irq = %u, napi_id = %u, queue_mapping = %u, rxhash = %u, l4_rxhash = %u, prot = %u, devname = %s\n", ops->hooknum, &src_ip, src_port, &dest_ip, dest_port, skb->dev->irq, napi_id, queue_mapping, skb->rxhash, skb->l4_rxhash, ip_header->protocol, in->name);
 
         return NF_ACCEPT; 
 }
