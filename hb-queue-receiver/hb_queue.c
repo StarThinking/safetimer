@@ -13,11 +13,24 @@
 #include <linux/tcp.h>
 #include <linux/udp.h>
 #include <linux/ipv6.h>
-
+#include <signal.h>
 #include <libnetfilter_queue/libnetfilter_queue.h>
+#include <pthread.h>
 
+#define PORT 6001
 #define LOCALIP "10.0.0.12"
-#define MSGSIZE sizeof(char)*3
+#define MSGSIZE sizeof(long)
+
+static pthread_t expirator_tid;
+static int sockfn;
+
+void sig_handler(int signo) {
+        if(signo == SIGINT) {
+                close(sockfn);
+                pthread_cancel(expirator_tid);
+        }
+        exit(0);
+}
 
 /* process packet and returns packet id */
 static u_int32_t process_pkt (struct nfq_data *tb) {
@@ -30,9 +43,7 @@ static u_int32_t process_pkt (struct nfq_data *tb) {
         if(ph)
                 id = ntohl(ph->packet_id);
        
-        printf("before nfq_get_payload\n");
         payload_len = nfq_get_payload(tb, &data);
-        printf("payload_len = %d\n", payload_len);
 
         if(payload_len >= 0) {
                 struct iphdr* iph;
@@ -71,13 +82,43 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL);
 }
 
+// thread for checking expiration
+void *expirator(void *arg) {
+        int sockfn = *(int *) arg;
+        int ret;
+        long buf = 1;
+
+        while(1) {
+                ret = send(sockfn, &buf, MSGSIZE, 0);
+                sleep(1);
+        }
+}
+
 int main(int argc, char **argv) {
-	struct nfq_handle *h;
+
+        signal(SIGINT, sig_handler);
+        
+        struct nfq_handle *h;
 	struct nfq_q_handle *qh;
 	//struct nfnl_handle *nh;
 	int fd;
 	int rv;
 	char buf[2048] __attribute__ ((aligned));
+
+        struct sockaddr_in serv_addr;
+        sockfn = socket(AF_INET, SOCK_STREAM, 0);
+        memset(&serv_addr, '0', sizeof(serv_addr));
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_addr.s_addr = inet_addr(LOCALIP);
+        serv_addr.sin_port = htons(PORT);
+
+        if(connect(sockfn, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+                fprintf(stderr, "Error: connect failed.\n");
+                return -1;
+        } else {
+                printf("[hb_queue local send-self server connected\n");
+                pthread_create(&expirator_tid, NULL, expirator, &sockfn);
+        }
 
 	printf("opening library handle\n");
 	h = nfq_open();
