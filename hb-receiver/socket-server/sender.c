@@ -9,8 +9,8 @@
 #include <unistd.h>
 #include <signal.h>
 
-//#define MSGSIZE 8
-#define MSGSIZE sizeof(long)
+#define MSGSIZE 8
+//#define MSGSIZE sizeof(char)*3
 
 static int sock = 0;
 static long timeout_intvl_ms = 0;
@@ -46,7 +46,7 @@ int main(int argc , char *argv[]) {
     }
     receiver_ip = argv[1];
     timeout_intvl_ms = atoi(argv[2]);
-    printf("receiver_ip = %s, timeout = %ld ms, msg_size = %lu\n", receiver_ip, timeout_intvl_ms, MSGSIZE);
+    printf("receiver_ip = %s, timeout = %ld ms, msg_size = %d\n", receiver_ip, timeout_intvl_ms, MSGSIZE);
 
     struct sockaddr_in server;
     char *buf = malloc(MSGSIZE); 
@@ -60,17 +60,26 @@ int main(int argc , char *argv[]) {
     server.sin_family = AF_INET;
     server.sin_port = htons(5001);
 
+/*    char *optval2 = "em1";
+    if(setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, optval2, 3) < 0)
+    {
+        printf("sock setsockopt failed\n");
+        close(sock);
+        exit(2);
+    }
+    puts("Setsockopted\n");
+*/
     if (connect(sock, (struct sockaddr *) &server , sizeof(server)) < 0) {
         perror("connect failed. Error");
         return 1;
-    }
-     
+    } 
     puts("Connected\n");
-    
+
+
     while(1) {  
         long now_t = now();
-        int ret = send(sock, &now_t, sizeof(long), 0);
-        //int ret = send(sock, buf, MSGSIZE, 0);
+        //int ret = send(sock, str, MSGSIZE, 0);
+        int ret = send(sock, &now_t, MSGSIZE, 0);
         if(ret <= 0) {
             break;
         }
