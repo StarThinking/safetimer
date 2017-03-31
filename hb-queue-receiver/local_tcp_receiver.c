@@ -13,8 +13,8 @@
 #include <stdbool.h>
 #include <semaphore.h>
 
-#define PORT 6001
-#define LOCAL_SENDER "10.0.0.12"
+#define LOCAL_PORT 6001
+#define LOCAL_ADDRESS "10.0.0.12"
 #define MSGSIZE sizeof(long)
 #define MAX_CONN_NUM 5
 
@@ -46,6 +46,11 @@ void *receiver(void *arg) {
                         printf("Warn: received packet size is %d, not %lu\n", ret, MSGSIZE);
             
                 printf("[local_tcp_receiver] local packet received, ret = %d, data = %lu\n", ret, now_t);
+
+                // reply
+                ret = send(connfd, &now_t, MSGSIZE, 0);
+                if(ret != MSGSIZE) 
+                        printf("Warning: write ret=%d\n", ret);
         }
 }
 
@@ -55,16 +60,16 @@ int main(int argc, char *argv[]) {
         struct sockaddr_in server;
         int connfd;
     
-        if(argc != 2) {
-                printf("Usage: ./local_tcp_receiver [timeout ms]\n");
+        if(argc != 1) {
+                printf("Usage: ./local_tcp_receiver\n");
 	        exit(1);
         }
 
         listenfd = socket(AF_INET, SOCK_STREAM, 0);
         memset(&server, '0', sizeof(server));
         server.sin_family = AF_INET;
-        server.sin_addr.s_addr = inet_addr(LOCAL_SENDER);
-        server.sin_port = htons(PORT); 
+        server.sin_addr.s_addr = inet_addr(LOCAL_ADDRESS);
+        server.sin_port = htons(LOCAL_PORT); 
         bind(listenfd, (struct sockaddr*) &server, sizeof(server)); 
         listen(listenfd, 10); 
     

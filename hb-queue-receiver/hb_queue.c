@@ -90,6 +90,8 @@ void *expirator(void *arg) {
 
         while(1) {
                 ret = send(sockfn, &buf, MSGSIZE, 0);
+                ret = recv(sockfn, &buf, MSGSIZE, 0);
+                printf("[hb_queue] response value = %ld\n", buf);
                 sleep(1);
         }
 }
@@ -116,7 +118,7 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Error: connect failed.\n");
                 return -1;
         } else {
-                printf("[hb_queue local send-self server connected\n");
+                printf("[hb_queue] local send-self server connected\n");
                 pthread_create(&expirator_tid, NULL, expirator, &sockfn);
         }
 
