@@ -86,6 +86,6 @@ int main(int argc, char *argv[]) {
 	        pthread_create(&tid, NULL, receiver, tmp);
                 receiver_tids[conn_num++] = tid;
         
-                printf("[tcp_receiver] new sock connection established, sockfd = %d, ip = %s\n", connfd, inet_ntoa(client.sin_addr));
+                printf("[tcp_receiver] new sock connection established, sockfd = %d, ip = %s, sport = %u\n", connfd, inet_ntoa(client.sin_addr), htons(client.sin_port));
     }
 }
