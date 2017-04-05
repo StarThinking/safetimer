@@ -20,6 +20,7 @@
 #define PORT 6001
 #define LOCALIP "10.0.0.12"
 #define MSGSIZE sizeof(long)
+#define SELFMSG 1110
 
 static pthread_t expirator_tid;
 static int sockfn;
@@ -86,12 +87,16 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 void *expirator(void *arg) {
         int sockfn = *(int *) arg;
         int ret;
-        long buf = 1;
+        const long send_self_msg = SELFMSG;
 
         while(1) {
-                ret = send(sockfn, &buf, MSGSIZE, 0);
-                ret = recv(sockfn, &buf, MSGSIZE, 0);
-                printf("[hb_queue] response value = %ld\n", buf);
+                ret = send(sockfn, &send_self_msg, MSGSIZE, 0);
+                if(ret <= 0)
+                        break;
+
+                if(ret != MSGSIZE)
+                        printf("Warning: write ret=%d\n", ret);
+                
                 sleep(1);
         }
 }
@@ -118,8 +123,8 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Error: connect failed.\n");
                 return -1;
         } else {
-                printf("[hb_queue] local send-self server connected\n");
                 pthread_create(&expirator_tid, NULL, expirator, &sockfn);
+                printf("[hb_queue] local send-self server connected\n");
         }
 
 	printf("opening library handle\n");

@@ -27,8 +27,8 @@ module_param(port, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 MODULE_PARM_DESC(port, "An integer");
 
 static struct nf_hook_ops nfho0;
-static u8 myvalue;
-static struct dentry *file, *dir;
+static u8 value13, value12;
+static struct dentry *file13, *dir13, *file12, *dir12;
 
 /*hook function*/
 unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb, 
@@ -39,6 +39,7 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
         unsigned int sport, dport, saddr, daddr;
         unsigned int irq_vec, queue_mapping, proto;
         const char *in_name, *out_name;
+        char str[INET_ADDRSTRLEN];
 
         ip = (struct iphdr *) skb_network_header(skb);
         saddr = (unsigned int) ip->saddr;
@@ -58,7 +59,12 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
 
                 if(dport == port) {
                         printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, irq_vec = %u, prot = %u, in = %s, out = %s\n", ops->hooknum, &saddr, sport, &daddr, dport, irq_vec, proto, in_name, out_name);
-                        myvalue = irq_vec;
+                        sprintf(str, "%pI4", &saddr);
+                        if(strcmp(str, "10.0.0.12") == 0) {
+                                value12 = irq_vec;
+                        } else if(strcmp(str, "10.0.0.13") == 0) {
+                                value13 = irq_vec;
+                        }
                 }
         } 
         return NF_ACCEPT; 
@@ -71,14 +77,18 @@ int init_module() {
         nfho0.pf = PF_INET; // IPV4 packets
         nf_register_hook(&nfho0);  
        
-        dir = debugfs_create_dir("10.0.0.13", NULL);
-        file = debugfs_create_u8("irq", 0644, dir, &myvalue);
+        dir13 = debugfs_create_dir("10.0.0.13", NULL);
+        file13 = debugfs_create_u8("irq", 0644, dir13, &value13);
+        dir12 = debugfs_create_dir("10.0.0.12", NULL);
+        file12 = debugfs_create_u8("irq", 0644, dir12, &value12);
 
         return 0; 
 }
 
 void cleanup_module() {
         nf_unregister_hook(&nfho0);   
-        debugfs_remove(file);
-        debugfs_remove(dir);
+        debugfs_remove(file13);
+        debugfs_remove(dir13);
+        debugfs_remove(file12);
+        debugfs_remove(dir12);
 }

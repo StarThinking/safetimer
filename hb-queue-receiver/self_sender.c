@@ -17,15 +17,17 @@
 #define LOCAL_ADDRESS "10.0.0.12"
 #define SELF "10.0.0.11"
 #define SELF_PORT 5001
+#define SELFMSG 1111
 #define MSGSIZE sizeof(long)
 
-static int listenfd, connfd;
+static int listenfd, connfd, selffd;
 static pthread_t receiver_tid;
 
 void sig_handler(int signo) {
         if (signo == SIGINT) {
                 close(listenfd);
                 close(connfd);
+                close(selffd);
                 pthread_cancel(receiver_tid);
         }
         exit(0);
@@ -35,7 +37,8 @@ void *receiver(void *arg) {
         long now_t;
         int ret;
         int connfd = *(int *) arg;
-    
+        const long self_msg = SELFMSG;
+
         while(1) {
 	        ret = recv(connfd, &now_t, MSGSIZE, 0);
 	        if(ret <= 0) {
@@ -44,13 +47,46 @@ void *receiver(void *arg) {
 	                break;
 	        }
 	        if(ret != MSGSIZE) 
-                        printf("Warn: received packet size is %d, not %lu\n", ret, MSGSIZE);
+                        printf("Warn: Received packet size is %d, not %lu\n", ret, MSGSIZE);
             
-                printf("[local_tcp_receiver] local packet received, ret = %d, data = %lu\n", ret, now_t);
+                printf("[self_sender] Local packet received, ret = %d, data = %lu\n", ret, now_t);
 
-                send_to_self();
+                // send to self
+                ret = send(selffd, &self_msg, MSGSIZE, 0);
+                if(ret <= 0)
+                        break;
+                
+                if(ret != MSGSIZE)
+                        printf("Warning: Write ret=%d\n", ret);
+                printf("[self_sender] Self msg sent.\n");
         }
         free(arg);
+}
+
+int verify_rx_ring(const int sockfn) {
+        long msg = 0, reply = 0;
+        send(sockfn, &msg, MSGSIZE, 0);
+        recv(sockfn, &reply, MSGSIZE, 0);
+        return reply;
+}
+
+int connect_to_desired_ring(struct sockaddr_in server) {
+        int _sockfn;
+        while(1) {
+                if((_sockfn = socket(AF_INET, SOCK_STREAM, 0)) < 0)  
+                        fprintf(stderr, "Error: Could not create socket.\n");
+
+                if(connect(_sockfn, (struct sockaddr *) &server, sizeof(server)) < 0)  
+                        fprintf(stderr, "Error: Connect failed.\n");
+    
+                if(!verify_rx_ring(_sockfn)) {
+                        printf("[self_sender] Not desired rx ring. Close socket and reconnect.\n");
+                        close(_sockfn);
+                        sleep(1);
+                } else
+                        break;
+        }   
+        return _sockfn; 
 }
 
 int main(int argc, char *argv[]) {
@@ -60,7 +96,7 @@ int main(int argc, char *argv[]) {
         int connfd;
     
         if(argc != 1) {
-                printf("Usage: ./local_tcp_receiver\n");
+                printf("Usage: ./self_sender\n");
 	        exit(1);
         }
 
@@ -74,9 +110,11 @@ int main(int argc, char *argv[]) {
         listen(listenfd, 10); 
     
         // self 10.0.0.11
-        local.sin_family = AF_INET;
-        local.sin_addr.s_addr = inet_addr(SELF);
-        server.sin_port = htons(SELF_PORT); 
+        self.sin_family = AF_INET;
+        self.sin_addr.s_addr = inet_addr(SELF);
+        self.sin_port = htons(SELF_PORT); 
+        selffd = connect_to_desired_ring(self);
+        printf("[self_sender] Connected to self succesfully!\n");
 
         while(1) {
                 struct sockaddr_in client;
@@ -90,6 +128,6 @@ int main(int argc, char *argv[]) {
 	        pthread_create(&tid, NULL, receiver, tmp);
                 receiver_tid = tid;
         
-                printf("[local_tcp_receiver] new sock connection established, sockfd = %d, ip = %s\n", connfd, inet_ntoa(client.sin_addr));
+                printf("[self_sender] New sock connection established, sockfd = %d, ip = %s\n", connfd, inet_ntoa(client.sin_addr));
     }
 }

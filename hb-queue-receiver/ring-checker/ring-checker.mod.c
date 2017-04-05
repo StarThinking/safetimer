@@ -24,6 +24,9 @@ __attribute__((section("__versions"))) = {
 	{ 0x70cdeb61, __VMLINUX_SYMBOL_STR(debugfs_create_u8) },
 	{ 0xb7ce9e9b, __VMLINUX_SYMBOL_STR(debugfs_create_dir) },
 	{ 0xdcdefc8d, __VMLINUX_SYMBOL_STR(nf_register_hook) },
+	{ 0xf0fdf6cb, __VMLINUX_SYMBOL_STR(__stack_chk_fail) },
+	{ 0xe2d5255a, __VMLINUX_SYMBOL_STR(strcmp) },
+	{ 0x91715312, __VMLINUX_SYMBOL_STR(sprintf) },
 	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
 };
@@ -34,4 +37,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "600F59318C59D38DED7EF13");
+MODULE_INFO(srcversion, "A7E580ADA1EDE8E6CE562CA");

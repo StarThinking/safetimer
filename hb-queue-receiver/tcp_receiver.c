@@ -17,7 +17,7 @@
 #define LOCAL_SENDER "10.0.0.12"
 #define MSGSIZE sizeof(long)
 #define MAX_CONN_NUM 5
-#define RX_RING_IRQ 50
+#define RX_RING_IRQ 55
 
 static int listenfd, conn_num = 0;
 static pthread_t receiver_tids[MAX_CONN_NUM];
@@ -59,7 +59,7 @@ int get_irq(struct sockaddr_in *client) {
         }
         fscanf(fp, "%s", &buf);
         irq = atoi(&buf);
-        
+        printf("irq = %d\n", irq); 
         fclose(fp);
         free(r1);
         free(r2);
