@@ -18,7 +18,7 @@ static char *receiver_ip = "";
 
 void sig_handler(int signo) {
       if (signo == SIGINT) {
-          printf("client ternimates and close conn\n");
+          printf("Ternimate!\n");
           close(sockfn);
       }
       exit(0);
@@ -37,11 +37,17 @@ long now() {
         return spec.tv_sec * 1000 + spec.tv_nsec/1.0e6;
 }
 
+int verify_rx_ring(const int sockfn) {
+        long msg = 0, reply = 0;
+        send(sockfn, &msg, MSGSIZE, 0);
+        recv(sockfn, &reply, MSGSIZE, 0);
+        return reply;
+}
+
 int main(int argc , char *argv[]) {
+        signal(SIGINT, sig_handler);
 
         struct sockaddr_in server;
-    
-        signal(SIGINT, sig_handler);
     
         if(argc != 3) {
 	        printf("Usage: ./tcp_sender [ip] [timeout ms]\n");
@@ -51,25 +57,33 @@ int main(int argc , char *argv[]) {
         timeout_intvl_ms = atoi(argv[2]);
         printf("receiver_ip = %s, timeout = %ld ms, msg_size = %lu\n", receiver_ip, timeout_intvl_ms, MSGSIZE);
 
-        if((sockfn = socket(AF_INET, SOCK_STREAM , 0)) < 0) 
-                fprintf(stderr, "Error: could not create socket.\n");
-     
         server.sin_addr.s_addr = inet_addr(receiver_ip);
         server.sin_family = AF_INET;
         server.sin_port = htons(PORT);
 
-        if(connect(sockfn, (struct sockaddr *) &server , sizeof(server)) < 0) {
-                fprintf(stderr, "Error: connect failed.\n");
-                return -1;
-        } 
-        printf("connected\n");
+        while(1) {
+                if((sockfn = socket(AF_INET, SOCK_STREAM , 0)) < 0) 
+                        fprintf(stderr, "Error: could not create socket.\n");
+
+                if(connect(sockfn, (struct sockaddr *) &server , sizeof(server)) < 0) 
+                        fprintf(stderr, "Error: connect failed.\n");
+                
+                if(!verify_rx_ring(sockfn)) {
+                        printf("Not desired rx ring. Close socket and reconnect.\n");
+                        close(sockfn);
+                        sleep(1);
+                } else
+                        break;
+        }
+
+        printf("Connected to server succesfully!\n");
 
         while(1) {  
                 long now_t = now();
                 int ret = send(sockfn, &now_t, MSGSIZE, 0);
-                if(ret <= 0) {
+                if(ret <= 0) 
                         break;
-                }
+        
                 if(ret != MSGSIZE) 
                         printf("Warning: write ret=%d\n", ret);
        
