@@ -44,6 +44,25 @@ int verify_rx_ring(const int sockfn) {
         return reply;
 }
 
+int connect_to_desired_ring(struct sockaddr_in server) {
+        int _sockfn;
+        while(1) {
+                if((_sockfn = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
+                        fprintf(stderr, "Error: could not create socket.\n");
+
+                if(connect(_sockfn, (struct sockaddr *) &server, sizeof(server)) < 0) 
+                        fprintf(stderr, "Error: connect failed.\n");
+                
+                if(!verify_rx_ring(_sockfn)) {
+                        printf("Not desired rx ring. Close socket and reconnect.\n");
+                        close(_sockfn);
+                        sleep(1);
+                } else
+                        break;
+        }
+        return _sockfn; 
+}
+
 int main(int argc , char *argv[]) {
         signal(SIGINT, sig_handler);
 
@@ -61,21 +80,7 @@ int main(int argc , char *argv[]) {
         server.sin_family = AF_INET;
         server.sin_port = htons(PORT);
 
-        while(1) {
-                if((sockfn = socket(AF_INET, SOCK_STREAM , 0)) < 0) 
-                        fprintf(stderr, "Error: could not create socket.\n");
-
-                if(connect(sockfn, (struct sockaddr *) &server , sizeof(server)) < 0) 
-                        fprintf(stderr, "Error: connect failed.\n");
-                
-                if(!verify_rx_ring(sockfn)) {
-                        printf("Not desired rx ring. Close socket and reconnect.\n");
-                        close(sockfn);
-                        sleep(1);
-                } else
-                        break;
-        }
-
+        sockfn = connect_to_desired_ring(server);
         printf("Connected to server succesfully!\n");
 
         while(1) {  
