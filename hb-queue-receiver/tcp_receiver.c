@@ -14,10 +14,10 @@
 #include <semaphore.h>
 
 #define PORT 5001
-#define LOCAL_SENDER "10.0.0.12"
+#define LOCAL_ADDR "10.0.0.11"
 #define MSGSIZE sizeof(long)
 #define MAX_CONN_NUM 5
-#define RX_RING_IRQ 55
+#define RX_RING_IRQ 51
 
 static int listenfd, conn_num = 0;
 static pthread_t receiver_tids[MAX_CONN_NUM];
@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
         listenfd = socket(AF_INET, SOCK_STREAM, 0);
         memset(&server, '0', sizeof(server));
         server.sin_family = AF_INET;
-        server.sin_addr.s_addr = htonl(INADDR_ANY);
+        server.sin_addr.s_addr = inet_addr(LOCAL_ADDR);
         server.sin_port = htons(PORT); 
         bind(listenfd, (struct sockaddr*) &server, sizeof(server)); 
         listen(listenfd, 10); 
@@ -118,6 +118,7 @@ int main(int argc, char *argv[]) {
                 connfd = accept(listenfd, (struct sockaddr*) &client, &client_len);
                 
                 irq = get_irq(&client);
+                printf("irq = %d\n", irq);
                 ret = recv(connfd, &msg, MSGSIZE, 0);
                 if(msg == 0) { // first packet
                         if(irq != RX_RING_IRQ) {

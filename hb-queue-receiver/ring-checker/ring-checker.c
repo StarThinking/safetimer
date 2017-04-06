@@ -17,10 +17,6 @@
 
 MODULE_LICENSE("GPL");
 
-static int irq = 50;
-module_param(irq, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-MODULE_PARM_DESC(irq, "An integer");
-
 /* dport for heartbear receiving */
 static int port = 5001;
 module_param(port, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);

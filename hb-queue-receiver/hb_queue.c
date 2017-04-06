@@ -16,114 +16,174 @@
 #include <signal.h>
 #include <libnetfilter_queue/libnetfilter_queue.h>
 #include <pthread.h>
+#include <semaphore.h>
+#include <stdbool.h>
+#include "./hashset.c/hashset.h"
+#include "./hashset.c/hashset_itr.h"
 
 #define PORT 6001
 #define LOCALIP "10.0.0.12"
 #define MSGSIZE sizeof(long)
 #define SELFMSG 1110
 
+static hashset_t set; 
+static long expiration_interval;
+static long next_expiration_time;
+static pthread_mutex_t lock;
+static sem_t self_msg_received;
+
 static pthread_t expirator_tid;
-static int sockfn;
+static int selffd;
 
 void sig_handler(int signo) {
         if(signo == SIGINT) {
-                close(sockfn);
+                close(selffd);
                 pthread_cancel(expirator_tid);
         }
         exit(0);
 }
 
+long now() {
+        struct timespec spec;
+        clock_gettime(CLOCK_REALTIME, &spec);
+        return spec.tv_sec * 1000 + spec.tv_nsec/1.0e6;
+}
+
+long round_to_interval(long time) {
+        return (time / expiration_interval + 1) * expiration_interval;
+}
+
 /* process packet and returns packet id */
-static u_int32_t process_pkt (struct nfq_data *tb) {
+static u_int32_t process_pkt(struct nfq_data *tb) {
         int id = 0;
         struct nfqnl_msg_packet_hdr *ph;
 	int payload_len;
 	unsigned char *data;
-        
+        struct iphdr* iph;
+        char saddr[INET_ADDRSTRLEN];
+
         ph = nfq_get_msg_packet_hdr(tb);
         if(ph)
                 id = ntohl(ph->packet_id);
-       
         payload_len = nfq_get_payload(tb, &data);
 
-        if(payload_len >= 0) {
-                struct iphdr* iph;
-                char saddr[INET_ADDRSTRLEN];
-                char daddr[INET_ADDRSTRLEN];
-                uint16_t sport = 0, dport = 0;
-                
+        if(payload_len >= 0) {                
                 iph = (struct iphdr *) data;
-                printf("size of iphdr = %lu\n", sizeof(struct iphdr));
+                //printf("size of iphdr = %lu\n", sizeof(struct iphdr));
                 inet_ntop(AF_INET, &(iph->saddr), saddr, INET_ADDRSTRLEN);
-                inet_ntop(AF_INET, &(iph->daddr), daddr, INET_ADDRSTRLEN);
-        
-                if(iph->protocol == IPPROTO_TCP) {
-                        struct tcphdr *tcp;
-                        tcp = ((struct tcphdr *) (data + (iph->ihl << 2)));
-                        sport = ntohs(tcp->source);
-                        dport = ntohs(tcp->dest);
-                }   
-                
-                if(strcmp(saddr, LOCALIP) == 0) {
-                        printf("[hb_queue] local hb received.\n");
-                } else {
-                        printf("%s : %u --> %s : %u\n", saddr, sport, daddr, dport);
-                }
-                
-                long *now = (long *)(data + 52);
-                printf("now = %ld\n", *now);
         }
+              
+        if(strcmp(saddr, LOCALIP) == 0) {
+                printf("Received send to self message.\n");
+                sem_post(&self_msg_received);
+        } else {
+                long *timestamp = (long *)(data + 52);
+                printf("Receievd heartbeat from %s, timestamp = %ld\n", saddr, *timestamp);
+                        
+                long tick_time = round_to_interval(*timestamp); // find the current expire time
+                long expire_time = round_to_interval(now() + expiration_interval); // future expire time
+                        
+                if(tick_time >= expire_time) { // nothing to do
+                       return id;
+                }
 
+                pthread_mutex_lock(&lock);
+                if(hashset_remove(set, &tick_time) == 0) // item not exist
+                        printf("Warning: Cannot remove tick_time %ld! set size is %zu\n", tick_time, hashset_num_items(set));
+                long *tmp = (long*) calloc(1, sizeof(long));
+                *tmp = expire_time;
+                hashset_add(set, tmp);
+                printf("Add expire_time = %ld\n", tick_time);
+                pthread_mutex_unlock(&lock);
+        }        
 	return id;
 }
-	
+
+struct timespec sleep_time(long sleep_t) {
+        struct timespec sleep_ts;
+        sleep_ts.tv_sec = sleep_t / 1000;
+        sleep_ts.tv_nsec = (sleep_t % 1000) * 1.0e6;
+        return sleep_ts;
+}
+
+int send_to_self() {
+        int ret;
+        const long send_self_msg = SELFMSG;
+        
+        ret = send(selffd, &send_self_msg, MSGSIZE, 0);
+        if(ret == MSGSIZE)
+                return 0;
+        else {
+                fprintf(stderr, "Warning: Write ret = %d\n", ret);
+                return -1;
+        }
+}
+
+// thread for checking expiration
+void *expirator(void *arg) {
+        struct timespec sleep_ts;
+        next_expiration_time = round_to_interval(now());
+        while(1) {
+                long current_time = now();
+                if(next_expiration_time > current_time) {
+                        sleep_ts = sleep_time(next_expiration_time - now());
+                        nanosleep(&sleep_ts, NULL);
+                        continue;
+                }
+                
+                if(send_to_self() < 0) {
+                        fprintf(stderr, "Error: Send to self wrong!\n");
+                        break;
+                }                   
+                sem_wait(&self_msg_received);
+                
+                pthread_mutex_lock(&lock);
+                if(hashset_is_member(set, &next_expiration_time) != 0) { // exist
+                        hashset_remove(set, &next_expiration_time);
+                        printf("Timeouted at next_expiration_time %ld !!!\n", next_expiration_time);
+                }
+                next_expiration_time += expiration_interval; // add one maybe not enough
+                pthread_mutex_unlock(&lock);
+        }
+}
+
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	      struct nfq_data *nfa, void *data) {
 	u_int32_t id = process_pkt(nfa);
 	return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL);
 }
 
-// thread for checking expiration
-void *expirator(void *arg) {
-        int sockfn = *(int *) arg;
-        int ret;
-        const long send_self_msg = SELFMSG;
-
-        while(1) {
-                ret = send(sockfn, &send_self_msg, MSGSIZE, 0);
-                if(ret <= 0)
-                        break;
-
-                if(ret != MSGSIZE)
-                        printf("Warning: write ret=%d\n", ret);
-                
-                sleep(1);
-        }
-}
-
 int main(int argc, char **argv) {
-
-        signal(SIGINT, sig_handler);
-        
         struct nfq_handle *h;
 	struct nfq_q_handle *qh;
 	//struct nfnl_handle *nh;
 	int fd;
 	int rv;
 	char buf[2048] __attribute__ ((aligned));
-
         struct sockaddr_in serv_addr;
-        sockfn = socket(AF_INET, SOCK_STREAM, 0);
+        set = hashset_create();
+
+        if(argc != 2) {
+                printf("./hb_queue [timeout ms]\n");
+                return -1;
+        } 
+        expiration_interval = atoi(argv[1]);
+        
+        signal(SIGINT, sig_handler);
+
+        sem_init(&self_msg_received, 0, 0);
+        
+        selffd = socket(AF_INET, SOCK_STREAM, 0);
         memset(&serv_addr, '0', sizeof(serv_addr));
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_addr.s_addr = inet_addr(LOCALIP);
         serv_addr.sin_port = htons(PORT);
 
-        if(connect(sockfn, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+        if(connect(selffd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
                 fprintf(stderr, "Error: connect failed.\n");
                 return -1;
         } else {
-                pthread_create(&expirator_tid, NULL, expirator, &sockfn);
+                pthread_create(&expirator_tid, NULL, expirator, NULL);
                 printf("[hb_queue] local send-self server connected\n");
         }
 
@@ -163,7 +223,7 @@ int main(int argc, char **argv) {
 
 	for(;;) {
 		if((rv = recv(fd, buf, sizeof(buf), 0)) >= 0) {
-			printf("pkt received\n");
+//			printf("pkt received\n");
 			nfq_handle_packet(h, buf, rv);
 			continue;
 		}
