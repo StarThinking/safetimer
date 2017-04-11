@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
 #include <string.h>
 #include <netinet/in.h>
 #include <linux/types.h>
@@ -11,24 +10,23 @@
 #include <arpa/inet.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
-#include <linux/udp.h>
 #include <linux/ipv6.h>
 #include <signal.h>
 #include <libnetfilter_queue/libnetfilter_queue.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdbool.h>
-#include "./hashset.c/hashset.h"
-#include "./hashset.c/hashset_itr.h"
+
+#include "./hashtable/src/hashtable.h"
 
 #define PORT 6001
 #define LOCALIP "10.0.0.12"
 #define MSGSIZE sizeof(long)
 #define SELFMSG 1110
 
-static hashset_t set; 
+static hash_table ht;
+static long base_time;
 static long expiration_interval;
-static long next_expiration_time;
 static pthread_mutex_t lock;
 static sem_t self_msg_received;
 
@@ -36,6 +34,7 @@ static pthread_t expirator_tid;
 static int selffd;
 
 void sig_handler(int signo) {
+        ht_destroy(&ht);
         if(signo == SIGINT) {
                 close(selffd);
                 pthread_cancel(expirator_tid);
@@ -49,54 +48,14 @@ long now() {
         return spec.tv_sec * 1000 + spec.tv_nsec/1.0e6;
 }
 
-long round_to_interval(long time) {
-        return (time / expiration_interval + 1) * expiration_interval;
+// return epoch id
+int round_to_epoch(long time) {
+        time -= base_time;
+        return (int)(time / expiration_interval + 1);
 }
 
-/* process packet and returns packet id */
-static u_int32_t process_pkt(struct nfq_data *tb) {
-        int id = 0;
-        struct nfqnl_msg_packet_hdr *ph;
-	int payload_len;
-	unsigned char *data;
-        struct iphdr* iph;
-        char saddr[INET_ADDRSTRLEN];
-
-        ph = nfq_get_msg_packet_hdr(tb);
-        if(ph)
-                id = ntohl(ph->packet_id);
-        payload_len = nfq_get_payload(tb, &data);
-
-        if(payload_len >= 0) {                
-                iph = (struct iphdr *) data;
-                //printf("size of iphdr = %lu\n", sizeof(struct iphdr));
-                inet_ntop(AF_INET, &(iph->saddr), saddr, INET_ADDRSTRLEN);
-        }
-              
-        if(strcmp(saddr, LOCALIP) == 0) {
-                printf("Received send to self message.\n");
-                sem_post(&self_msg_received);
-        } else {
-                long *timestamp = (long *)(data + 52);
-                printf("Receievd heartbeat from %s, timestamp = %ld\n", saddr, *timestamp);
-                        
-                long tick_time = round_to_interval(*timestamp); // find the current expire time
-                long expire_time = round_to_interval(now() + expiration_interval); // future expire time
-                        
-                if(tick_time >= expire_time) { // nothing to do
-                       return id;
-                }
-
-                pthread_mutex_lock(&lock);
-                if(hashset_remove(set, &tick_time) == 0) // item not exist
-                        printf("Warning: Cannot remove tick_time %ld! set size is %zu\n", tick_time, hashset_num_items(set));
-                long *tmp = (long*) calloc(1, sizeof(long));
-                *tmp = expire_time;
-                hashset_add(set, tmp);
-                printf("Add expire_time = %ld\n", tick_time);
-                pthread_mutex_unlock(&lock);
-        }        
-	return id;
+long round_to_interval(long id) {
+        return base_time + (id * expiration_interval);
 }
 
 struct timespec sleep_time(long sleep_t) {
@@ -119,14 +78,69 @@ int send_to_self() {
         }
 }
 
+// process packet and returns packet id 
+static u_int32_t process_hb(struct nfq_data *tb) {
+        int id = 0;
+        struct nfqnl_msg_packet_hdr *ph;
+	int payload_len;
+	unsigned char *data;
+        struct iphdr* iph;
+        char saddr[INET_ADDRSTRLEN];
+
+        ph = nfq_get_msg_packet_hdr(tb);
+        if(ph)
+                id = ntohl(ph->packet_id);
+        payload_len = nfq_get_payload(tb, &data);
+
+        if(payload_len >= 0) {                
+                iph = (struct iphdr *) data;
+                //printf("size of iphdr = %lu\n", sizeof(struct iphdr));
+                inet_ntop(AF_INET, &(iph->saddr), saddr, INET_ADDRSTRLEN);
+        }
+              
+        if(strcmp(saddr, LOCALIP) == 0) {
+                printf("Received send to self message.\n");
+                sem_post(&self_msg_received);
+        } else {
+                //long *timestamp = (long *)(data + 52);
+                //printf("Receievd heartbeat from %s, timestamp = %ld\n", saddr, *timestamp);
+                
+                pthread_mutex_lock(&lock); 
+                int epoch_id = round_to_epoch(now()); // find the current epoch to be touched
+                
+                if(ht_contains(&ht, &epoch_id, sizeof(int))) {
+                        printf("To remove epoch %d as it has been touched.\n", epoch_id);
+                        ht_remove(&ht, &epoch_id, sizeof(int));
+                } else {
+                        printf("Waring: epoch %d not found!\n", epoch_id);
+                }
+               
+                // add next epoch into array
+                epoch_id ++;
+                ht_insert(&ht, &epoch_id, sizeof(int), &epoch_id, sizeof(int)); // the value not matters
+                if(ht_contains(&ht, &epoch_id, sizeof(int)))
+                        printf("Added epoch %d as the next timeout epoch.\n", epoch_id);
+                else
+                        printf("Waring: Filed to add epoch %d as the next timeout epoch.\n", epoch_id);
+                pthread_mutex_unlock(&lock);
+        }        
+        return id;
+}
+
 // thread for checking expiration
 void *expirator(void *arg) {
         struct timespec sleep_ts;
-        next_expiration_time = round_to_interval(now());
+        base_time = now();
+        int next_epoch_id = round_to_epoch(now());
+        
+        printf("starting expirator, base_time = %ld, expiration_interval = %ld, next_epoch_id = %d\n", base_time, expiration_interval, next_epoch_id);
+        
         while(1) {
                 long current_time = now();
+                long next_expiration_time = round_to_interval(next_epoch_id);
+
                 if(next_expiration_time > current_time) {
-                        sleep_ts = sleep_time(next_expiration_time - now());
+                        sleep_ts = sleep_time(next_expiration_time - current_time);
                         nanosleep(&sleep_ts, NULL);
                         continue;
                 }
@@ -138,18 +152,20 @@ void *expirator(void *arg) {
                 sem_wait(&self_msg_received);
                 
                 pthread_mutex_lock(&lock);
-                if(hashset_is_member(set, &next_expiration_time) != 0) { // exist
-                        hashset_remove(set, &next_expiration_time);
-                        printf("Timeouted at next_expiration_time %ld !!!\n", next_expiration_time);
+                if(!ht_contains(&ht, &next_epoch_id, sizeof(int))) {
+                        printf("\tNot timeout at epoch %d.\n", next_epoch_id);
+                } else { 
+                        printf("\tTimeouted at epoch %d.\n", next_epoch_id);
                 }
-                next_expiration_time += expiration_interval; // add one maybe not enough
+                next_epoch_id ++; // add one maybe not enough
                 pthread_mutex_unlock(&lock);
-        }
+        }  
+        return NULL;
 }
 
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	      struct nfq_data *nfa, void *data) {
-	u_int32_t id = process_pkt(nfa);
+	u_int32_t id = process_hb(nfa);
 	return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL);
 }
 
@@ -161,8 +177,7 @@ int main(int argc, char **argv) {
 	int rv;
 	char buf[2048] __attribute__ ((aligned));
         struct sockaddr_in serv_addr;
-        set = hashset_create();
-
+        
         if(argc != 2) {
                 printf("./hb_queue [timeout ms]\n");
                 return -1;
@@ -171,6 +186,7 @@ int main(int argc, char **argv) {
         
         signal(SIGINT, sig_handler);
 
+        ht_init(&ht, HT_NONE, 0.05);
         sem_init(&self_msg_received, 0, 0);
         
         selffd = socket(AF_INET, SOCK_STREAM, 0);
@@ -183,8 +199,9 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Error: connect failed.\n");
                 return -1;
         } else {
-                pthread_create(&expirator_tid, NULL, expirator, NULL);
                 printf("[hb_queue] local send-self server connected\n");
+                pthread_create(&expirator_tid, NULL, expirator, NULL);
+                printf("Expirator created.\n");
         }
 
 	printf("opening library handle\n");
