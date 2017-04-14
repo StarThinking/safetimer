@@ -25,16 +25,18 @@
 #define SELFMSG 1110
 
 static hash_table ht;
+static hash_table sem_ht;
 static long base_time;
 static long expiration_interval;
 static pthread_mutex_t lock;
-static sem_t self_msg_received;
+//static sem_t self_msg_received;
 
 static pthread_t expirator_tid;
 static int selffd;
 
 void sig_handler(int signo) {
         ht_destroy(&ht);
+        ht_destroy(&sem_ht);
         if(signo == SIGINT) {
                 close(selffd);
                 pthread_cancel(expirator_tid);
@@ -65,9 +67,28 @@ struct timespec sleep_time(long sleep_t) {
         return sleep_ts;
 }
 
-int send_to_self() {
+long random_at_most(long max) {
+        unsigned long
+        // max <= RAND_MAX < ULONG_MAX, so this is okay.
+        num_bins = (unsigned long) max + 1,
+        num_rand = (unsigned long) RAND_MAX + 1,
+        bin_size = num_rand / num_bins,
+        defect   = num_rand % num_bins;
+
+        long x;
+        do {
+                x = random();
+        }
+        // This is carefully written not to overflow
+        while (num_rand - defect <= (unsigned long)x);
+
+        // Truncated division is intentional
+        return x/bin_size;
+}
+
+int send_to_self(int epoch_id) {
         int ret;
-        const long send_self_msg = SELFMSG;
+        const long send_self_msg = (long) epoch_id;
         
         ret = send(selffd, &send_self_msg, MSGSIZE, 0);
         if(ret == MSGSIZE)
@@ -99,29 +120,42 @@ static u_int32_t process_hb(struct nfq_data *tb) {
         }
               
         if(strcmp(saddr, LOCALIP) == 0) {
-                printf("Received send to self message.\n");
-                sem_post(&self_msg_received);
+                long *epoch_id = (long *)(data + 52);
+                printf("[S2S] S2S message for epoch %ld received.\n", *epoch_id);
+                size_t value_size;
+                sem_t **sem = (sem_t**)ht_get(&sem_ht, epoch_id, sizeof(long), &value_size);
+                if(sem == NULL) {
+                        printf("[S2S] Warning: sem for epoch %ld not found!\n", *epoch_id);
+                } else {
+                        sem_post(*sem);
+                        printf("[S2S] Post the sem for epoch %ld\n", *epoch_id);
+                }
         } else {
-                //long *timestamp = (long *)(data + 52);
                 //printf("Receievd heartbeat from %s, timestamp = %ld\n", saddr, *timestamp);
                 
+                // sleep [0, expiration_interval]
+/*                long rand_sleep_time = random_at_most(expiration_interval);
+                struct timespec sleep_ts = sleep_time(rand_sleep_time);
+                printf("To sleep %ld ms.\n", rand_sleep_time);
+                nanosleep(&sleep_ts, NULL);
+*/
                 pthread_mutex_lock(&lock); 
-                int epoch_id = round_to_epoch(now()); // find the current epoch to be touched
+                long epoch_id = round_to_epoch(now()); // find the current epoch to be touched
                 
-                if(ht_contains(&ht, &epoch_id, sizeof(int))) {
-                        printf("To remove epoch %d as it has been touched.\n", epoch_id);
-                        ht_remove(&ht, &epoch_id, sizeof(int));
+                if(ht_contains(&ht, &epoch_id, sizeof(long))) {
+                        ht_remove(&ht, &epoch_id, sizeof(long));
+                        printf("[Receiver] Heartbeat message and removed epoch %ld received.\n", epoch_id);
                 } else {
-                        printf("Waring: epoch %d not found!\n", epoch_id);
+                        printf("[Receiver] Waring: epoch %ld not found when removing!\n", epoch_id);
                 }
                
-                // add next epoch into array
+                // add next epoch
                 epoch_id ++;
-                ht_insert(&ht, &epoch_id, sizeof(int), &epoch_id, sizeof(int)); // the value not matters
-                if(ht_contains(&ht, &epoch_id, sizeof(int)))
-                        printf("Added epoch %d as the next timeout epoch.\n", epoch_id);
+                ht_insert(&ht, &epoch_id, sizeof(long), &epoch_id, sizeof(long)); // the value not matters
+                if(ht_contains(&ht, &epoch_id, sizeof(long)))
+                        printf("[Receiver] Added epoch %ld as the next epoch.\n", epoch_id);
                 else
-                        printf("Waring: Filed to add epoch %d as the next timeout epoch.\n", epoch_id);
+                        printf("[Receiver] Waring: Filed to add epoch %ld as the next timeout epoch.\n", epoch_id);
                 pthread_mutex_unlock(&lock);
         }        
         return id;
@@ -129,33 +163,42 @@ static u_int32_t process_hb(struct nfq_data *tb) {
 
 // thread for checking expiration
 void *expirator(void *arg) {
-        struct timespec sleep_ts;
         base_time = now();
-        int next_epoch_id = round_to_epoch(now());
-        
-        printf("starting expirator, base_time = %ld, expiration_interval = %ld, next_epoch_id = %d\n", base_time, expiration_interval, next_epoch_id);
+        long next_epoch_id = round_to_epoch(now()); 
+        printf("starting expirator, base_time = %ld, expiration_interval = %ld, next_epoch_id = %ld\n", base_time, expiration_interval, next_epoch_id);
         
         while(1) {
                 long current_time = now();
                 long next_expiration_time = round_to_interval(next_epoch_id);
 
                 if(next_expiration_time > current_time) {
-                        sleep_ts = sleep_time(next_expiration_time - current_time);
+                        struct timespec sleep_ts = sleep_time(next_expiration_time - current_time);
                         nanosleep(&sleep_ts, NULL);
                         continue;
                 }
-                
-                if(send_to_self() < 0) {
+               
+
+                if(send_to_self(next_epoch_id) < 0) {
                         fprintf(stderr, "Error: Send to self wrong!\n");
                         break;
-                }                   
-                sem_wait(&self_msg_received);
+                }
+                printf("\t[S2S] Self-message for epoch %ld sent.\n", next_epoch_id);
+                
+                sem_t *sem_p = (sem_t*) calloc(1, sizeof(sem_t));
+                sem_init(sem_p, 0, 0);
+                ht_insert(&sem_ht, &next_epoch_id, sizeof(long), &sem_p, sizeof(sem_t*));
+                printf("\t[S2S] Inserted and waiting for sem for epoch %ld.\n", next_epoch_id);
+                sem_wait(sem_p);
+                
+                ht_remove(&sem_ht, &next_epoch_id, sizeof(long));
+                free(sem_p);
+                printf("\t[S2S] Removed sem for epoch %ld.\n", next_epoch_id);
                 
                 pthread_mutex_lock(&lock);
-                if(!ht_contains(&ht, &next_epoch_id, sizeof(int))) {
-                        printf("\tNot timeout at epoch %d.\n", next_epoch_id);
+                if(!ht_contains(&ht, &next_epoch_id, sizeof(long))) {
+                        printf("\t[Expirator] Not timeout at epoch %ld.\n", next_epoch_id);
                 } else { 
-                        printf("\tTimeouted at epoch %d.\n", next_epoch_id);
+                        printf("\t[Expirator] Timeouted at epoch %ld!!!\n", next_epoch_id);
                 }
                 next_epoch_id ++; // add one maybe not enough
                 pthread_mutex_unlock(&lock);
@@ -187,7 +230,7 @@ int main(int argc, char **argv) {
         signal(SIGINT, sig_handler);
 
         ht_init(&ht, HT_NONE, 0.05);
-        sem_init(&self_msg_received, 0, 0);
+        ht_init(&sem_ht, HT_NONE, 0.05);
         
         selffd = socket(AF_INET, SOCK_STREAM, 0);
         memset(&serv_addr, '0', sizeof(serv_addr));

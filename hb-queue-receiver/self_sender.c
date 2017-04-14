@@ -37,7 +37,6 @@ void *receiver(void *arg) {
         long now_t;
         int ret;
         int connfd = *(int *) arg;
-        const long self_msg = SELFMSG;
 
         while(1) {
 	        ret = recv(connfd, &now_t, MSGSIZE, 0);
@@ -52,7 +51,7 @@ void *receiver(void *arg) {
                 printf("[self_sender] Local packet received, ret = %d, data = %lu\n", ret, now_t);
 
                 // send to self
-                ret = send(selffd, &self_msg, MSGSIZE, 0);
+                ret = send(selffd, &now_t, MSGSIZE, 0);
                 if(ret <= 0)
                         break;
                 
