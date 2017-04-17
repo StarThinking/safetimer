@@ -38,6 +38,7 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
         char str[INET_ADDRSTRLEN];
 
         ip = (struct iphdr *) skb_network_header(skb);
+        long *data = (long*)(ip + 52);
         saddr = (unsigned int) ip->saddr;
         daddr = (unsigned int) ip->daddr;
         sport = dport = 0;
@@ -54,7 +55,7 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
                 dport = (unsigned int) ntohs(tcp->dest);
 
                 if(dport == port) {
-                        printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, irq_vec = %u, prot = %u, in = %s, out = %s\n", ops->hooknum, &saddr, sport, &daddr, dport, irq_vec, proto, in_name, out_name);
+                        printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, data = %ld, irq_vec = %u, prot = %u, in = %s, out = %s\n", ops->hooknum, &saddr, sport, &daddr, dport, *data, irq_vec, proto, in_name, out_name);
                         sprintf(str, "%pI4", &saddr);
                         if(strcmp(str, "10.0.0.12") == 0) {
                                 value12 = irq_vec;
