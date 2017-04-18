@@ -16,7 +16,7 @@
 #define LOCAL_PORT 6001
 #define LOCAL_ADDRESS "10.0.0.12"
 #define SELF "10.0.0.11"
-#define SELF_PORT 5001
+#define SELF_PORT 5002
 #define SELFMSG 1111
 #define MSGSIZE sizeof(long)
 

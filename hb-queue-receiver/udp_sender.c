@@ -9,17 +9,17 @@
 #include <unistd.h>
 #include <signal.h>
 
-#define PORT 5002
+#define PORT 5001
 #define MSGSIZE sizeof(long)
 
-static int sockfn = 0;
+static int sockfd = 0;
 static long timeout_intvl_ms = 0;
 static char *receiver_ip = "";
 
 void sig_handler(int signo) {
       if (signo == SIGINT) {
           printf("Ternimate!\n");
-          close(sockfn);
+          close(sockfd);
       }
       exit(0);
 }
@@ -37,60 +37,36 @@ long now() {
         return spec.tv_sec * 1000 + spec.tv_nsec/1.0e6;
 }
 
-int verify_rx_ring(const int sockfn) {
-        long msg = 0, reply = 0;
-        send(sockfn, &msg, MSGSIZE, 0);
-        recv(sockfn, &reply, MSGSIZE, 0);
-        return reply;
-}
-
-int connect_to_desired_ring(struct sockaddr_in server) {
-        int _sockfn;
-        while(1) {
-                if((_sockfn = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
-                        fprintf(stderr, "Error: could not create socket.\n");
-
-                if(connect(_sockfn, (struct sockaddr *) &server, sizeof(server)) < 0) 
-                        fprintf(stderr, "Error: connect failed.\n");
-                
-                if(!verify_rx_ring(_sockfn)) {
-                        printf("Not desired rx ring. Close socket and reconnect.\n");
-                        close(_sockfn);
-                        sleep(1);
-                } else
-                        break;
-        }
-        return _sockfn; 
-}
-
 int main(int argc , char *argv[]) {
         signal(SIGINT, sig_handler);
 
         struct sockaddr_in server;
     
         if(argc != 3) {
-	        printf("Usage: ./tcp_sender [ip] [timeout ms]\n");
+	        printf("Usage: ./udp_sender [ip] [timeout ms]\n");
 	        return -1;
         }
         receiver_ip = argv[1];
         timeout_intvl_ms = atoi(argv[2]);
         printf("receiver_ip = %s, timeout = %ld ms, msg_size = %lu\n", receiver_ip, timeout_intvl_ms, MSGSIZE);
 
+        sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         server.sin_addr.s_addr = inet_addr(receiver_ip);
         server.sin_family = AF_INET;
         server.sin_port = htons(PORT);
 
-        sockfn = connect_to_desired_ring(server);
-        printf("Connected to server succesfully!\n");
-
         while(1) {  
                 long now_t = now();
-                int ret = send(sockfn, &now_t, MSGSIZE, 0);
-                if(ret <= 0) 
+                int ret = sendto(sockfd, &now_t, MSGSIZE, 0, (struct sockaddr *) &server, sizeof(server));
+                
+                if(ret <= 0) {
+                        fprintf(stderr, "Error: sendto ret is less than 0.\n");
+                        close(sockfd);
                         break;
+                }
         
                 if(ret != MSGSIZE) 
-                        printf("Warning: write ret=%d\n", ret);
+                        printf("Warning: sendto ret is %d!\n", ret);
        
                 // sleep
                 struct timespec sleep_ts = sleep_time();
