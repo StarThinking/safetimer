@@ -17,6 +17,7 @@
 #define TCP_PORT 5002
 #define LOCAL_ADDR "10.0.0.11"
 #define MSGSIZE sizeof(long)
+#define TCP_MSGSIZE MSGSIZE*2
 #define MAX_CONN_NUM 5
 
 static pthread_t udp_server_tid;
@@ -68,23 +69,23 @@ void *udp_server(void *arg) {
 }
 
 void *receiver(void *arg) {
-        long now_t;
         int ret;
         int connfd = *(int *) arg;
+        long *data = (long*) calloc(2, sizeof(long));
 
         printf("receiver\n");
         while(1) {
-                ret = recv(connfd, &now_t, MSGSIZE, 0);
+                ret = recv(connfd, data, TCP_MSGSIZE, 0);
                 if(ret <= 0) {
                         fprintf(stderr, "Error: recv ret is less than 0\n");
                         close(connfd);
                         break;
                 }
 
-                if(ret != MSGSIZE)
-                        printf("Warning: received packet size is %d, not %lu !\n", ret, MSGSIZE);
+                if(ret != TCP_MSGSIZE)
+                        printf("Warning: received packet size is %d, not %lu !\n", ret, TCP_MSGSIZE);
                       
-                printf("[tcp] packet received, ret = %d, data = %lu.\n", ret, now_t);
+                printf("[tcp] packet received, ret = %d, data[0] = %ld, data[1] = %ld.\n", ret, data[0], data[1]);
         }
         free(arg);
 }
@@ -121,7 +122,7 @@ void *tcp_server(void *arg) {
 
 int main(int argc, char *argv[]) {
         signal(SIGINT, sig_handler);
-        
+
         if(argc != 2) {
                 printf("Usage: ./hb_receiver [timeout ms]\n");
 	        exit(1);

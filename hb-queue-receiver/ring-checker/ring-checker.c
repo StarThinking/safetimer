@@ -15,16 +15,33 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 
+#define IRQ_NUM 4
+#define BASE_IRQ 54
+#define SELF_IP "10.0.0.12"
+#define PORT 5002
+
 MODULE_LICENSE("GPL");
 
 /* dport for heartbear receiving */
-static int port = 5001;
+/*static int port = 5002;
 module_param(port, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-MODULE_PARM_DESC(port, "An integer");
+MODULE_PARM_DESC(port, "An integer");*/
 
 static struct nf_hook_ops nfho0;
-static u8 value13, value12;
-static struct dentry *file13, *dir13, *file12, *dir12;
+
+static struct dentry *clear;
+static struct dentry *dir;
+static u32 sports[IRQ_NUM];
+static struct dentry *files[IRQ_NUM];
+
+static int write_op(void *data, u64 value) {
+        int i;
+        for(i=0; i<IRQ_NUM; i++)
+                sports[i] = 0;
+        return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(clear_fops, NULL, write_op, "%llu\n");
 
 /*hook function*/
 unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb, 
@@ -38,7 +55,6 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
         char str[INET_ADDRSTRLEN];
 
         ip = (struct iphdr *) skb_network_header(skb);
-        long *data = (long*)(ip + 52);
         saddr = (unsigned int) ip->saddr;
         daddr = (unsigned int) ip->daddr;
         sport = dport = 0;
@@ -51,16 +67,24 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
 
         if(ip->protocol == IPPROTO_TCP) { 
                 tcp = (struct tcphdr *) skb_transport_header(skb);
-                sport = (unsigned int) ntohs(tcp->source);
-                dport = (unsigned int) ntohs(tcp->dest);
+                sport = (size_t) ntohs(tcp->source);
+                dport = (size_t) ntohs(tcp->dest);
 
-                if(dport == port) {
-                        printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, data = %ld, irq_vec = %u, prot = %u, in = %s, out = %s\n", ops->hooknum, &saddr, sport, &daddr, dport, *data, irq_vec, proto, in_name, out_name);
-                        sprintf(str, "%pI4", &saddr);
-                        if(strcmp(str, "10.0.0.12") == 0) {
-                                value12 = irq_vec;
-                        } else if(strcmp(str, "10.0.0.13") == 0) {
-                                value13 = irq_vec;
+                sprintf(str, "%pI4", &saddr);
+                
+                if(dport == PORT && strcmp(str, SELF_IP) == 0) {
+                        int index;
+                        
+                        printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, irq_vec = %u, prot = %u, in = %s, out = %s\n", ops->hooknum, &saddr, sport, &daddr, dport, irq_vec, proto, in_name, out_name);
+                        
+                        index = irq_vec - BASE_IRQ;
+                        if(index < 0 || index > 4)
+                                printk("[msx] Error: irq index out of bound!\n");
+                        else {
+                                if(sports[index] == 0) { // no tcp connection before, record the sport 
+                                        printk("[msx] sport[%d] = %u\n", index, sport);
+                                        sports[index] = sport;
+                                }
                         }
                 }
         } 
@@ -68,24 +92,39 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
 }
 
 int init_module() {
+        int i;
+
         /* NF_IP_PRE_ROUTING */
         nfho0.hook = hook_func;        
         nfho0.hooknum = 0; 
         nfho0.pf = PF_INET; // IPV4 packets
         nf_register_hook(&nfho0);  
        
-        dir13 = debugfs_create_dir("10.0.0.13", NULL);
-        file13 = debugfs_create_u8("irq", 0644, dir13, &value13);
-        dir12 = debugfs_create_dir("10.0.0.12", NULL);
-        file12 = debugfs_create_u8("irq", 0644, dir12, &value12);
+        dir = debugfs_create_dir(SELF_IP, NULL);
+        for(i=0; i<IRQ_NUM; i++) {
+                char irq_str[8];
+                sprintf(irq_str, "%d", BASE_IRQ + i);
+                files[i] = debugfs_create_u32(irq_str, 0644, dir, &sports[i]);
+        }
 
+        clear = debugfs_create_file("clear", 0222, dir, NULL, &clear_fops);
+        if (!clear) {
+                // Abort module load.
+                printk(KERN_ALERT "[msx] Failed to create clear\n");
+                        return -1;
+        }
+        
         return 0; 
 }
 
 void cleanup_module() {
+        int i;
+
         nf_unregister_hook(&nfho0);   
-        debugfs_remove(file13);
-        debugfs_remove(dir13);
-        debugfs_remove(file12);
-        debugfs_remove(dir12);
+        
+        for(i=0; i<IRQ_NUM; i++) {
+                debugfs_remove(files[i]);
+        }
+        debugfs_remove(clear);
+        debugfs_remove(dir);
 }

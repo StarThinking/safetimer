@@ -20,7 +20,7 @@
 #include "./hashtable/src/hashtable.h"
 
 #define PORT 6001
-#define LOCALIP "10.0.0.12"
+#define SELFIP "10.0.0.12"
 #define MSGSIZE sizeof(long)
 #define SELFMSG 1110
 
@@ -122,18 +122,21 @@ static u_int32_t process_hb(struct nfq_data *tb) {
         }
         
         // sleep [0, expiration_interval]
-        long rand_sleep_time = random_at_most(expiration_interval);
+/*        long rand_sleep_time = random_at_most(expiration_interval);
         if(rand_sleep_time > 0.9 * expiration_interval) {
                 struct timespec sleep_ts = sleep_time(rand_sleep_time + expiration_interval);
                 printf("[Receiver] Sleep %ld ms.\n", rand_sleep_time);
                 nanosleep(&sleep_ts, NULL);
         }
-              
-        if(strcmp(saddr, LOCALIP) == 0) {
-                long *epoch_id = (long *)(data + 52);
-                printf("[S2S] S2S message for epoch %ld (%ld) received at time %ld.\n", *epoch_id, round_to_interval(*epoch_id), now());
+  */            
+        if(strcmp(saddr, SELFIP) == 0) {
+                long *content = (long *)(data + 52);
+                long epoch_id  = *content; 
+                long ring_id  = *(content + 1); 
                 
-                size_t value_size;
+                printf("[S2S] S2S message for epoch %ld for ring %ld received at time %ld.\n", epoch_id, ring_id, now());
+
+                /*size_t value_size;
                 pthread_mutex_lock(&lock); 
                 sem_t **sem = (sem_t**)ht_get(&sem_ht, epoch_id, sizeof(long), &value_size);
                 pthread_mutex_unlock(&lock);
@@ -143,7 +146,7 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                 } else {
                         sem_post(*sem);
                         printf("[S2S] Post the sem for epoch %ld\n", *epoch_id);
-                }
+                }*/
         } else {
                 //printf("Receievd heartbeat from %s, timestamp = %ld\n", saddr, *timestamp);
                 
@@ -155,8 +158,8 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                 if(epoch_id < 0)
                         goto ret;
 
-                printf("[Receiver] Heartbeat message for epoch %ld (%ld) sent at %ld received at time %ld.\n", epoch_id, round_to_interval(epoch_id), *send_time, now());
-                if(ht_contains(&ht, &epoch_id, sizeof(long))) {
+                printf("[Receiver] Heartbeat message from %s for epoch %ld (%ld) sent at %ld received at time %ld.\n", saddr, epoch_id, round_to_interval(epoch_id), *send_time, now());
+                /*if(ht_contains(&ht, &epoch_id, sizeof(long))) {
                         ht_remove(&ht, &epoch_id, sizeof(long));
                         printf("[Receiver] Epoch %ld removed.\n", epoch_id);
                 } else {
@@ -169,7 +172,7 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                 if(ht_contains(&ht, &epoch_id, sizeof(long)))
                         printf("[Receiver] Added epoch %ld as the next epoch.\n", epoch_id);
                 else
-                        printf("[Receiver] Waring: Filed to add epoch %ld as the next timeout epoch.\n", epoch_id);
+                        printf("[Receiver] Waring: Filed to add epoch %ld as the next timeout epoch.\n", epoch_id);*/
         } 
 
 ret:
@@ -186,7 +189,7 @@ void *expirator(void *arg) {
         long next_epoch_id = round_to_epoch(now()); 
         printf("starting expirator, base_time = %ld, expiration_interval = %ld, next_epoch_id = %ld\n", base_time, expiration_interval, next_epoch_id);
         
-        while(1) {
+      /*  while(1) {
                 long current_time = now();
                 long next_expiration_time = round_to_interval(next_epoch_id);
 
@@ -223,7 +226,7 @@ void *expirator(void *arg) {
                 }
                 next_epoch_id ++; // add one maybe not enough
                 pthread_mutex_unlock(&lock);
-        }  
+        }*/  
         return NULL;
 }
 
@@ -256,17 +259,17 @@ int main(int argc, char **argv) {
         selffd = socket(AF_INET, SOCK_STREAM, 0);
         memset(&serv_addr, '0', sizeof(serv_addr));
         serv_addr.sin_family = AF_INET;
-        serv_addr.sin_addr.s_addr = inet_addr(LOCALIP);
+        serv_addr.sin_addr.s_addr = inet_addr(SELFIP);
         serv_addr.sin_port = htons(PORT);
 
-        if(connect(selffd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-                fprintf(stderr, "Error: connect failed.\n");
-                return -1;
-        } else {
+        //if(connect(selffd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+        //        fprintf(stderr, "Error: connect failed.\n");
+        //        return -1;
+        //} else {
                 printf("[hb_queue] local send-self server connected\n");
                 pthread_create(&expirator_tid, NULL, expirator, NULL);
                 printf("Expirator created.\n");
-        }
+       // }
 
 	printf("opening library handle\n");
 	h = nfq_open();

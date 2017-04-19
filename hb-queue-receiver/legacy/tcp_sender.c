@@ -10,7 +10,7 @@
 #include <signal.h>
 
 #define PORT 5002
-#define MSGSIZE sizeof(long)
+#define MSGSIZE sizeof(long)*2
 
 static int sockfn = 0;
 static long timeout_intvl_ms = 0;
@@ -52,13 +52,18 @@ int connect_to_desired_ring(struct sockaddr_in server) {
 
                 if(connect(_sockfn, (struct sockaddr *) &server, sizeof(server)) < 0) 
                         fprintf(stderr, "Error: connect failed.\n");
-                
-                if(!verify_rx_ring(_sockfn)) {
+
+                struct sockaddr_in local_address;
+                int addr_size = sizeof(local_address);
+                getsockname(_sockfn, (struct sockaddr*)&local_address, &addr_size);
+                printf("The local port is %d\n", htons(local_address.sin_port));
+              /*  if(!verify_rx_ring(_sockfn)) {
                         printf("Not desired rx ring. Close socket and reconnect.\n");
                         close(_sockfn);
                         sleep(1);
                 } else
-                        break;
+              */
+                break;
         }
         return _sockfn; 
 }
@@ -84,14 +89,17 @@ int main(int argc , char *argv[]) {
         printf("Connected to server succesfully!\n");
 
         while(1) {  
-                long now_t = now();
-                int ret = send(sockfn, &now_t, MSGSIZE, 0);
+                long *data = (long*)calloc(2, sizeof(long));
+                data[0] = now();
+                data[1] = 3;
+                int ret = send(sockfn, data, MSGSIZE, 0);
                 if(ret <= 0) 
                         break;
         
                 if(ret != MSGSIZE) 
                         printf("Warning: write ret=%d\n", ret);
        
+                free(data);
                 // sleep
                 struct timespec sleep_ts = sleep_time();
                 nanosleep(&sleep_ts, NULL); 

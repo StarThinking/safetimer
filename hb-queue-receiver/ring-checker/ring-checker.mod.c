@@ -18,16 +18,20 @@ static const struct modversion_info ____versions[]
 __used
 __attribute__((section("__versions"))) = {
 	{ 0x710e0d3b, __VMLINUX_SYMBOL_STR(module_layout) },
-	{ 0xb6b46a7c, __VMLINUX_SYMBOL_STR(param_ops_int) },
+	{ 0x32740957, __VMLINUX_SYMBOL_STR(simple_attr_release) },
+	{ 0x8de200ba, __VMLINUX_SYMBOL_STR(simple_attr_write) },
+	{ 0xecc32caa, __VMLINUX_SYMBOL_STR(simple_attr_read) },
+	{ 0x359ee64f, __VMLINUX_SYMBOL_STR(generic_file_llseek) },
 	{ 0xabb7921, __VMLINUX_SYMBOL_STR(debugfs_remove) },
 	{ 0x2a35968d, __VMLINUX_SYMBOL_STR(nf_unregister_hook) },
-	{ 0x70cdeb61, __VMLINUX_SYMBOL_STR(debugfs_create_u8) },
+	{ 0x8b35cde9, __VMLINUX_SYMBOL_STR(debugfs_create_file) },
+	{ 0x50e92a92, __VMLINUX_SYMBOL_STR(debugfs_create_u32) },
 	{ 0xb7ce9e9b, __VMLINUX_SYMBOL_STR(debugfs_create_dir) },
 	{ 0xdcdefc8d, __VMLINUX_SYMBOL_STR(nf_register_hook) },
+	{ 0x68466925, __VMLINUX_SYMBOL_STR(simple_attr_open) },
 	{ 0xf0fdf6cb, __VMLINUX_SYMBOL_STR(__stack_chk_fail) },
-	{ 0xe2d5255a, __VMLINUX_SYMBOL_STR(strcmp) },
-	{ 0x91715312, __VMLINUX_SYMBOL_STR(sprintf) },
 	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
+	{ 0x91715312, __VMLINUX_SYMBOL_STR(sprintf) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
 };
 
@@ -37,4 +41,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "7E3B59729C3FF0E082748C9");
+MODULE_INFO(srcversion, "73A6FEBF6BA38D6025F833B");
