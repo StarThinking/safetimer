@@ -13,17 +13,7 @@
 #include <stdbool.h>
 #include <semaphore.h>
 
-#define IRQ_NUM 4
-#define BASE_IRQ 54
-
-#define LOCAL_IP "10.0.0.11"
-#define UDP_PORT 5001
-#define MSGSIZE sizeof(long)
-#define MAX_CONN_NUM IRQ_NUM
-
-#define SELF_IP "10.0.0.12"
-#define TCP_PORT 5002
-#define SELF_MSGSIZE MSGSIZE*2
+#include "hb_config.h"
 
 static pthread_t udp_server_tid;
 static int udp_server_sockfd;
@@ -31,8 +21,8 @@ static int udp_server_sockfd;
 static int tcp_listenfd;
 static int conn_num = 0;
 static pthread_t tcp_server_tid;
-static pthread_t tcp_receiver_tids[MAX_CONN_NUM];
-static int tcp_connfds[MAX_CONN_NUM];
+static pthread_t tcp_receiver_tids[IRQ_NUM];
+static int self_connfds[IRQ_NUM];
 
 void sig_handler(int signo) {
         pthread_cancel(udp_server_tid);
@@ -47,7 +37,7 @@ void *udp_server(void *arg) {
         memset(&udp_server, '0', sizeof(udp_server));
         udp_server.sin_family = AF_INET;
         udp_server.sin_addr.s_addr = inet_addr(LOCAL_IP);
-        udp_server.sin_port = htons(UDP_PORT); 
+        udp_server.sin_port = htons(HB_PORT); 
         bind(udp_server_sockfd, (struct sockaddr*) &udp_server, sizeof(udp_server)); 
 
         while(1) {
@@ -159,7 +149,7 @@ void *tcp_server(void *arg) {
         memset(&tcp_server, '0', sizeof(tcp_server));
         tcp_server.sin_family = AF_INET;
         tcp_server.sin_addr.s_addr = inet_addr(LOCAL_IP);
-        tcp_server.sin_port = htons(TCP_PORT);
+        tcp_server.sin_port = htons(LOCAL_PORT);
         bind(tcp_listenfd, (struct sockaddr*) &tcp_server, sizeof(tcp_server));
         listen(tcp_listenfd, 10);
 
@@ -182,7 +172,7 @@ void *tcp_server(void *arg) {
                                 close(connfd);
                                 continue;
                         } else {
-                                tcp_connfds[index] = connfd;
+                                self_connfds[index] = connfd;
                                 send(connfd, &index, MSGSIZE, 0);
                         }
                 }
@@ -215,7 +205,7 @@ int main(int argc, char *argv[]) {
         
         int i;
         for(i = 0; i < conn_num; i++){
-                close(tcp_connfds[i]);
+                close(self_connfds[i]);
                 pthread_cancel(tcp_receiver_tids[i]);
         }
 

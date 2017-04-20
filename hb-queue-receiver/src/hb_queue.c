@@ -17,13 +17,8 @@
 #include <semaphore.h>
 #include <stdbool.h>
 
-#include "./hashtable/src/hashtable.h"
-
-#define PORT 6001
-#define SELFIP "10.0.0.12"
-#define MSGSIZE sizeof(long)
-#define SELFMSG 1110
-#define IRQ_NUM 4
+#include "hashtable.h"
+#include "hb_config.h"
 
 static hash_table ht, sem_ht;
 static int received_self_msg_array[100][4]; // temporal
@@ -131,7 +126,7 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                 nanosleep(&sleep_ts, NULL);
         }
               
-        if(strcmp(saddr, SELFIP) == 0) { // size is 2 longs
+        if(strcmp(saddr, SELF_IP) == 0) { // size is 2 longs
                 // data in TCP IPs begins at the 52th byte
                 long *content = (long *)(data + 52);
                 long epoch_id  = *content; 
@@ -272,8 +267,8 @@ int main(int argc, char **argv) {
         self_sockfd = socket(AF_INET, SOCK_STREAM, 0);
         memset(&self_server, '0', sizeof(self_server));
         self_server.sin_family = AF_INET;
-        self_server.sin_addr.s_addr = inet_addr(SELFIP);
-        self_server.sin_port = htons(PORT);
+        self_server.sin_addr.s_addr = inet_addr(SELF_IP);
+        self_server.sin_port = htons(SELF_PORT);
 
         if(connect(self_sockfd, (struct sockaddr *) &self_server, sizeof(self_server)) < 0) {
                 fprintf(stderr, "Error: connect failed.\n");

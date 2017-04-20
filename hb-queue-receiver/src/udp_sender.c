@@ -9,8 +9,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-#define PORT 5001
-#define MSGSIZE sizeof(long)
+#include "hb_config.h"
 
 static int sockfd = 0;
 static long timeout_intvl_ms = 0;
@@ -53,7 +52,7 @@ int main(int argc , char *argv[]) {
         sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         server.sin_addr.s_addr = inet_addr(receiver_ip);
         server.sin_family = AF_INET;
-        server.sin_port = htons(PORT);
+        server.sin_port = htons(HB_PORT);
 
         while(1) {  
                 long now_t = now();
