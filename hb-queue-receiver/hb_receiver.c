@@ -13,12 +13,17 @@
 #include <stdbool.h>
 #include <semaphore.h>
 
+#define IRQ_NUM 4
+#define BASE_IRQ 54
+
+#define LOCAL_IP "10.0.0.11"
 #define UDP_PORT 5001
-#define TCP_PORT 5002
-#define LOCAL_ADDR "10.0.0.11"
 #define MSGSIZE sizeof(long)
-#define TCP_MSGSIZE MSGSIZE*2
-#define MAX_CONN_NUM 5
+#define MAX_CONN_NUM IRQ_NUM
+
+#define SELF_IP "10.0.0.12"
+#define TCP_PORT 5002
+#define SELF_MSGSIZE MSGSIZE*2
 
 static pthread_t udp_server_tid;
 static int udp_server_sockfd;
@@ -41,7 +46,7 @@ void *udp_server(void *arg) {
         udp_server_sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         memset(&udp_server, '0', sizeof(udp_server));
         udp_server.sin_family = AF_INET;
-        udp_server.sin_addr.s_addr = inet_addr(LOCAL_ADDR);
+        udp_server.sin_addr.s_addr = inet_addr(LOCAL_IP);
         udp_server.sin_port = htons(UDP_PORT); 
         bind(udp_server_sockfd, (struct sockaddr*) &udp_server, sizeof(udp_server)); 
 
@@ -75,19 +80,76 @@ void *receiver(void *arg) {
 
         printf("receiver\n");
         while(1) {
-                ret = recv(connfd, data, TCP_MSGSIZE, 0);
+                ret = recv(connfd, data, SELF_MSGSIZE, 0);
                 if(ret <= 0) {
                         fprintf(stderr, "Error: recv ret is less than 0\n");
                         close(connfd);
                         break;
                 }
 
-                if(ret != TCP_MSGSIZE)
-                        printf("Warning: received packet size is %d, not %lu !\n", ret, TCP_MSGSIZE);
+                if(ret != SELF_MSGSIZE)
+                        printf("Warning: received packet size is %d, not %lu !\n", ret, SELF_MSGSIZE);
                       
                 printf("[tcp] packet received, ret = %d, data[0] = %ld, data[1] = %ld.\n", ret, data[0], data[1]);
         }
         free(arg);
+}
+
+char* concat(const char *s1, const char *s2) {
+        char *result = malloc(strlen(s1) + strlen(s2) + 1);
+        strcpy(result, s1);
+        strcat(result, s2);
+        return result;
+}
+
+int get_sport_of_irq(const int irq) {
+        char *r1, *r2, *r3;
+        char irq_str[4];
+        FILE *fp;
+        char buf[8];
+        int port;
+
+        sprintf(irq_str, "%d", irq);
+        r1 = concat("/sys/kernel/debug/", SELF_IP);
+        r2 = concat(r1, "/");
+        r3 = concat(r2, irq_str);
+
+        fp = fopen(r3, "r");
+        if(fp == NULL) {
+                fprintf(stderr, "Error: can't open debugfs file %s!\n", r3);
+                exit(1);
+        }
+
+        fscanf(fp, "%s", buf);
+        port = atoi(buf);
+
+        fclose(fp);
+        free(r1);
+        free(r2);
+        free(r3);
+
+        return port;
+}
+
+int sockfd_is_first(struct sockaddr_in client, int *index) {
+        int i;
+        int sport;
+
+        // retrieve sport of this sockfd
+        sport = htons(client.sin_port);
+
+        // if sport is within any irq file, return 1; otherwise, return 0.
+        for(i=0; i<IRQ_NUM; i++) {
+                int irq = i + BASE_IRQ;
+                int sport_read = get_sport_of_irq(irq);
+                if(sport_read == sport) {
+                        *index = i;
+                        return 1;
+                }
+        }
+        
+        *index = -1; 
+        return 0;
 }
 
 void *tcp_server(void *arg) {
@@ -96,7 +158,7 @@ void *tcp_server(void *arg) {
         tcp_listenfd = socket(AF_INET, SOCK_STREAM, 0);
         memset(&tcp_server, '0', sizeof(tcp_server));
         tcp_server.sin_family = AF_INET;
-        tcp_server.sin_addr.s_addr = inet_addr(LOCAL_ADDR);
+        tcp_server.sin_addr.s_addr = inet_addr(LOCAL_IP);
         tcp_server.sin_port = htons(TCP_PORT);
         bind(tcp_listenfd, (struct sockaddr*) &tcp_server, sizeof(tcp_server));
         listen(tcp_listenfd, 10);
@@ -107,10 +169,24 @@ void *tcp_server(void *arg) {
 	        long msg;
                 unsigned int client_len;
                 pthread_t tid;
+                int index;
 
                 client_len = sizeof(client);
                 connfd = accept(tcp_listenfd, (struct sockaddr*) &client, &client_len);
-    
+
+                recv(connfd, &msg, MSGSIZE, 0);
+                
+                if(msg == 0) { // first packet
+                        if(!sockfd_is_first(client, &index)) {
+                                send(connfd, &index, MSGSIZE, 0);
+                                close(connfd);
+                                continue;
+                        } else {
+                                tcp_connfds[index] = connfd;
+                                send(connfd, &index, MSGSIZE, 0);
+                        }
+                }
+ 
                 int *tmp = malloc(sizeof(int));
                 *tmp = connfd;
                 pthread_create(&tid, NULL, receiver, tmp);

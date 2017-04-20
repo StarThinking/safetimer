@@ -9,8 +9,8 @@
 #include <unistd.h>
 #include <signal.h>
 
-#define PORT 5002
-#define MSGSIZE sizeof(long)*2
+#define PORT 6001
+#define MSGSIZE sizeof(long)
 
 static int sockfn = 0;
 static long timeout_intvl_ms = 0;
@@ -88,18 +88,16 @@ int main(int argc , char *argv[]) {
         sockfn = connect_to_desired_ring(server);
         printf("Connected to server succesfully!\n");
 
+        long count = 0;
         while(1) {  
-                long *data = (long*)calloc(2, sizeof(long));
-                data[0] = now();
-                data[1] = 3;
-                int ret = send(sockfn, data, MSGSIZE, 0);
+                count ++;
+                int ret = send(sockfn, &count, MSGSIZE, 0);
                 if(ret <= 0) 
                         break;
         
                 if(ret != MSGSIZE) 
                         printf("Warning: write ret=%d\n", ret);
        
-                free(data);
                 // sleep
                 struct timespec sleep_ts = sleep_time();
                 nanosleep(&sleep_ts, NULL); 
