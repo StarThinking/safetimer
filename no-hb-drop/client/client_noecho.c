@@ -7,29 +7,34 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <signal.h>
 
-long current_time()
-{
-    struct timespec spec;
+long count = 0;
 
-    clock_gettime(CLOCK_REALTIME, &spec);
-    return spec.tv_sec * 1000 + spec.tv_nsec/1.0e6;
+void sig_handler(int signo) {
+    printf("count = %ld\n", count);
+    exit(0);
 }
- 
-int main(int argc , char *argv[])
-{
 
-    if(argc!=3){
-	printf("client [ip] [msg_size]\n");
+int main(int argc , char *argv[]) {
+
+    signal(SIGINT, sig_handler);
+
+    if(argc != 4) {
+	printf("client [ip] [port] [msg_size]\n");
 	return -1;
     }
+    
     char *ip = argv[1];
-    int msg_size = atoi(argv[2]);
-    printf("ip=%s, msg_size=%d\n", ip, msg_size);
+    int port = atoi(argv[2]);
+    int msg_size = atoi(argv[3]);
+    printf("ip = %s, port = %d, msg_size = %d\n", ip, port, msg_size);
 
+    int packets_to_send = 1000*1000;
+    int _packets_to_send = packets_to_send;
     int sock;
     struct sockaddr_in server, client;
-    char *buf = malloc(msg_size); 
+    char *buf = calloc(1, msg_size); 
 
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if(sock == -1)
@@ -39,29 +44,27 @@ int main(int argc , char *argv[])
      
     server.sin_addr.s_addr = inet_addr(ip);
     server.sin_family = AF_INET;
-    server.sin_port = htons(5000);
+    server.sin_port = htons(port);
 
-    long start_time = current_time();
-    long count = 0;
     int client_len = sizeof(client);
-    while(1)
-    {   
+    
+    while(1) {   
         int ret = sendto(sock, buf, msg_size, 0, (struct sockaddr *) &server, sizeof(server));
+        
         if(ret <= 0) {
+            printf("Error: write ret = %d\n", ret);
             break;
         }
-        if(ret != msg_size) printf("warning write ret=%d\n", ret);
-        sleep(1);        
-/*	ret = recvfrom(sock, buf, msg_size, 0, (struct sockaddr *) &client, &client_len);
-        if(ret <= 0){
-            break;
-        }
-        if(ret != msg_size) printf("warning recv ret=%d\n", ret);
-*/
+
+        if(ret != msg_size) 
+            printf("Warning: write ret = %d\n", ret);
+        
         count++;
+        _packets_to_send--;
+        if(_packets_to_send == 0)
+            break;
     }
-    double thput = (double)count*(double)msg_size/(double)(current_time()-start_time);
-    printf("thoughput=%d kb/s\n", (int)thput);
+
     close(sock);
     return 0;
 }
