@@ -9,17 +9,25 @@
 #include <sys/types.h>
 #include <time.h> 
 #include <pthread.h>
+#include <signal.h>
 
-int msg_size = 0;
+long count = 0;
 
-int main(int argc, char *argv[])
-{
-    if(argc!=2){
-	printf("server [msg_size]\n");
+void sig_handler(int signo) {
+    printf("count = %ld\n", count);
+    exit(0);
+}
+
+int main(int argc, char *argv[]) {
+    signal(SIGINT, sig_handler);
+
+    if(argc != 3){
+	printf("server [port] [msg_size]\n");
 	return -1;
     }
-    msg_size = atoi(argv[1]);
-    printf("msg_size = %d\n", msg_size);
+    int port = atoi(argv[1]);
+    int msg_size = atoi(argv[2]);
+    printf("port = %d, msg_size = %d\n", port, msg_size);
     int sock = 0;
     int client_len;
     struct sockaddr_in server, client; 
@@ -31,7 +39,7 @@ int main(int argc, char *argv[])
 
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
-    server.sin_port = htons(5001); 
+    server.sin_port = htons(port); 
 
     bind(sock, (struct sockaddr*) &server, sizeof(server)); 
 
@@ -49,7 +57,8 @@ int main(int argc, char *argv[])
         if(ret != msg_size) 
             printf("Warning: received packet size is %d, not %d !\n", ret, msg_size);
     
-        printf("received packet from %s\n", inet_ntoa(client.sin_addr));
+//        printf("received packet from %s\n", inet_ntoa(client.sin_addr));
+        count++;
     }
     free(buf);
     close(sock);

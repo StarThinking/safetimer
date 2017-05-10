@@ -24,9 +24,12 @@ static pthread_t tcp_server_tid;
 static pthread_t tcp_receiver_tids[IRQ_NUM];
 static int self_connfds[IRQ_NUM];
 
+static int hb_received = 0;
+
 void sig_handler(int signo) {
         pthread_cancel(udp_server_tid);
         pthread_cancel(tcp_server_tid);
+        printf("hb_received = %d\n", hb_received);
 }
 
 void *udp_server(void *arg) {
@@ -57,6 +60,7 @@ void *udp_server(void *arg) {
                 if(ret != MSGSIZE) 
                         printf("Warning: received packet size is %d, not %lu !\n", ret, MSGSIZE);
             
+                hb_received ++;
                 printf("[udp] packet received from %s, ret = %d, data = %ld.\n", 
                         inet_ntoa(client.sin_addr), ret, msg);
 
