@@ -17,26 +17,34 @@
 #include <semaphore.h>
 #include <stdbool.h>
 
-#include "utility.h"
 #include "hashtable.h"
+#include "list.h"
+
+#include "utility.h"
 #include "hb_config.h"
+
+//#define S2S
 
 static struct nfq_handle *h;
 static struct nfq_q_handle *qh;
 
-static hash_table heartbeat_ht, sem_ht;
-static pthread_mutex_t heartbeat_ht_lock, sem_ht_lock;
-static pthread_mutex_t lock;
+static hash_table epoch_list_ht;
+static pthread_mutex_t epoch_list_ht_lock;
 
 static long base_time;
 static long expiration_interval;
 static pthread_t expirator_tid;
-static int self_sockfd;
-static int running = 1;
+static int running;
 
+#ifdef S2S
 #define ARRAY_SIZE 100
+static int self_sockfd;
+static hash_table epoch_sem_ht;
+static pthread_mutex_t epoch_sem_ht_lock;
 static int received_self_msg_array[ARRAY_SIZE][IRQ_NUM]; 
-static int array_round = 1; // recond the round so that clear is not needed for new round
+// recond the round so that clear is not needed for new round
+static int array_round = 1; 
+#endif
 
 static void destroy_nfqueue() {
 	printf("unbinding from queue 0\n");
@@ -53,23 +61,37 @@ static void destroy_nfqueue() {
 	nfq_close(h);
 }
 
-static void clear_up(int signo) {
-        printf("destroy nfqueue\n");
+static int ip_equal(void *a, void *b) {
+        return 0 == strcmp((char*)a, (char*)b);
+}
+
+static void free_val(void *val) {
+        free(val);
+}
+
+static void signal_handler(int signo) {
+        running = 0;
+        
         destroy_nfqueue();
+       
+        printf("Singal handled by switching running to 0 and destroying nfqueue.\n");
         
-        printf("destory heartbeat_ht\n");
-        ht_destroy(&heartbeat_ht);
+}
+
+static void clear_all() {
+        printf("Destroy epoch_list_ht.\n");
+        ht_destroy(&epoch_list_ht);
         
-        printf("destory sem_ht\n");
-        ht_destroy(&sem_ht);
+#ifdef S2S
+        printf("Destroy epoch_sem_ht.\n");
+        ht_destroy(&epoch_sem_ht);
         
-        printf("close self_sockfd\n");
+        printf("Close self_sockfd.\n");
         close(self_sockfd);
+#endif
         
-        printf("cancel thread expirator_tid\n");
+        printf("Cancel thread expirator_tid.\n");
         pthread_cancel(expirator_tid);
-        
-        exit(0);
 }
 
 // return epoch id
@@ -102,7 +124,8 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                 iph = (struct iphdr *) data;
                 inet_ntop(AF_INET, &(iph->saddr), saddr, INET_ADDRSTRLEN);
         }
-        
+
+#ifdef S2S
         /*
          * Packets sent from SELF_IP are send-to-self messages.
          * The content of this TCP packet, beginning at the 52th byte, consists of two 8-byte longs.
@@ -135,17 +158,16 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                 if(array_index == (ARRAY_SIZE -1))
                         array_round ++;    
                 
-                pthread_mutex_lock(&sem_ht_lock); 
-                sem_t **sem = (sem_t**) ht_get(&sem_ht, &epoch_id, sizeof(long), &value_size);
-                pthread_mutex_unlock(&sem_ht_lock);
-                
+                pthread_mutex_lock(&epoch_sem_ht_lock); 
+                sem_t **sem = (sem_t**) ht_get(&epoch_sem_ht, &epoch_id, sizeof(long), &value_size);
                 if(sem != NULL) {
                         sem_post(*sem);
                         printf("[S2S] The semaphore for epoch %ld is posted.\n", epoch_id);
                 } else 
                         printf("[S2S] Error: The semaphore for epoch %ld not found!\n", epoch_id);
+                pthread_mutex_unlock(&epoch_sem_ht_lock);
         }
-
+#endif
         /*
          * Packets sent not from SELF_IP are heartbeat messages.
          * The content of this UDP packet, beginning at the 28th byte, consists of one 8-byte long.
@@ -155,33 +177,48 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                 long *content = (long *)(data + 28);
                 long send_time = *content;
                 long epoch_id = round_to_epoch(send_time); // get the epoch id by sending time
+                size_t value_size;
+                list_t **ip_list;
 
-                printf("[Receiver] Heartbeat message from %s for epoch (%ld, %ld) sent at %ld received at time %ld.\n", saddr, epoch_id, round_to_interval(epoch_id), send_time, now());
+                printf("[Receiver] Heartbeat from Ip %s for Epoch (%ld, %ld) sent at %ld received at %ld.\n", \
+                        saddr, epoch_id, round_to_interval(epoch_id), send_time, now());
                 
                 if(epoch_id < 0)
                         goto ret;
 
-                pthread_mutex_lock(&heartbeat_ht_lock); 
+                pthread_mutex_lock(&epoch_list_ht_lock); 
                 
-                // Remove the key-value entry of epoch_id
-                if(ht_contains(&heartbeat_ht, &epoch_id, sizeof(long))) {
-                        ht_remove(&heartbeat_ht, &epoch_id, sizeof(long));
-                        printf("[Receiver] Epoch %ld removed.\n", epoch_id);
-                } else {
-                        printf("[Receiver] Waring: Epoch %ld not found when removing!\n", epoch_id);
+                // Touch the node for the epoch
+                ip_list = (list_t**) ht_get(&epoch_list_ht, &epoch_id, sizeof(long), &value_size);
+                if(ip_list != NULL) {
+                        list_node_t *ip_to_remove = list_find(*ip_list, saddr);
+                        if(ip_to_remove != NULL) {
+                                list_remove(*ip_list, ip_to_remove);
+                                printf("[Receiver] Removed Ip %s for Epoch %ld.\n", saddr, epoch_id);
+                        } 
                 }
-               
-                // Add next epoch
+                
+                // Insert Ip into the Ip list of the next epoch
                 epoch_id ++;
-                ht_insert(&heartbeat_ht, &epoch_id, sizeof(long), &epoch_id, sizeof(long)); // the value does not matters
-               
-                // Check whether addition is successfull
-                if(ht_contains(&heartbeat_ht, &epoch_id, sizeof(long)))
-                        printf("[Receiver] Added epoch %ld as the next epoch.\n", epoch_id);
-                else
-                        printf("[Receiver] Waring: Filed to add epoch %ld as the next timeout epoch.\n", epoch_id);
+                
+                ip_list = (list_t**) ht_get(&epoch_list_ht, &epoch_id, sizeof(long), &value_size);
+                if(ip_list == NULL) {
+                        list_t *tmp = list_new();
+                        tmp->match = ip_equal;
+                        tmp->free = free_val;
+                        ip_list = &tmp;
+                        ht_insert(&epoch_list_ht, &epoch_id, sizeof(long), ip_list, sizeof(list_t*));
+                        printf("[Receiver] Created and inserted the Ip list for Epoch %ld.\n", epoch_id);
+                }
+                
+                if(list_find(*ip_list, saddr) == NULL) {
+                        // Allocate the memory of _saddr in heap
+                        char *_saddr = (char*) calloc(INET_ADDRSTRLEN, sizeof(char));
+                        strcpy(_saddr, saddr);
+                        list_rpush(*ip_list, list_node_new(_saddr));
+                }
 
-                pthread_mutex_unlock(&heartbeat_ht_lock); 
+                pthread_mutex_unlock(&epoch_list_ht_lock); 
         } 
 
 ret:
@@ -198,62 +235,72 @@ void *expirator(void *arg) {
         next_epoch_id = round_to_epoch(now()); 
         printf("[Expirator] Thread started with base_time = %ld, expiration_interval = %ld, next_epoch_id = %ld\n", base_time, expiration_interval, next_epoch_id);
         
-        while(1) {
+        while(running) {
                 long current_time = now();
                 long next_expiration_time = round_to_interval(next_epoch_id);
+                list_t **ip_list;
+                size_t value_size;
 
                 if(next_expiration_time > current_time) {
                         struct timespec sleep_ts = sleep_time(next_expiration_time - current_time);
                         nanosleep(&sleep_ts, NULL);
                         continue;
                 }             
-
-                // Allocate and initialize the memory of a new semaphore
+#ifdef S2S
+                // Allocate and initialize the memory of a new semaphore.
                 sem_t *sem_p = (sem_t*) calloc(1, sizeof(sem_t));
                 sem_init(sem_p, 0, 0);
 
-                pthread_mutex_lock(&sem_ht_lock); 
-                ht_insert(&sem_ht, &next_epoch_id, sizeof(long), &sem_p, sizeof(sem_t*));
-                pthread_mutex_unlock(&sem_ht_lock); 
-                
+                // Insert semaphore into sem hashtable.
+                pthread_mutex_lock(&epoch_sem_ht_lock); 
+                ht_insert(&epoch_sem_ht, &next_epoch_id, sizeof(long), &sem_p, sizeof(sem_t*));
+                pthread_mutex_unlock(&epoch_sem_ht_lock); 
                 printf("\t[S2S] Semaphore for epoch %ld inserted.\n", next_epoch_id);
                 
                 // Send a TCP message containing next_epoch_id to Self Sender.
                 if((send(self_sockfd, &next_epoch_id, MSGSIZE, 0)) != MSGSIZE) {
                         fprintf(stderr, "Error: Send to self wrong!\n");
-                        goto error;
+                        pthread_mutex_unlock(&epoch_sem_ht_lock); 
+                        break;
                 }
-                
                 printf("\t[S2S] Self-message for epoch %ld sent at time %ld.\n", next_epoch_id, now());
                 
+                // Wait sem post from S2S message receiver.
                 sem_wait(sem_p); 
 
-                // Waken up and proceed
-                pthread_mutex_lock(&sem_ht_lock); 
-                ht_remove(&sem_ht, &next_epoch_id, sizeof(long));
+                // Semaphore is posted.
+                pthread_mutex_lock(&epoch_sem_ht_lock); 
+                ht_remove(&epoch_sem_ht, &next_epoch_id, sizeof(long));
                 free(sem_p);
-                pthread_mutex_unlock(&sem_ht_lock); 
-                
-                printf("\t[S2S] Semaphore for epoch %ld removed.\n", next_epoch_id);
-                
-                pthread_mutex_lock(&heartbeat_ht_lock);
-                if(!ht_contains(&heartbeat_ht, &next_epoch_id, sizeof(long))) {
-                        printf("\t[Expirator] Not timeout at epoch %ld.\n", next_epoch_id);
-                } else { 
-                        printf("\n\t[Expirator] Timeouted at epoch %ld!!!\n\n", next_epoch_id);
-                        goto timeout;
+                printf("\t[S2S] Semaphore for epoch %ld removed.\n", next_epoch_id); 
+                pthread_mutex_unlock(&epoch_sem_ht_lock); 
+#endif
+
+                // Expiration check. 
+                pthread_mutex_lock(&epoch_list_ht_lock);
+
+                printf("\t[Expirator] It's time to do expiration check for Epoch %ld.\n", next_epoch_id);
+                ip_list = (list_t**) ht_get(&epoch_list_ht, &next_epoch_id, sizeof(long), &value_size);
+                if(ip_list != NULL) {
+                        list_iterator_t *it = list_iterator_new(*ip_list, LIST_HEAD);
+                        list_node_t *next = list_iterator_next(it);
+                        while(next != NULL) {
+                                printf("\n\t[Expirator] Ip %s expired at Epoch %ld !!!\n\n", (char*) next->val, next_epoch_id);
+                                list_remove(*ip_list, next);
+                                next = list_iterator_next(it);
+                        }
+
+                        // Delete iterator, list and hashtable kv entry.
+                        list_iterator_destroy(it);
+                        list_destroy(*ip_list);
+                        ht_remove(&epoch_list_ht, &next_epoch_id, sizeof(long));
                 }
-                pthread_mutex_unlock(&heartbeat_ht_lock);
+
+                pthread_mutex_unlock(&epoch_list_ht_lock);
                 
                 next_epoch_id ++;
         }
-timeout:
-        pthread_mutex_unlock(&heartbeat_ht_lock);
-error:
-        pthread_mutex_lock(&lock); 
-//        printf("running = 0\n");
-  //      running = 0;
-        pthread_mutex_unlock(&lock); 
+        printf("expirator exits\n");
         return NULL;
 }
 
@@ -267,18 +314,22 @@ int main(int argc, char **argv) {
 	int fd;
 	int rv;
 	char buf[2048] __attribute__ ((aligned));
-        struct sockaddr_in self_server;
         
-        signal(SIGINT, clear_up);
-        
+        if (signal(SIGINT, signal_handler) == SIG_ERR)
+                printf("Can't catch SIGINT\n");
+
         if(argc != 2) {
                 printf("./hb_queue [timeout ms]\n");
                 return -1;
         } else 
                 expiration_interval = atoi(argv[1]);
         
-        ht_init(&heartbeat_ht, HT_NONE, 0.05);
-        ht_init(&sem_ht, HT_NONE, 0.05);
+        ht_init(&epoch_list_ht, HT_NONE, 0.05);
+
+#ifdef S2S
+        struct sockaddr_in self_server;
+        
+        ht_init(&epoch_sem_ht, HT_NONE, 0.05);
         
         self_sockfd = socket(AF_INET, SOCK_STREAM, 0);
         memset(&self_server, '0', sizeof(self_server));
@@ -292,36 +343,33 @@ int main(int argc, char **argv) {
         } else {
                 printf("[hb_queue] local send-self server connected\n");
         }
-        
+#endif
+    
+        running = 1;
         pthread_create(&expirator_tid, NULL, expirator, NULL);
 
-	printf("opening library handle\n");
 	h = nfq_open();
 	if(!h) {
 	        fprintf(stderr, "error during nfq_open()\n");
                 exit(1);
 	}
 
-	printf("unbinding existing nf_queue handler for AF_INET (if any)\n");
 	if(nfq_unbind_pf(h, AF_INET) < 0) {
 		fprintf(stderr, "error during nfq_unbind_pf()\n");
 		exit(1);
 	}
 
-	printf("binding nfnetlink_queue as nf_queue handler for AF_INET\n");
 	if(nfq_bind_pf(h, AF_INET) < 0) {
 		fprintf(stderr, "error during nfq_bind_pf()\n");
 		exit(1);
 	}
 
-	printf("binding this socket to queue '0'\n");
 	qh = nfq_create_queue(h, 0, &cb, NULL);
 	if(!qh) {
 		fprintf(stderr, "error during nfq_create_queue()\n");
 		exit(1);
 	}
 
-	printf("setting copy_packet mode\n");
 	if(nfq_set_mode(qh, NFQNL_COPY_PACKET, 0xffff) < 0) {
 		fprintf(stderr, "can't set packet_copy mode\n");
 		exit(1);
@@ -329,12 +377,7 @@ int main(int argc, char **argv) {
 
 	fd = nfq_fd(h);
 
-	while(1) {
-                pthread_mutex_lock(&lock); 
-                if(running != 1)
-                        break;
-                pthread_mutex_unlock(&lock); 
-		
+	while(running) {
                 if((rv = recv(fd, buf, sizeof(buf), 0)) >= 0) {
             		printf("pkt received\n");
 			nfq_handle_packet(h, buf, rv);
@@ -354,8 +397,10 @@ int main(int argc, char **argv) {
 		perror("recv failed");
 		break;
 	}
+       
+        pthread_join(expirator_tid, NULL);
 
-        clear_up(0);
+        clear_all();
         
         return 0;
 }

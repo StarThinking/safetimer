@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -Wall -D__WITH_MURMUR
+CFLAGS = -Wall -ggdb -D__WITH_MURMUR
 
 INCLUDE = -I./include
 
@@ -12,7 +12,7 @@ all: bin/hb_queue bin/self_sender bin/hb_receiver bin/udp_sender
 
 bin/hb_queue: src/hb_queue.o $(OBJS)
 	@mkdir -p bin
-	$(CC) $^ -L./lib -lhashtable -lrt -lpthread -lnfnetlink -lnetfilter_queue -o $@
+	$(CC) $^ -L./lib -lhashtable -lrt -lpthread -lnfnetlink -lnetfilter_queue lib/liblist.a -o $@
 
 bin/self_sender: src/self_sender.o
 	@mkdir -p bin

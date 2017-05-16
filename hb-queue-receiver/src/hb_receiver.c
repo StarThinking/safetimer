@@ -65,6 +65,7 @@ void *udp_server(void *arg) {
                         inet_ntoa(client.sin_addr), ret, msg);
 
         }
+        return NULL;
 }
 
 void *receiver(void *arg) {
@@ -87,6 +88,7 @@ void *receiver(void *arg) {
                 printf("[tcp] packet received, ret = %d, data[0] = %ld, data[1] = %ld.\n", ret, data[0], data[1]);
         }
         free(arg);
+        return NULL;
 }
 
 char* concat(const char *s1, const char *s2) {
@@ -214,4 +216,6 @@ int main(int argc, char *argv[]) {
         }
 
         printf("Program exits.\n");
+        
+        return 0;
 }

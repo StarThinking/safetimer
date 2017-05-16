@@ -72,6 +72,7 @@ void *receiver(void *arg) {
                 printf("[self_sender] All %d self messages for epoch %ld have been sent.\n", IRQ_NUM, epoch_id);
         }
         free(arg);
+        return NULL;
 }
 
 int validate(const int sockfn) {
