@@ -29,5 +29,3 @@ else
     obj-m := ring-checker.o
 
 endif
-
-

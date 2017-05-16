@@ -9,4 +9,4 @@
 #define SELF_MSGSIZE MSGSIZE*2
 
 #define IRQ_NUM 4
-#define BASE_IRQ 54
+#define BASE_IRQ 49

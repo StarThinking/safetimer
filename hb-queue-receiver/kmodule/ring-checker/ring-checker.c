@@ -15,10 +15,7 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 
-#define IRQ_NUM 4
-#define BASE_IRQ 54
-#define SELF_IP "10.0.0.12"
-#define PORT 5002
+#include "../../include/hb_config.h"
 
 MODULE_LICENSE("GPL");
 
@@ -72,7 +69,7 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
 
                 sprintf(str, "%pI4", &saddr);
                 
-                if(dport == PORT && strcmp(str, SELF_IP) == 0) {
+                if(dport == LOCAL_PORT && strcmp(str, SELF_IP) == 0) {
                         int index;
                         
                         printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, irq_vec = %u, prot = %u, in = %s, out = %s\n", ops->hooknum, &saddr, sport, &daddr, dport, irq_vec, proto, in_name, out_name);

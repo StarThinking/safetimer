@@ -23,7 +23,7 @@
 #include "utility.h"
 #include "hb_config.h"
 
-//#define S2S
+#define S2S
 
 static struct nfq_handle *h;
 static struct nfq_q_handle *qh;
@@ -152,7 +152,7 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                                 goto ret;
                 }
                 
-                printf("[S2S] All S2S messages for epoch %ld are received.\n", epoch_id);
+                printf("[S2S] All S2S messages for Epoch %ld are received.\n", epoch_id);
 
                 // reach the end of a round
                 if(array_index == (ARRAY_SIZE -1))
@@ -162,9 +162,9 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                 sem_t **sem = (sem_t**) ht_get(&epoch_sem_ht, &epoch_id, sizeof(long), &value_size);
                 if(sem != NULL) {
                         sem_post(*sem);
-                        printf("[S2S] The semaphore for epoch %ld is posted.\n", epoch_id);
+                        printf("[S2S] The semaphore for Epoch %ld is posted.\n", epoch_id);
                 } else 
-                        printf("[S2S] Error: The semaphore for epoch %ld not found!\n", epoch_id);
+                        printf("[S2S] Error: The semaphore for Epoch %ld not found!\n", epoch_id);
                 pthread_mutex_unlock(&epoch_sem_ht_lock);
         }
 #endif
@@ -255,7 +255,7 @@ void *expirator(void *arg) {
                 pthread_mutex_lock(&epoch_sem_ht_lock); 
                 ht_insert(&epoch_sem_ht, &next_epoch_id, sizeof(long), &sem_p, sizeof(sem_t*));
                 pthread_mutex_unlock(&epoch_sem_ht_lock); 
-                printf("\t[S2S] Semaphore for epoch %ld inserted.\n", next_epoch_id);
+                printf("\t[S2S] Semaphore for Epoch %ld inserted.\n", next_epoch_id);
                 
                 // Send a TCP message containing next_epoch_id to Self Sender.
                 if((send(self_sockfd, &next_epoch_id, MSGSIZE, 0)) != MSGSIZE) {
@@ -263,7 +263,7 @@ void *expirator(void *arg) {
                         pthread_mutex_unlock(&epoch_sem_ht_lock); 
                         break;
                 }
-                printf("\t[S2S] Self-message for epoch %ld sent at time %ld.\n", next_epoch_id, now());
+                printf("\t[S2S] Self-message for Epoch %ld sent at time %ld.\n", next_epoch_id, now());
                 
                 // Wait sem post from S2S message receiver.
                 sem_wait(sem_p); 
@@ -272,7 +272,7 @@ void *expirator(void *arg) {
                 pthread_mutex_lock(&epoch_sem_ht_lock); 
                 ht_remove(&epoch_sem_ht, &next_epoch_id, sizeof(long));
                 free(sem_p);
-                printf("\t[S2S] Semaphore for epoch %ld removed.\n", next_epoch_id); 
+                printf("\t[S2S] Semaphore for Epoch %ld removed.\n", next_epoch_id); 
                 pthread_mutex_unlock(&epoch_sem_ht_lock); 
 #endif
 
@@ -300,7 +300,6 @@ void *expirator(void *arg) {
                 
                 next_epoch_id ++;
         }
-        printf("expirator exits\n");
         return NULL;
 }
 
@@ -341,7 +340,7 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Error: Failed to connect to self server.\n");
                 return -1;
         } else {
-                printf("[hb_queue] local send-self server connected\n");
+                printf("[hb_queue] Local send-self server connected\n");
         }
 #endif
     
