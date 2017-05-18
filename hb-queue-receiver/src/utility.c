@@ -1,10 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <linux/types.h>
 #include <time.h>
 
 #include "utility.h"
+
+int ip_equal(void *a, void *b) {
+        return 0 == strcmp((char*)a, (char*)b);
+}
+
+void free_val(void *val) {
+        free(val);
+}
 
 long now() {
         struct timespec spec;
@@ -37,7 +46,7 @@ long random_at_most(long max) {
         // Truncated division is intentional
         return x/bin_size;
 }
-        
+
         // sleep [expiration_interval, 2*expiration_interval]
         /*long rand_sleep_time = random_at_most(expiration_interval);
         if(rand_sleep_time < 0.1 * expiration_interval) {

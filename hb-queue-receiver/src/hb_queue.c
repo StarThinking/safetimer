@@ -22,8 +22,10 @@
 
 #include "utility.h"
 #include "hb_config.h"
+#include "drop.h"
 
-#define S2S
+//#define S2S
+#define DROP
 
 static struct nfq_handle *h;
 static struct nfq_q_handle *qh;
@@ -61,21 +63,11 @@ static void destroy_nfqueue() {
 	nfq_close(h);
 }
 
-static int ip_equal(void *a, void *b) {
-        return 0 == strcmp((char*)a, (char*)b);
-}
-
-static void free_val(void *val) {
-        free(val);
-}
-
 static void signal_handler(int signo) {
         running = 0;
-        
+        // destroy nfqueue in signal handler so that recv won't be blocked.
         destroy_nfqueue();
-       
         printf("Singal handled by switching running to 0 and destroying nfqueue.\n");
-        
 }
 
 static void clear_all() {
@@ -231,9 +223,15 @@ ret:
 void *expirator(void *arg) {
         long next_epoch_id;
 
+#ifdef DROP
+        struct kernel_drop_stats last_stats;
+        init_kernel_drop(&last_stats);
+#endif
+        
         base_time = now();
         next_epoch_id = round_to_epoch(now()); 
-        printf("[Expirator] Thread started with base_time = %ld, expiration_interval = %ld, next_epoch_id = %ld\n", base_time, expiration_interval, next_epoch_id);
+        printf("[Expirator] Thread started with base_time = %ld, expiration_interval = %ld, next_epoch_id = %ld\n", \
+                base_time, expiration_interval, next_epoch_id);
         
         while(running) {
                 long current_time = now();
@@ -245,7 +243,8 @@ void *expirator(void *arg) {
                         struct timespec sleep_ts = sleep_time(next_expiration_time - current_time);
                         nanosleep(&sleep_ts, NULL);
                         continue;
-                }             
+                }  
+
 #ifdef S2S
                 // Allocate and initialize the memory of a new semaphore.
                 sem_t *sem_p = (sem_t*) calloc(1, sizeof(sem_t));
@@ -276,6 +275,13 @@ void *expirator(void *arg) {
                 pthread_mutex_unlock(&epoch_sem_ht_lock); 
 #endif
 
+#ifdef DROP
+                // Determine if there is packet dropped 
+                if(check_kernel_drop(&last_stats)) {
+                        printf("\n\t[Expirator] Dropping packets!!!\n\n");
+                }
+#endif
+
                 // Expiration check. 
                 pthread_mutex_lock(&epoch_list_ht_lock);
 
@@ -285,7 +291,8 @@ void *expirator(void *arg) {
                         list_iterator_t *it = list_iterator_new(*ip_list, LIST_HEAD);
                         list_node_t *next = list_iterator_next(it);
                         while(next != NULL) {
-                                printf("\n\t[Expirator] Ip %s expired at Epoch %ld !!!\n\n", (char*) next->val, next_epoch_id);
+                                printf("\n\t[Expirator] Ip %s expired at Epoch %ld !!!\n\n", \
+                                        (char*) next->val, next_epoch_id);
                                 list_remove(*ip_list, next);
                                 next = list_iterator_next(it);
                         }

@@ -4,13 +4,9 @@ CFLAGS = -Wall -ggdb -D__WITH_MURMUR
 
 INCLUDE = -I./include
 
-SRCS = src/utility.c
-
-OBJS = $(SRCS:.c=.o)
-
 all: bin/hb_queue bin/self_sender bin/hb_receiver bin/udp_sender
 
-bin/hb_queue: src/hb_queue.o $(OBJS)
+bin/hb_queue: src/hb_queue.o src/drop.o src/utility.o
 	@mkdir -p bin
 	$(CC) $^ -L./lib -lhashtable -lrt -lpthread -lnfnetlink -lnetfilter_queue lib/liblist.a -o $@
 
