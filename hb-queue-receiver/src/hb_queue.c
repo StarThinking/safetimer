@@ -27,6 +27,9 @@
 //#define S2S
 #define DROP
 
+// tmp
+static int count = 0;
+
 static struct nfq_handle *h;
 static struct nfq_q_handle *qh;
 
@@ -68,6 +71,7 @@ static void signal_handler(int signo) {
         // destroy nfqueue in signal handler so that recv won't be blocked.
         destroy_nfqueue();
         printf("Singal handled by switching running to 0 and destroying nfqueue.\n");
+        printf("Count = %d\n", count);
 }
 
 static void clear_all() {
@@ -133,7 +137,7 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                 // get array index; if it's a new round, increase round
                 int array_index = epoch_id % ARRAY_SIZE;
                 
-                if(received_self_msg_array[array_index][ring_id] < array_round) {
+                if(received_self_msg_array[array_index][ring_id] != array_round) {
                         received_self_msg_array[array_index][ring_id] = array_round; 
                 } else { // the S2S message for the ring is redundant
                         goto ret;
@@ -224,7 +228,10 @@ void *expirator(void *arg) {
         long next_epoch_id;
 
 #ifdef DROP
+        int skip_check;
         struct kernel_drop_stats last_stats;
+        pid_t _nfqueue_pid = getpid();
+        last_stats.nfqueue_pid = _nfqueue_pid;
         init_kernel_drop(&last_stats);
 #endif
         
@@ -279,6 +286,8 @@ void *expirator(void *arg) {
                 // Determine if there is packet dropped 
                 if(check_kernel_drop(&last_stats)) {
                         printf("\n\t[Expirator] Dropping packets!!!\n\n");
+                        // Skip handle expiration for the current and the next epochs.
+                        skip_check = 2;
                 }
 #endif
 
@@ -291,8 +300,17 @@ void *expirator(void *arg) {
                         list_iterator_t *it = list_iterator_new(*ip_list, LIST_HEAD);
                         list_node_t *next = list_iterator_next(it);
                         while(next != NULL) {
-                                printf("\n\t[Expirator] Ip %s expired at Epoch %ld !!!\n\n", \
-                                        (char*) next->val, next_epoch_id);
+#ifdef DROP
+                                if(skip_check > 0) {
+                                        printf("\t[Expirator] Skip handle Ip %s expiration at Epoch %ld.\n", \
+                                                (char*) next->val, next_epoch_id);
+                                        skip_check --;
+                                } else 
+#endif
+                                {
+                                        printf("\n\t[Expirator] Ip %s expired at Epoch %ld !!!\n\n", \
+                                                (char*) next->val, next_epoch_id);
+                                }
                                 list_remove(*ip_list, next);
                                 next = list_iterator_next(it);
                         }
@@ -329,7 +347,7 @@ int main(int argc, char **argv) {
                 return -1;
         } else 
                 expiration_interval = atoi(argv[1]);
-        
+         
         ht_init(&epoch_list_ht, HT_NONE, 0.05);
 
 #ifdef S2S
@@ -386,6 +404,7 @@ int main(int argc, char **argv) {
 	while(running) {
                 if((rv = recv(fd, buf, sizeof(buf), 0)) >= 0) {
             		printf("pkt received\n");
+                        count++;
 			nfq_handle_packet(h, buf, rv);
 			continue;
 		}
@@ -397,10 +416,10 @@ int main(int argc, char **argv) {
 		 * this situation.
 		 */
 		if(rv < 0 && errno == ENOBUFS) {
-			printf("losing packets!\n");
+			printf("\n\nNFQUEUE is losing packets!!!!\n\n");
 			continue;
 		}
-		perror("recv failed");
+		printf("\n\nNFQUEUE recv failed!! rv = %d, errno = %d, ENOBUFS = %u\n\n", rv, errno, ENOBUFS);
 		break;
 	}
        

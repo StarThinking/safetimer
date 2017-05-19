@@ -106,6 +106,7 @@ int main(int argc, char **argv) {
 	}
 
 	fd = nfq_fd(h);
+        printf("fd = %d\n", fd);
 
 	for(;;) {
                 rv = recv(fd, buf, sizeof(buf), 0);
