@@ -7,17 +7,16 @@
 
 #include "drop.h"
 
-static FILE *fp;
-static char line[256];
-static char *token, *eptr;
-static int line_counter = 0;
-static int column_counter = 0;
-
 // fetch UDP InErrors in /proc/net/snmp
 static long fetch_udp_inerrors() {
         long udp_inerrors = -1;
+        FILE *fp;
+        char line[256] = "";
         char *url = "/proc/net/snmp";
-        char delim[2] = " :";
+        char delim[3] = " :";
+        char *token, *eptr;
+        int line_counter = 0;
+        int column_counter = 0;
         
         if((fp = fopen(url, "r")) == NULL) {
                 printf("can't open file %s!\n", url);
@@ -41,14 +40,16 @@ static long fetch_udp_inerrors() {
         }
         
         fclose(fp);
-
         return udp_inerrors;
 }
 
 // fetch netlink drops by the process of nfqueuein /proc/net/netlink
 static long fetch_netlink_drops(pid_t pid) {
-        printf("nfqueue_pid = %d\n", pid);
         long netlink_drops = -1;
+        FILE *fp;
+        char line[256] = "";
+        char *token, *eptr;
+        int column_counter = 0;
         char *url = "/proc/net/netlink";
         char delim[2] = " ";
         long nfqueue_pid = (long) pid;
@@ -63,11 +64,9 @@ static long fetch_netlink_drops(pid_t pid) {
                 token = strtok(line, delim);
                 column_counter = 0;
                 while(token != NULL) {
-//                        printf("column_counter = %d, token = %s\n", column_counter, token);
                         // compare the 3rd column of each which is the pid of netlink program
                         if(column_counter == 2) {
                                 _pid = strtol(token, &eptr, 10);
-//                                printf("_pid = %ld\n", _pid);
                                 if(_pid != nfqueue_pid) 
                                         break;
                         }
@@ -85,7 +84,6 @@ static long fetch_netlink_drops(pid_t pid) {
 
 found:        
         fclose(fp);
-        printf("netlink_drops = %ld\n", netlink_drops);
         return netlink_drops;
 }
 
@@ -109,18 +107,22 @@ static int fetch_kernel_drop_stats(struct kernel_drop_stats *stats) {
         return 0;
 }
 
-void init_kernel_drop(struct kernel_drop_stats *stats) {
-        if(fetch_kernel_drop_stats(stats) < 0)
+int init_kernel_drop(struct kernel_drop_stats *stats) {
+        if(fetch_kernel_drop_stats(stats) < 0) {
                 printf("\n\nfetch kernel drop stats error!\n\n");
+                return -1;
+        }
+        return 0;
 }
 
 int check_kernel_drop(struct kernel_drop_stats *last_stats) {
         struct kernel_drop_stats current_stats;
         long udp_errors_diff, netlink_drops_diff;
 
+        current_stats.nfqueue_pid = last_stats->nfqueue_pid;
         if(fetch_kernel_drop_stats(&current_stats) < 0) {
                 printf("\n\nfetch kernel drop stats error!\n\n");
-                exit(1);
+                return -1;
         }       
 
         udp_errors_diff = current_stats.udp_errors - last_stats->udp_errors;
@@ -133,8 +135,8 @@ int check_kernel_drop(struct kernel_drop_stats *last_stats) {
         return (udp_errors_diff > 0) || (netlink_drops_diff > 0); 
 }
 
-int main(int argc, char *argv[]) {
+/*int main(int argc, char *argv[]) {
         pid_t pid = atoi(argv[1]);
         fetch_netlink_drops(pid);
         return 0;
-}
+}*/

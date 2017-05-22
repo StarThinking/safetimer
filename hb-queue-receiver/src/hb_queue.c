@@ -52,7 +52,7 @@ static int array_round = 1;
 #endif
 
 static void destroy_nfqueue() {
-	printf("unbinding from queue 0\n");
+	printf("nfq_destroy_queue\n");
 	nfq_destroy_queue(qh);
 
 #ifdef INSANE
@@ -176,7 +176,7 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                 size_t value_size;
                 list_t **ip_list;
 
-                printf("[Receiver] Heartbeat from Ip %s for Epoch (%ld, %ld) sent at %ld received at %ld.\n", \
+                printf("[Receiver] Heartbeat from Ip %s for Epoch (%ld, %ld) sent at %ld received at %ld.\n",
                         saddr, epoch_id, round_to_interval(epoch_id), send_time, now());
                 
                 if(epoch_id < 0)
@@ -228,17 +228,18 @@ void *expirator(void *arg) {
         long next_epoch_id;
 
 #ifdef DROP
-        int skip_check;
+        int skip_check = 0;
         struct kernel_drop_stats last_stats;
         pid_t _nfqueue_pid = getpid();
         last_stats.nfqueue_pid = _nfqueue_pid;
-        init_kernel_drop(&last_stats);
+        printf("\t[Expirator] Initialize kernel_drop_stats with nfqueue pid %d.\n", _nfqueue_pid);
+        if(init_kernel_drop(&last_stats) <0 )
+                goto error;
 #endif
         
         base_time = now();
         next_epoch_id = round_to_epoch(now()); 
-        printf("[Expirator] Thread started with base_time = %ld, expiration_interval = %ld, next_epoch_id = %ld\n", \
-                base_time, expiration_interval, next_epoch_id);
+        printf("\t[Expirator] Thread started with base_time = %ld, expiration_interval = %ld, next_epoch_id = %ld\n",                 base_time, expiration_interval, next_epoch_id);
         
         while(running) {
                 long current_time = now();
@@ -283,9 +284,13 @@ void *expirator(void *arg) {
 #endif
 
 #ifdef DROP
-                // Determine if there is packet dropped 
-                if(check_kernel_drop(&last_stats)) {
-                        printf("\n\t[Expirator] Dropping packets!!!\n\n");
+                // Determine if there is packet dropped. 1: yes, 0: no, <0: fetch failed. 
+                int ret = check_kernel_drop(&last_stats);
+                if(ret < 0) {
+                        goto error;
+                } else if(ret == 1) {
+                        printf("\n\t[Expirator] Packets dropped and skip expiration check for Epoch %ld %ld.\n\n",
+                                next_epoch_id, next_epoch_id+1);
                         // Skip handle expiration for the current and the next epochs.
                         skip_check = 2;
                 }
@@ -302,13 +307,13 @@ void *expirator(void *arg) {
                         while(next != NULL) {
 #ifdef DROP
                                 if(skip_check > 0) {
-                                        printf("\t[Expirator] Skip handle Ip %s expiration at Epoch %ld.\n", \
+                                        printf("\n\t[Expirator] Skip handle Ip %s timeout at Epoch %ld as potential drops.\n\n",
                                                 (char*) next->val, next_epoch_id);
                                         skip_check --;
                                 } else 
 #endif
                                 {
-                                        printf("\n\t[Expirator] Ip %s expired at Epoch %ld !!!\n\n", \
+                                        printf("\n\t[Expirator] Ip %s expired at Epoch %ld !!!\n\n", 
                                                 (char*) next->val, next_epoch_id);
                                 }
                                 list_remove(*ip_list, next);
@@ -325,6 +330,8 @@ void *expirator(void *arg) {
                 
                 next_epoch_id ++;
         }
+error:
+        printf("Expirator exits\n");
         return NULL;
 }
 
@@ -377,22 +384,26 @@ int main(int argc, char **argv) {
 	        fprintf(stderr, "error during nfq_open()\n");
                 exit(1);
 	}
+        printf("nfq_open\n");
 
 	if(nfq_unbind_pf(h, AF_INET) < 0) {
 		fprintf(stderr, "error during nfq_unbind_pf()\n");
 		exit(1);
 	}
+        printf("nfq_unbind_pf\n");
 
 	if(nfq_bind_pf(h, AF_INET) < 0) {
 		fprintf(stderr, "error during nfq_bind_pf()\n");
 		exit(1);
 	}
+        printf("nfq_bind_pf\n");
 
 	qh = nfq_create_queue(h, 0, &cb, NULL);
 	if(!qh) {
 		fprintf(stderr, "error during nfq_create_queue()\n");
 		exit(1);
 	}
+        printf("nfq_create_queue\n");
 
 	if(nfq_set_mode(qh, NFQNL_COPY_PACKET, 0xffff) < 0) {
 		fprintf(stderr, "can't set packet_copy mode\n");
@@ -403,7 +414,7 @@ int main(int argc, char **argv) {
 
 	while(running) {
                 if((rv = recv(fd, buf, sizeof(buf), 0)) >= 0) {
-            		printf("pkt received\n");
+            //		printf("pkt received\n");
                         count++;
 			nfq_handle_packet(h, buf, rv);
 			continue;
@@ -419,7 +430,6 @@ int main(int argc, char **argv) {
 			printf("\n\nNFQUEUE is losing packets!!!!\n\n");
 			continue;
 		}
-		printf("\n\nNFQUEUE recv failed!! rv = %d, errno = %d, ENOBUFS = %u\n\n", rv, errno, ENOBUFS);
 		break;
 	}
        
