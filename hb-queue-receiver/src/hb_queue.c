@@ -285,11 +285,13 @@ void *expirator(void *arg) {
 
 #ifdef DROP
                 // Determine if there is packet dropped. 1: yes, 0: no, <0: fetch failed. 
-                int ret = check_kernel_drop(&last_stats);
-                if(ret < 0) {
+                int kernel_drop = check_kernel_drop(&last_stats);
+                int nic_drop = check_nic_drop();
+                
+                if(kernel_drop < 0 || nic_drop < 0) {
                         goto error;
-                } else if(ret == 1) {
-                        printf("\n\t[Expirator] Packets dropped and skip expiration check for Epoch %ld %ld.\n\n",
+                } else if(kernel_drop == 1 || nic_drop == 1) {
+                        printf("\n\t[Expirator] Packets dropped and skip expiration check for Epoch %ld %ld.\n\n", 
                                 next_epoch_id, next_epoch_id+1);
                         // Skip handle expiration for the current and the next epochs.
                         skip_check = 2;

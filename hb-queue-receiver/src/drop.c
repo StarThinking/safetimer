@@ -13,6 +13,7 @@ static long fetch_udp_inerrors() {
         FILE *fp;
         char line[256] = "";
         char *url = "/proc/net/snmp";
+        // note that the last charactor of char array should be reserved for terminator
         char delim[3] = " :";
         char *token, *eptr;
         int line_counter = 0;
@@ -87,9 +88,9 @@ found:
         return netlink_drops;
 }
 
-static int fetch_kernel_drop_stats(struct kernel_drop_stats *stats) {
-        long _udp_inerrors;
-        long _netlink_drops;
+static int fetch_all_kernel_drop_stats(struct kernel_drop_stats *stats) {
+        long _udp_inerrors = 0;
+        long _netlink_drops = 0;
 
         if((_udp_inerrors = fetch_udp_inerrors()) < 0) {
                 printf("failed to fetch udp inerrors!\n");
@@ -108,7 +109,7 @@ static int fetch_kernel_drop_stats(struct kernel_drop_stats *stats) {
 }
 
 int init_kernel_drop(struct kernel_drop_stats *stats) {
-        if(fetch_kernel_drop_stats(stats) < 0) {
+        if(fetch_all_kernel_drop_stats(stats) < 0) {
                 printf("\n\nfetch kernel drop stats error!\n\n");
                 return -1;
         }
@@ -120,7 +121,7 @@ int check_kernel_drop(struct kernel_drop_stats *last_stats) {
         long udp_errors_diff, netlink_drops_diff;
 
         current_stats.nfqueue_pid = last_stats->nfqueue_pid;
-        if(fetch_kernel_drop_stats(&current_stats) < 0) {
+        if(fetch_all_kernel_drop_stats(&current_stats) < 0) {
                 printf("\n\nfetch kernel drop stats error!\n\n");
                 return -1;
         }       
@@ -128,15 +129,40 @@ int check_kernel_drop(struct kernel_drop_stats *last_stats) {
         udp_errors_diff = current_stats.udp_errors - last_stats->udp_errors;
         netlink_drops_diff = current_stats.netlink_drops - last_stats->netlink_drops;
 
-        printf("\t[Drop] udp_errors_diff = %ld, netlink_drops_diff = %ld.\n", \
+        printf("\t[Drop] udp_errors_diff = %ld, netlink_drops_diff = %ld.\n", 
                 udp_errors_diff, netlink_drops_diff);
         *last_stats = current_stats;
         
         return (udp_errors_diff > 0) || (netlink_drops_diff > 0); 
 }
 
+// return 1 if drop, 0 if not, <0 if error
+int check_nic_drop() {
+        long nic_drop = -1;
+        FILE *fp;
+        char buffer[20] = "";
+        char *url = "/sys/kernel/debug/nic-drop/pkt_dropped";
+        char *ptr;
+
+        if((fp = fopen(url, "r")) == NULL) {
+                printf("can't open file %s!\n", url);
+                goto error;
+        }
+
+        fscanf(fp, "%s", buffer);
+        nic_drop = strtol(buffer, &ptr, 10);
+       
+        printf("\t[Drop] nic_drop = %ld.\n", nic_drop);
+        fclose(fp);        
+    
+        return nic_drop > 0;
+
+
+error:
+        return nic_drop;
+}
+
 /*int main(int argc, char *argv[]) {
-        pid_t pid = atoi(argv[1]);
-        fetch_netlink_drops(pid);
+        check_nic_drop();   
         return 0;
 }*/
