@@ -1,0 +1,1 @@
+PYTHONPATH=lib.linux-x86_64-2.6 LD_LIBRARY_PATH=lib.linux-x86_64-2.6 ./zk-latencies.py --root_znode=/client --cluster 10.0.0.11:2181 --znode_size=100 --znode_count=100     --timeout=5000 watch_multiple=5 &

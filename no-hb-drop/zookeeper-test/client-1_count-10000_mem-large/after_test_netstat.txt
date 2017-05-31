@@ -1,0 +1,53 @@
+Ip:
+    1876656 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    1876656 incoming packets delivered
+    1918981 requests sent out
+Icmp:
+    2 ICMP messages received
+    0 input ICMP message failed.
+    ICMP input histogram:
+        destination unreachable: 2
+    2 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+        destination unreachable: 2
+IcmpMsg:
+        InType3: 2
+        OutType3: 2
+Tcp:
+    0 active connections openings
+    514 passive connection openings
+    0 failed connection attempts
+    0 connection resets received
+    2 connections established
+    1875398 segments received
+    2127382 segments send out
+    0 segments retransmited
+    0 bad segments received.
+    1 resets sent
+Udp:
+    422 packets received
+    0 packets to unknown port received.
+    0 packet receive errors
+    430 packets sent
+UdpLite:
+TcpExt:
+    65 packets pruned from receive queue because of socket buffer overrun
+    4044 delayed acks sent
+    10 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 220 times
+    1038474 packet headers predicted
+    100917 acknowledgments not containing data payload received
+    931693 predicted acknowledgments
+    1549 packets collapsed in receive queue due to low socket buffer
+    220 DSACKs sent for old packets
+    TCPRcvCoalesce: 631566
+    TCPAutoCorking: 856393
+IpExt:
+    InBcastPkts: 834
+    InOctets: 1504065664
+    OutOctets: 1299559938
+    InBcastOctets: 264378
+    InNoECTPkts: 2450283

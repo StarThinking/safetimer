@@ -1,0 +1,9 @@
+1) Adding “skb->napi_id = tnapi->irq_vec;” in tg3_rx(),
+so that ring-checker kernel module can determine the ring from which a SKB comes from.
+
+2) Disabling “TG3_STAT_ADD32(&sp->rxbds_empty, RCVLPC_NO_RCV_BD_CNT)” in tg3_periodic_fetch_stats(),
+so that nic-drop-fetch kernel module can read NIC’s I/O memory by itself; 
+otherwise, we can only read the drop stats by ethtool but it only fetches stats periodically. 
+
+3) Recording and exporting “tp->regs” in tg3_init_one(),
+so that nic-drop-fetch kernel module can read NIC’s I/O memory.

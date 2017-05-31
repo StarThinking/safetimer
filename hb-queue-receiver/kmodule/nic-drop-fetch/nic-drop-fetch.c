@@ -50,7 +50,7 @@ static ssize_t my_reader(struct file *fp, char __user *user_buffer,
 
                 rxbds_empty.high = rxbds_empty.low = 0;
                 TG3_STAT_ADD32(&rxbds_empty, my_tp_regs[i], RCVLPC_NO_RCV_BD_CNT);
-                printk("rxbds_empty = %llu\n", get_stat64(&rxbds_empty));
+                //printk("rxbds_empty = %llu\n", get_stat64(&rxbds_empty));
                 pkt_dropped += get_stat64(&rxbds_empty);
         }        
         

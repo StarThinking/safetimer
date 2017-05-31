@@ -21,12 +21,11 @@ __attribute__((section("__versions"))) = {
 	{ 0xc9aca5d0, __VMLINUX_SYMBOL_STR(debugfs_remove_recursive) },
 	{ 0x8b35cde9, __VMLINUX_SYMBOL_STR(debugfs_create_file) },
 	{ 0xb7ce9e9b, __VMLINUX_SYMBOL_STR(debugfs_create_dir) },
-	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
-	{ 0xe484e35f, __VMLINUX_SYMBOL_STR(ioread32) },
-	{ 0xd2d7216a, __VMLINUX_SYMBOL_STR(my_tp_regs) },
 	{ 0xf0fdf6cb, __VMLINUX_SYMBOL_STR(__stack_chk_fail) },
 	{ 0x619cb7dd, __VMLINUX_SYMBOL_STR(simple_read_from_buffer) },
 	{ 0x91715312, __VMLINUX_SYMBOL_STR(sprintf) },
+	{ 0xe484e35f, __VMLINUX_SYMBOL_STR(ioread32) },
+	{ 0xd2d7216a, __VMLINUX_SYMBOL_STR(my_tp_regs) },
 	{ 0x79c11397, __VMLINUX_SYMBOL_STR(my_tp_regs_count) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
 };
@@ -37,4 +36,4 @@ __attribute__((section(".modinfo"))) =
 "depends=tg3";
 
 
-MODULE_INFO(srcversion, "541DFE4FEF9B3C21A54F4CB");
+MODULE_INFO(srcversion, "1939E6067C5B361C650F266");
