@@ -3,12 +3,15 @@
 #include <linux/debugfs.h> /* this is for DebugFS libraries */
 #include <linux/fs.h>   
 
+#include <linux/uaccess.h>
+
 MODULE_LICENSE("GPL");
 
 #define len 8
 
 struct dentry *dirret,*fileret;
 char ker_buf[len];
+int log_size = 0;
 
 /* read file operation */
 static ssize_t myreader(struct file *fp, char __user *user_buffer,
@@ -20,13 +23,28 @@ static ssize_t myreader(struct file *fp, char __user *user_buffer,
  
 /* write file operation */
 static ssize_t mywriter(struct file *fp, const char __user *user_buffer,
-                                size_t count, loff_t *position)
+                                size_t count, loff_t *ppos)
 {
-        printk("write: count = %zu, position = %lld\n", count, *position);
-        if(count > len )
+        printk("write: count = %zu, position = %lld\n", count, *ppos);
+        if((count + log_size) > len)
                 return -EINVAL;
   
-        return simple_write_to_buffer(ker_buf, len, position, user_buffer, count);
+        loff_t pos = *ppos;
+        size_t res;
+
+        if (pos < 0)
+                return -EINVAL;
+        if (pos >= len || !count || (pos + log_size + count) > len)
+                return 0;
+        if (count > len - pos -log_size)
+                count = len - pos - log_size;
+        res = copy_from_user(ker_buf + log_size + pos, user_buffer, count);
+        if (res == count)
+                return -EFAULT;
+        count -= res;
+        log_size += count;
+        *ppos = pos + log_size + count;
+        return count;
 }
  
 static const struct file_operations fops_debug = {

@@ -18,12 +18,17 @@ static const struct modversion_info ____versions[]
 __used
 __attribute__((section("__versions"))) = {
 	{ 0x710e0d3b, __VMLINUX_SYMBOL_STR(module_layout) },
-	{ 0xc9aca5d0, __VMLINUX_SYMBOL_STR(debugfs_remove_recursive) },
-	{ 0x8b35cde9, __VMLINUX_SYMBOL_STR(debugfs_create_file) },
-	{ 0xb7ce9e9b, __VMLINUX_SYMBOL_STR(debugfs_create_dir) },
-	{ 0x619cb7dd, __VMLINUX_SYMBOL_STR(simple_read_from_buffer) },
-	{ 0xbb4f4766, __VMLINUX_SYMBOL_STR(simple_write_to_buffer) },
-	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
+	{ 0x6f05cb03, __VMLINUX_SYMBOL_STR(device_destroy) },
+	{ 0x257a28f, __VMLINUX_SYMBOL_STR(class_destroy) },
+	{ 0x6faae96b, __VMLINUX_SYMBOL_STR(device_create) },
+	{ 0x7485e15e, __VMLINUX_SYMBOL_STR(unregister_chrdev_region) },
+	{ 0xa10f0a12, __VMLINUX_SYMBOL_STR(cdev_del) },
+	{ 0xc428f990, __VMLINUX_SYMBOL_STR(__class_create) },
+	{ 0x9888fb0f, __VMLINUX_SYMBOL_STR(cdev_add) },
+	{ 0x19c364fc, __VMLINUX_SYMBOL_STR(cdev_init) },
+	{ 0x29537c9e, __VMLINUX_SYMBOL_STR(alloc_chrdev_region) },
+	{ 0x4f6b400b, __VMLINUX_SYMBOL_STR(_copy_from_user) },
+	{ 0x4f8b5ddb, __VMLINUX_SYMBOL_STR(_copy_to_user) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
 };
 
@@ -33,4 +38,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "DED643B999B245DF45CB031");
+MODULE_INFO(srcversion, "CC841059E9A1C6A6AECFE0D");
