@@ -19,17 +19,10 @@ __used
 __attribute__((section("__versions"))) = {
 	{ 0x710e0d3b, __VMLINUX_SYMBOL_STR(module_layout) },
 	{ 0xaa9087c0, __VMLINUX_SYMBOL_STR(param_ops_string) },
-	{ 0xc9aca5d0, __VMLINUX_SYMBOL_STR(debugfs_remove_recursive) },
 	{ 0xe1ba164b, __VMLINUX_SYMBOL_STR(unregister_kretprobe) },
-	{ 0x8b35cde9, __VMLINUX_SYMBOL_STR(debugfs_create_file) },
-	{ 0xb7ce9e9b, __VMLINUX_SYMBOL_STR(debugfs_create_dir) },
 	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
 	{ 0xc0241fac, __VMLINUX_SYMBOL_STR(register_kretprobe) },
-	{ 0xf0fdf6cb, __VMLINUX_SYMBOL_STR(__stack_chk_fail) },
-	{ 0x69acdf38, __VMLINUX_SYMBOL_STR(memcpy) },
-	{ 0x91715312, __VMLINUX_SYMBOL_STR(sprintf) },
-	{ 0x619cb7dd, __VMLINUX_SYMBOL_STR(simple_read_from_buffer) },
-	{ 0xbb4f4766, __VMLINUX_SYMBOL_STR(simple_write_to_buffer) },
+	{ 0x7d11c268, __VMLINUX_SYMBOL_STR(jiffies) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
 };
 
@@ -39,4 +32,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "46BD39E6567BA690606569D");
+MODULE_INFO(srcversion, "7030582EE3AB782DAD84ABD");

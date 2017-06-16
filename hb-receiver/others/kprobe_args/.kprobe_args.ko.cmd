@@ -1,0 +1,1 @@
+cmd_/root/hb-latency/hb-receiver/others/kprobe_args/kprobe_args.ko := ld -r -m elf_x86_64 -T /usr/src/linux-3.14.33-regular/scripts/module-common.lds --build-id  -o /root/hb-latency/hb-receiver/others/kprobe_args/kprobe_args.ko /root/hb-latency/hb-receiver/others/kprobe_args/kprobe_args.o /root/hb-latency/hb-receiver/others/kprobe_args/kprobe_args.mod.o

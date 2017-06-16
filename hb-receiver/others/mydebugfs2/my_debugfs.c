@@ -7,7 +7,7 @@
 
 MODULE_LICENSE("GPL");
 
-#define len 8
+#define len 1024
 
 struct dentry *dirret,*fileret;
 char ker_buf[len];
