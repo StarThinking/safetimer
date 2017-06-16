@@ -22,6 +22,7 @@ static ssize_t myreader(struct file *fp, char __user *user_buffer,
 }
  
 /* write file operation */
+// appending writes
 static ssize_t mywriter(struct file *fp, const char __user *user_buffer,
                                 size_t count, loff_t *ppos)
 {

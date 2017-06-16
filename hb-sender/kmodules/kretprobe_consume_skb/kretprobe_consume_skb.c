@@ -34,8 +34,8 @@
 
 //#define len 64
 
-//static struct dentry *dirret, *fileret;
-//static unsigned long hb_completion_time = 0;
+static struct dentry *dirret, *fileret;
+static unsigned long hb_completion_time = 0;
 
 static char func_name[NAME_MAX] = "consume_skb";
 module_param_string(func, func_name, NAME_MAX, S_IRUGO);
@@ -43,23 +43,22 @@ MODULE_PARM_DESC(func, "Function to kretprobe; this module will report the"
 			" function's execution time");
 
 /* read file operation */
-/*static ssize_t myreader(struct file *fp, char __user *user_buffer,
+static ssize_t myreader(struct file *fp, char __user *user_buffer,
                                 size_t count, loff_t *position)
 {
-//        printk(KERN_INFO "hb_completion_time = %lu, now = %lu\n", hb_completion_time, jiffies);
+        printk(KERN_INFO "hb_completion_time = %lu, now = %lu\n", hb_completion_time, jiffies);
         
-        return simple_read_from_buffer(user_buffer, count, position, &hb_completion_time, len);
-}*/
+        return simple_read_from_buffer(user_buffer, count, position, &hb_completion_time, sizeof(hb_completion_time));
+}
 
-/*static const struct file_operations fops_debug = {
+static const struct file_operations fops_debug = {
         .read = myreader
 };
-*/
+
 
 /* Here we use the entry_hanlder to timestamp function entry */
 static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs)
 {
-        struct sk_buff **skb_p = NULL;
         struct sk_buff *skb = NULL;
         struct iphdr *iph = NULL;
         struct udphdr *uh = NULL;
@@ -68,11 +67,9 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs)
         if(regs == NULL)
                 return 0;
 
-        skb_p = (struct sk_buff **) (regs->ax);
-        if(skb_p == NULL)
+        skb = (struct sk_buff *) regs->di;
+        if(skb == NULL)
                 return 0;
-        else
-            skb = *skb_p;
 
         iph = ip_hdr(skb);
         if(iph == NULL)
@@ -89,7 +86,7 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs)
         if(dport != 5001)
                 return 0;
         
-        unsigned long last_event_jiffies = jiffies;
+        hb_completion_time = jiffies;
         
         return 0;
 }
@@ -153,8 +150,8 @@ static int __init kretprobe_init(void)
 {
 	int ret;
 
-//        dirret = debugfs_create_dir("dell", NULL);
-//        fileret = debugfs_create_file("text", 0644, dirret, NULL, &fops_debug);
+        dirret = debugfs_create_dir("dell", NULL);
+        fileret = debugfs_create_file("text", 0644, dirret, NULL, &fops_debug);
 
 	my_kretprobe.kp.symbol_name = func_name;
 	ret = register_kretprobe(&my_kretprobe);
@@ -171,7 +168,7 @@ static int __init kretprobe_init(void)
 
 static void __exit kretprobe_exit(void)
 {
-//        debugfs_remove_recursive(dirret);
+        debugfs_remove_recursive(dirret);
 
         unregister_kretprobe(&my_kretprobe);
 	printk(KERN_INFO "kretprobe at %p unregistered\n",
