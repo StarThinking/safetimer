@@ -8,12 +8,13 @@
 static struct kprobe kp;
 
 static struct kprobe kp = {
-    .symbol_name    = "foobar",
+    .symbol_name    = "foobar2",
 };
 
 static int handler_pre(struct kprobe *p, struct pt_regs *regs)
 {
-    printk(KERN_INFO "handler_pre: arg = %lu\n", regs->di);
+    printk(KERN_INFO "handler_pre: arg1 = %lu, arg2 = %lu, arg3 = %lu\n",
+                                    regs->di, regs->si, regs->dx);
     return 0;
 }
 
@@ -23,7 +24,7 @@ static void handler_post(struct kprobe *p, struct pt_regs *regs,
     printk(KERN_INFO "handler_post\n");
 }
 
-extern void foobar(int);
+extern void foobar2(int, int, int);
 
 static int __init kprobe_args_init(void)
 {
@@ -43,7 +44,7 @@ static int __init kprobe_args_init(void)
     
     printk(KERN_INFO "Planted kprobe at %p\n", kp.addr);
     
-    foobar(123);
+    foobar2(3,2,1);
     
     return 0;
 }

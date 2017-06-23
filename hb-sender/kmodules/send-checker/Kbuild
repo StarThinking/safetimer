@@ -26,7 +26,6 @@ clean:
 
 else
     # called from kernel build system: just declare what our modules are
-    #trace-events-sample.o := -I./
-    obj-m := kretprobe_consume_skb.o
+    obj-m := send-checker.o
 
 endif

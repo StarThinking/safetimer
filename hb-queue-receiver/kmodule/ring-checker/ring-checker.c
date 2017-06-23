@@ -91,9 +91,8 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
 int init_module() {
         int i;
 
-        /* NF_IP_PRE_ROUTING */
         nfho0.hook = hook_func;        
-        nfho0.hooknum = 0; 
+        nfho0.hooknum = NF_INET_PRE_ROUTING; 
         nfho0.pf = PF_INET; // IPV4 packets
         nf_register_hook(&nfho0);  
        

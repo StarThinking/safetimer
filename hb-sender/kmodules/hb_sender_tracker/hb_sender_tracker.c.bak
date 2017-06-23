@@ -1,0 +1,230 @@
+/*
+ * kretprobe_example.c
+ *
+ * Here's a sample kernel module showing the use of return probes to
+ * report the return value and total time taken for probed function
+ * to run.
+ *
+ * usage: insmod kretprobe_example.ko func=<func_name>
+ *
+ * If no func_name is specified, do_fork is instrumented
+ *
+ * For more information on theory of operation of kretprobes, see
+ * Documentation/kprobes.txt
+ *
+ * Build and insert the kernel module as done in the kprobe example.
+ * You will see the trace data in /var/log/messages and on the console
+ * whenever the probed function returns. (Some messages may be suppressed
+ * if syslogd is configured to eliminate duplicate messages.)
+ */
+
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/kprobes.h>
+#include <linux/ktime.h>
+#include <linux/limits.h>
+#include <linux/sched.h>
+
+#include <linux/init.h>
+#include <linux/debugfs.h>
+#include <linux/fs.h>
+
+#include <linux/skbuff.h>
+#include <net/ip.h>
+
+static struct dentry *dir_entry;
+static struct dentry *hb_compl_entry; // r
+static struct dentry *base_time_entry; // r+w
+static struct dentry *timeout_interval_entry; // r+w
+
+static long hb_send_compl_time;
+//EXPORT_SYMBOL(hb_send_compl_time);
+
+#define BUFFERSIZE 20
+static long base_time = 0;
+static char base_time_str[BUFFERSIZE];
+
+static long timeout_interval = 0; // unit of ms
+static char timeout_interval_str[BUFFERSIZE];
+
+static long max_transfer_delay = timeout_interval * 0.25;
+
+int prepared(void) {
+        return (base_time > 0 && timeout_interval > 0) ? 1 : 0;
+}
+
+long timeout(void) {
+        long hb_send_epoch = time_to_epoch(hb_send_compl_time);
+        long timeout_receiver = epoch_to_time(hb_send_epoch + 1);
+        return timeout_receiver - max_transfer_delay;
+}
+
+long now(void) {
+        return ktime_to_ms(ktime_get());
+}
+
+long time_to_epoch(long time) {
+        if(timeout_interval == 0)
+                return -1;
+
+        time -= base_time;
+        return time < 0 ? -1 : (long)(time / timeout_interval + 1);
+}
+
+long epoch_to_time(long id) {
+        return base_time + (id * timeout_interval);
+}
+
+/* Here we use the entry_hanlder to timestamp function entry */
+static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs)
+{
+        struct sk_buff *skb = NULL;
+        struct iphdr *iph = NULL;
+        struct udphdr *uh = NULL;
+
+//        if(ri->ret_addr != (void *) 0xffffffffa004a0b5)
+//                return 0;
+        if(!prepared())
+            return 0;
+
+        if(regs != NULL) {
+                skb = (struct sk_buff *) regs->di;
+                if(skb != NULL) {
+                        iph = ip_hdr(skb);
+                        if(iph != NULL && iph->protocol == IPPROTO_UDP) {
+                                uh = udp_hdr(skb);
+                                if(uh != NULL) {
+                                        u16 dport = ntohs(uh->dest);
+                                        if(dport != 5001) {
+                                                return 0;
+                                        } else {
+                                                long now = now();
+                                                /*long timeout = timeout();
+                                                if(now > timeout) {
+                                                        printk("heartbeat sending completion is timeouted! now = %ld timeout = %ld", now, timeout);
+                                                } else {
+                                                        hb_send_compl_time = now;
+                                                }*/
+                                                hb_send_compl_time = now;
+                                        }
+                                }
+                        }
+                }
+        }
+        
+        return 0;
+}
+
+static struct kretprobe my_kretprobe = {
+	.entry_handler		= entry_handler,
+	/* Probe up to 20 instances concurrently. */
+	.maxactive		= 20,
+};
+
+/* read file operation */
+static ssize_t read_hb_compl(struct file *fp, char __user *user_buffer,
+                                size_t count, loff_t *position) {
+        
+        char str[BUFFERSIZE] = "";
+
+        printk(KERN_INFO "hb_send_compl_time = %ld, now = %ld\n", hb_send_compl_time, now());
+        sprintf(str, "%ld", hb_send_compl_time);
+        return simple_read_from_buffer(user_buffer, count, position, str, BUFFERSIZE);
+}
+
+
+static const struct file_operations fops_hb_compl = {
+        .read = read_hb_compl
+};
+
+static ssize_t read_base_time(struct file *fp, char __user *user_buffer,
+                                    size_t count, loff_t *position) {
+        printk(KERN_INFO "base_time = %ld\n", base_time);
+        return simple_read_from_buffer(user_buffer, count, position, base_time_str, BUFFERSIZE);
+}
+
+static ssize_t write_base_time(struct file *fp, const char __user *user_buffer,
+                                     size_t count, loff_t *position) {
+        ssize_t ret;
+
+        if(count > BUFFERSIZE)
+                return -EINVAL;
+
+        ret =  simple_write_to_buffer(base_time_str, BUFFERSIZE, position, user_buffer, count);
+        if(kstrtol(base_time_str, 10, &base_time) != 0)
+                printk(KERN_INFO "base_time_str conversion failed!\n");
+
+        return ret;
+}
+
+static const struct file_operations fops_base_time = {
+        .read = read_base_time,
+        .write = write_base_time
+};
+
+static ssize_t read_timeout_interval(struct file *fp, char __user *user_buffer,
+                                    size_t count, loff_t *position) {
+        printk(KERN_INFO "timeout_interval = %ld\n", timeout_interval);
+        return simple_read_from_buffer(user_buffer, count, position, timeout_interval_str, BUFFERSIZE);
+}
+
+static ssize_t write_timeout_interval(struct file *fp, const char __user *user_buffer,
+                                     size_t count, loff_t *position) {
+        ssize_t ret;
+
+        if(count > BUFFERSIZE)
+                return -EINVAL;
+
+        ret =  simple_write_to_buffer(timeout_interval_str, BUFFERSIZE, position, user_buffer, count);
+        if(kstrtol(timeout_interval_str, 10, &timeout_interval) != 0)
+                printk(KERN_INFO "timeout_interval_str conversion failed!\n");
+
+        return ret;
+}
+
+static const struct file_operations fops_timeout_interval = {
+        .read = read_timeout_interval,
+        .write = write_timeout_interval
+};
+
+static int __init kretprobe_init(void)
+{
+	int ret;
+
+        base_time = now();
+        //next_epoch_id = time_to_epoch(now());
+
+        dir_entry = debugfs_create_dir("hb-sender", NULL);
+        hb_compl_entry = debugfs_create_file("hb_compl", 0644, dir_entry, NULL, &fops_hb_compl);
+        base_time_entry = debugfs_create_file("base_time", 0644, dir_entry, NULL, &fops_base_time);
+        timeout_interval_entry = debugfs_create_file("timeout_interval", 0644, dir_entry, NULL, &fops_timeout_interval);
+        
+	my_kretprobe.kp.symbol_name = "consume_skb";
+	ret = register_kretprobe(&my_kretprobe);
+	if (ret < 0) {
+		printk(KERN_INFO "register_kretprobe failed, returned %d\n",
+				ret);
+		return -1;
+	}
+	printk(KERN_INFO "Planted return probe at %s: %p\n",
+			my_kretprobe.kp.symbol_name, my_kretprobe.kp.addr);
+      
+        return 0;
+}
+
+static void __exit kretprobe_exit(void)
+{
+        debugfs_remove_recursive(dir_entry);
+    
+        unregister_kretprobe(&my_kretprobe);
+	printk(KERN_INFO "kretprobe at %p unregistered\n",
+			my_kretprobe.kp.addr);
+
+	// nmissed > 0 suggests that maxactive was set too low. 
+	printk(KERN_INFO "Missed probing %d instances of %s\n",
+		my_kretprobe.nmissed, my_kretprobe.kp.symbol_name);
+}
+
+module_init(kretprobe_init)
+module_exit(kretprobe_exit)
+MODULE_LICENSE("GPL");

@@ -24,8 +24,8 @@
 #include "hb_config.h"
 #include "drop.h"
 
-//#define S2S
-#define DROP
+#define S2S
+//#define DROP
 
 // tmp
 static int count = 0;
@@ -301,7 +301,7 @@ void *expirator(void *arg) {
                 // Expiration check. 
                 pthread_mutex_lock(&epoch_list_ht_lock);
 
-                printf("\t[Expirator] It's time to do expiration check for Epoch %ld.\n", next_epoch_id);
+                printf("\t[Expirator] It's now safe to do expiration check for Epoch %ld.\n", next_epoch_id);
                 ip_list = (list_t**) ht_get(&epoch_list_ht, &next_epoch_id, sizeof(long), &value_size);
                 if(ip_list != NULL) {
                         list_iterator_t *it = list_iterator_new(*ip_list, LIST_HEAD);
