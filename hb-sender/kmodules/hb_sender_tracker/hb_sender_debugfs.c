@@ -5,10 +5,10 @@
 #include <linux/fs.h>
 
 #include "hb_sender_debugfs.h"
+#include "hb_sender_kretprobe.h"
 
 MODULE_LICENSE("GPL");
 
-long hb_send_compl_time = 0;
 long base_time = 0;
 long timeout_interval = 0;
 
@@ -24,7 +24,7 @@ static ssize_t hb_send_compl_time_read(struct file *fp, char __user *user_buffer
                                 size_t count, loff_t *position) {
         char str[BUFFERSIZE] = "";
 
-        printk(KERN_INFO "hb_send_compl_time = %ld\n", hb_send_compl_time);
+        printk(KERN_INFO "hb_send_compl_time = %ld, udp_send_time = %ld\n", hb_send_compl_time, udp_send_time);
         sprintf(str, "%ld", hb_send_compl_time);
         return simple_read_from_buffer(user_buffer, count, position, str, BUFFERSIZE);
 }
@@ -99,17 +99,3 @@ void debugfs_exit(void) {
     
 	printk(KERN_INFO "debugfs_exited\n");
 }
-
-/*static int __init tracker_init(void) {
-        printk("tracker_init\n");
-        debugfs_init();
-        return 0;
-}
-
-static void __exit tracker_exit(void) {
-        debugfs_exit();
-}
-                    
-module_init(tracker_init)
-module_exit(tracker_exit)
-*/

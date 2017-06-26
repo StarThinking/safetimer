@@ -21,13 +21,17 @@ __attribute__((section("__versions"))) = {
 	{ 0x619cb7dd, __VMLINUX_SYMBOL_STR(simple_read_from_buffer) },
 	{ 0xb7ce9e9b, __VMLINUX_SYMBOL_STR(debugfs_create_dir) },
 	{ 0x779a18af, __VMLINUX_SYMBOL_STR(kstrtoll) },
+	{ 0xc0241fac, __VMLINUX_SYMBOL_STR(register_kretprobe) },
+	{ 0xc87c1f84, __VMLINUX_SYMBOL_STR(ktime_get) },
 	{ 0x8b35cde9, __VMLINUX_SYMBOL_STR(debugfs_create_file) },
 	{ 0x91715312, __VMLINUX_SYMBOL_STR(sprintf) },
 	{ 0xc9aca5d0, __VMLINUX_SYMBOL_STR(debugfs_remove_recursive) },
 	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
+	{ 0xe1ba164b, __VMLINUX_SYMBOL_STR(unregister_kretprobe) },
 	{ 0xf0fdf6cb, __VMLINUX_SYMBOL_STR(__stack_chk_fail) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
 	{ 0xbb4f4766, __VMLINUX_SYMBOL_STR(simple_write_to_buffer) },
+	{ 0x4cdb3178, __VMLINUX_SYMBOL_STR(ns_to_timeval) },
 };
 
 static const char __module_depends[]
@@ -36,4 +40,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "818EA1A6FB91E8FAF1284FD");
+MODULE_INFO(srcversion, "C4EC94A386D72C98B61971F");

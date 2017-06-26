@@ -1,9 +1,7 @@
 EXTRA_CFLAGS := -I./
 
-obj-m += hb_send_tracker.o 
-hb_send_tracker-objs := hb_sender_debugfs.o hb_sender_main.o
-
-#obj-m += hb_sender_debugfs.o 
+obj-m += hb_sender_tracker.o 
+hb_sender_tracker-objs := hb_sender_debugfs.o hb_sender_kretprobe.o hb_sender_main.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

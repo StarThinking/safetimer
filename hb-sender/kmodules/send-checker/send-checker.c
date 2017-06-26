@@ -14,7 +14,7 @@
 MODULE_LICENSE("GPL");
 
 static struct nf_hook_ops nfho0;
-extern long hb_completion_time;
+//extern long hb_completion_time;
 
 unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb, 
         const struct net_device *in, const struct net_device *out, 
@@ -38,11 +38,11 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
                 uh = (struct udphdr *) skb_transport_header(skb);
                 sport = (size_t) ntohs(uh->source);
                 dport = (size_t) ntohs(uh->dest);
+            
+                printk(KERN_DEBUG "[msx] POST_ROUTING %pI4:%u --> %pI4:%u, skb->data_len = %u\n", 
+                    &saddr, sport, &daddr, dport, skb->data_len);
         }
 
-        printk(KERN_DEBUG "[msx] POST_ROUTING %pI4:%u --> %pI4:%u at %lu and hb_completion_time = %lu\n", 
-                    &saddr, sport, &daddr, dport, jiffies, hb_completion_time);
-        
         return NF_ACCEPT; 
 }
 
