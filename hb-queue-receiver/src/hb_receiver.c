@@ -21,7 +21,8 @@ static int udp_server_sockfd;
 static int tcp_listenfd;
 static int conn_num = 0;
 static pthread_t tcp_server_tid;
-static pthread_t tcp_receiver_tids[IRQ_NUM];
+static pthread_t sender_request_receiver_tid;
+static pthread_t s2s_msg_receiver_tids[IRQ_NUM];
 static int self_connfds[IRQ_NUM];
 
 static int hb_received = 0;
@@ -68,13 +69,73 @@ void *udp_server(void *arg) {
         return NULL;
 }
 
-void *receiver(void *arg) {
+void *sender_request_receiver(void *arg) {
         int ret;
         int connfd = *(int *) arg;
-        long *data = (long*) calloc(2, sizeof(long));
+        free(arg);
 
-        printf("receiver\n");
+        printf("sender_request_receiver which receives 2 longs\n");
+
         while(1) {
+                FILE *fp;
+                char *buf;
+                long recv_buf[2];
+                long data_to_send[2];
+                long base_time, timeout_interval;
+                
+                ret = recv(connfd, &recv_buf, SELF_MSGSIZE, 0);
+                if(ret <= 0) {
+                        fprintf(stderr, "Error: recv ret is less than 0\n");
+                        close(connfd);
+                        break;
+                }
+
+                if(ret != SELF_MSGSIZE)
+                        printf("Warning: received packet size is %d, not %lu !\n", ret, SELF_MSGSIZE);
+                      
+                printf("[tcp] packet received, ret = %d, recv_buf[0] = %ld, recv_buf[1] = %ld.\n", 
+                        ret, recv_buf[0], recv_buf[1]);
+                
+                // send back base_time and timeout interval to heartbeat sender
+                fp = fopen("/sys/kernel/debug/hb_receiver/base_time", "r");
+                buf = (char*) calloc(20, sizeof(char));
+                fgets(buf, 20, fp);
+                base_time = atol(buf);
+                free(buf);
+                
+                fp = fopen("/sys/kernel/debug/hb_receiver/timeout_interval", "r");
+                buf = (char*) calloc(20, sizeof(char));
+                fgets (buf, 20, fp);
+                timeout_interval = atol(buf);
+                free(buf);
+
+                data_to_send[0] = base_time;;
+                data_to_send[1] = timeout_interval;
+                ret = send(connfd, data_to_send, SELF_MSGSIZE, 0);
+                
+                if(ret <= 0) {
+                        fprintf(stderr, "Error: send ret is 0!\n");
+                        exit(1);
+                }
+                
+                if(ret != SELF_MSGSIZE)
+                        printf("Warning: send ret is %d.\n", ret);
+
+                printf("[tcp] base_time %ld and timeout_interval %ld has been sent to heartbeat sender\n"
+                            ,data_to_send[0], data_to_send[1]);
+                close(connfd);
+        }
+        return NULL;
+}
+
+void *s2s_msg_receiver(void *arg) {
+        int ret;
+        int connfd = *(int *) arg;
+        free(arg);
+
+        printf("s2s_msg_receiver which receives 2 longs\n");
+        while(1) {
+                long data[2];
                 ret = recv(connfd, data, SELF_MSGSIZE, 0);
                 if(ret <= 0) {
                         fprintf(stderr, "Error: recv ret is less than 0\n");
@@ -87,11 +148,10 @@ void *receiver(void *arg) {
                       
                 printf("[tcp] packet received, ret = %d, data[0] = %ld, data[1] = %ld.\n", ret, data[0], data[1]);
         }
-        free(arg);
         return NULL;
 }
 
-char* concat(const char *s1, const char *s2) {
+char *concat(const char *s1, const char *s2) {
         char *result = malloc(strlen(s1) + strlen(s2) + 1);
         strcpy(result, s1);
         strcat(result, s2);
@@ -161,7 +221,7 @@ void *tcp_server(void *arg) {
 
         while(1) {
                 struct sockaddr_in client;
-                int connfd;
+                int connfd = 0;
 	        long msg;
                 unsigned int client_len;
                 pthread_t tid;
@@ -170,33 +230,46 @@ void *tcp_server(void *arg) {
                 client_len = sizeof(client);
                 connfd = accept(tcp_listenfd, (struct sockaddr*) &client, &client_len);
 
-                recv(connfd, &msg, MSGSIZE, 0);
+                // Establish #rx-irqs TCP connections from self sender with this local tcp server
+                if(strcmp(inet_ntoa(client.sin_addr), SELF_IP) == 0) {
+                        recv(connfd, &msg, MSGSIZE, 0);
                 
-                if(msg == 0) { // first packet
-                        if(!sockfd_is_first(client, &index)) {
-                                send(connfd, &index, MSGSIZE, 0);
-                                close(connfd);
-                                continue;
-                        } else {
-                                self_connfds[index] = connfd;
-                                send(connfd, &index, MSGSIZE, 0);
+                        if(msg == 0) { // first packet
+                                if(!sockfd_is_first(client, &index)) {
+                                        send(connfd, &index, MSGSIZE, 0);
+                                        close(connfd);
+                                        continue;
+                                 } else {
+                                        self_connfds[index] = connfd;
+                                        send(connfd, &index, MSGSIZE, 0);
+                                 }
                         }
-                }
  
-                int *tmp = malloc(sizeof(int));
-                *tmp = connfd;
-                pthread_create(&tid, NULL, receiver, tmp);
-                tcp_receiver_tids[conn_num++] = tid;
+                        int *tmp = malloc(sizeof(int));
+                        *tmp = connfd;
+                        pthread_create(&tid, NULL, s2s_msg_receiver, tmp);
+                        s2s_msg_receiver_tids[conn_num++] = tid;
     
-                printf("New TCP socket connection established, sockfd = %d, ip = %s, sport = %u\n", connfd, inet_ntoa(client.sin_addr), htons(client.sin_port));
+                        printf("New SELF TCP socket connection established, sockfd = %d, ip = %s, sport = %u\n",
+                                connfd, inet_ntoa(client.sin_addr), htons(client.sin_port));
+                } else {
+                        int *tmp = malloc(sizeof(int));
+                        *tmp = connfd;
+                        pthread_create(&tid, NULL, sender_request_receiver, tmp);
+                        sender_request_receiver_tid = tid;
+                        
+                        printf("New Sender Request TCP socket connection established, sockfd = %d, ip = %s, sport = %u\n",
+                                connfd, inet_ntoa(client.sin_addr), htons(client.sin_port));
+                        
+                }
         }   
 }
 
 int main(int argc, char *argv[]) {
         signal(SIGINT, sig_handler);
 
-        if(argc != 2) {
-                printf("Usage: ./hb_receiver [timeout ms]\n");
+        if(argc != 1) {
+                printf("Usage: ./hb_receiver\n");
 	        exit(1);
         }
 
@@ -212,8 +285,9 @@ int main(int argc, char *argv[]) {
         int i;
         for(i = 0; i < conn_num; i++){
                 close(self_connfds[i]);
-                pthread_cancel(tcp_receiver_tids[i]);
+                pthread_cancel(s2s_msg_receiver_tids[i]);
         }
+        pthread_cancel(sender_request_receiver_tid);
 
         printf("Program exits.\n");
         

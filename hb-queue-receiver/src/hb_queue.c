@@ -24,7 +24,7 @@
 #include "hb_config.h"
 #include "drop.h"
 
-#define S2S
+//#define S2S
 //#define DROP
 
 // tmp
@@ -36,8 +36,8 @@ static struct nfq_q_handle *qh;
 static hash_table epoch_list_ht;
 static pthread_mutex_t epoch_list_ht_lock;
 
-static long base_time;
-static long expiration_interval;
+long base_time = 0;
+long timeout_interval = 0;
 static pthread_t expirator_tid;
 static int running;
 
@@ -93,11 +93,11 @@ static void clear_all() {
 // return epoch id
 long round_to_epoch(long time) {
         time -= base_time;
-        return time < 0 ? -1 : (long)(time / expiration_interval + 1);
+        return time < 0 ? -1 : (long)(time / timeout_interval + 1);
 }
 
 long round_to_interval(long id) {
-        return base_time + (id * expiration_interval);
+        return base_time + (id * timeout_interval);
 }
 
 /*
@@ -106,18 +106,20 @@ long round_to_interval(long id) {
 static u_int32_t process_hb(struct nfq_data *tb) {
         int id = 0;
         struct nfqnl_msg_packet_hdr *ph;
-	int payload_len;
-	unsigned char *data;
+	int payload_len = 0;
+	unsigned char *nf_packet;
         struct iphdr* iph;
+        unsigned short iphdr_size;
         char saddr[INET_ADDRSTRLEN];
 
         ph = nfq_get_msg_packet_hdr(tb);
         if(ph)
                 id = ntohl(ph->packet_id);
         
-        payload_len = nfq_get_payload(tb, &data);
+        payload_len = nfq_get_payload(tb, &nf_packet);
         if(payload_len >= 0) {                
-                iph = (struct iphdr *) data;
+                iph = (struct iphdr *) nf_packet;
+                iphdr_size = iph->ihl << 2;
                 inet_ntop(AF_INET, &(iph->saddr), saddr, INET_ADDRSTRLEN);
         }
 
@@ -127,15 +129,26 @@ static u_int32_t process_hb(struct nfq_data *tb) {
          * The content of this TCP packet, beginning at the 52th byte, consists of two 8-byte longs.
          * The first long contains epoch_id, while the seocnd long contains ring_id. 
          */
-        if(strcmp(saddr, SELF_IP) == 0) {
-                long *content = (long *)(data + 52);
-                long epoch_id  = *content; 
-                long ring_id  = *(content + 1); 
-                int i;
+        if(strcmp(saddr, SELF_IP) == 0 && iph->protocol == IPPROTO_TCP) {
+                int i, array_index;
                 size_t value_size;
+                struct tcphdr *tcp = ((struct tcphdr *) (nf_packet + iphdr_size)); 
+                unsigned short tcphdr_size = (tcp->doff << 2);
+                unsigned short offset = iphdr_size + tcphdr_size;
+                long epoch_id = -1;
+                long ring_id = -1;
+                
+                // payload size check
+                if(payload_len >= offset + SELF_MSGSIZE) {
+                        epoch_id = *((long *)(nf_packet + offset));
+                        ring_id  = *((long *)(nf_packet + offset + MSGSIZE)); 
+                        //printf("epoch_id = %ld, ring_id = %ld\n", epoch_id, ring_id);
+                } else {
+                        printf("[S2S] Error: TCP payload size less than %ld!\n", SELF_MSGSIZE);
+                }
                 
                 // get array index; if it's a new round, increase round
-                int array_index = epoch_id % ARRAY_SIZE;
+                array_index = epoch_id % ARRAY_SIZE;
                 
                 if(received_self_msg_array[array_index][ring_id] != array_round) {
                         received_self_msg_array[array_index][ring_id] = array_round; 
@@ -169,12 +182,22 @@ static u_int32_t process_hb(struct nfq_data *tb) {
          * The content of this UDP packet, beginning at the 28th byte, consists of one 8-byte long.
          * The long contains send_time. 
          */
-        if(strcmp(saddr, SELF_IP) != 0) {
-                long *content = (long *)(data + 28);
-                long send_time = *content;
-                long epoch_id = round_to_epoch(send_time); // get the epoch id by sending time
+        if(strcmp(saddr, SELF_IP) != 0 && iph->protocol == IPPROTO_UDP) {
+                unsigned short udphdr_size = 8;
+                unsigned short offset = iphdr_size + udphdr_size;
+                long send_time = -1;
+                long epoch_id = -1;
                 size_t value_size;
                 list_t **ip_list;
+
+                //printf("payload_len = %d, offset = %d\n", payload_len, offset);
+                // payload size check
+                if(payload_len >= offset + MSGSIZE) {
+                        send_time = *((long*)(nf_packet + offset));
+                        epoch_id = round_to_epoch(send_time); // get the epoch id by sending time
+                } else {
+                        printf("[Receiver] Error: UDP payload size less than %ld!\n", MSGSIZE);
+                }
 
                 printf("[Receiver] Heartbeat from Ip %s for Epoch (%ld, %ld) sent at %ld received at %ld.\n",
                         saddr, epoch_id, round_to_interval(epoch_id), send_time, now());
@@ -217,6 +240,16 @@ static u_int32_t process_hb(struct nfq_data *tb) {
                 pthread_mutex_unlock(&epoch_list_ht_lock); 
         } 
 
+        if(strcmp(saddr, SELF_IP) != 0 && iph->protocol == IPPROTO_TCP) {
+                struct tcphdr *tcp = ((struct tcphdr *) (nf_packet + iphdr_size)); 
+                unsigned short tcphdr_size = (tcp->doff << 2);
+                unsigned short offset = iphdr_size + tcphdr_size;
+
+                if(payload_len >= offset + SELF_MSGSIZE) { // The content of this message doesn't matter
+                        printf("[Receiver] Heartbeat sender request received.\n");
+                } 
+        }
+
 ret:
         return id;
 }
@@ -226,6 +259,8 @@ ret:
  */
 void *expirator(void *arg) {
         long next_epoch_id;
+        FILE *fp;
+        char *buf;
 
 #ifdef DROP
         int skip_check = 0;
@@ -238,8 +273,25 @@ void *expirator(void *arg) {
 #endif
         
         base_time = now();
+
+        // write base time into debugfs
+        fp = fopen("/sys/kernel/debug/hb_receiver/base_time", "r+");
+        buf = (char*) calloc(20, sizeof(char));
+        sprintf(buf, "%ld", base_time);
+        fputs(buf, fp);
+        free(buf);
+        fclose(fp);
+        
+        fp = fopen("/sys/kernel/debug/hb_receiver/timeout_interval", "r+");
+        buf = (char*) calloc(20, sizeof(char));
+        sprintf(buf, "%ld", timeout_interval);
+        fputs(buf, fp);
+        free(buf);
+        fclose(fp);
+
         next_epoch_id = round_to_epoch(now()); 
-        printf("\t[Expirator] Thread started with base_time = %ld, expiration_interval = %ld, next_epoch_id = %ld\n",                 base_time, expiration_interval, next_epoch_id);
+        printf("\t[Expirator] Thread started with base_time = %ld, timeout_interval = %ld, next_epoch_id = %ld\n",
+                base_time, timeout_interval, next_epoch_id);
         
         while(running) {
                 long current_time = now();
@@ -355,7 +407,7 @@ int main(int argc, char **argv) {
                 printf("./hb_queue [timeout ms]\n");
                 return -1;
         } else 
-                expiration_interval = atoi(argv[1]);
+                timeout_interval = atoi(argv[1]);
          
         ht_init(&epoch_list_ht, HT_NONE, 0.05);
 

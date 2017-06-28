@@ -40,29 +40,27 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs)
        //         return 0;
 
         if(regs != NULL) {
-                skb = (struct sk_buff *) regs->di;
-                if(skb != NULL) {
-                        iph = ip_hdr(skb);
-                        if(iph != NULL && iph->protocol == IPPROTO_UDP) {
-                                uh = udp_hdr(skb);
-                                if(uh != NULL) {
-                                        u16 dport = ntohs(uh->dest);
-                                        if(dport == 5001) {
-                                                if(skb->data_len >= 0) {
-                                                        unsigned char *data = (unsigned char *) iph;
-                                                        long *udp_send_time_p = (long *) (data + 28);
-                                                        udp_send_time = *udp_send_time_p;
-                                                }
+            skb = (struct sk_buff *) regs->di;
+            if(skb != NULL) {
+                iph = ip_hdr(skb);
+                if(iph != NULL && iph->protocol == IPPROTO_UDP) {
+                    uh = udp_hdr(skb);
+                    if(uh != NULL) {
+                        u16 dport = ntohs(uh->dest);
+                        if(dport == 5001) {
+                            unsigned char *data = (unsigned char *) iph;
+                            long *udp_send_time_p = (long *) (data + 28);
+                            udp_send_time = *udp_send_time_p;
 
-                                                //if(timeout()) {
-                                                //        printk("heartbeat sending completion is timeouted!\n")
-                                                //} else {
-                                                hb_send_compl_time = now();
-                                                //}
-                                        }
-                                }
+                            //if(timeout()) {
+                            //  printk("heartbeat sending completion is timeouted!\n");
+                            //} else {
+                                hb_send_compl_time = now();
+                            //}
                         }
+                    }
                 }
+            }
         }
         
         return 0;
