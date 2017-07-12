@@ -12,8 +12,9 @@
 #include "hb_config.h"
 
 static int sockfd = 0;
-static long timeout_intvl_ms = 0;
+static long timeout_interval = 0;
 static char *receiver_ip = "";
+static int first_hb_send = 1;
 
 static int packet_sent = 0;
 
@@ -27,8 +28,8 @@ void sig_handler(int signo) {
 
 struct timespec sleep_time() {
         struct timespec ts;
-        ts.tv_sec = timeout_intvl_ms / 1000;
-        ts.tv_nsec = (timeout_intvl_ms % 1000) * 1.0e6;
+        ts.tv_sec = timeout_interval / 1000;
+        ts.tv_nsec = (timeout_interval % 1000) * 1.0e6;
         return ts;
 }
 
@@ -46,16 +47,17 @@ int main(int argc , char *argv[]) {
         int ret;
         long request[2];
         long recv_buf[2];
+        FILE *fp;
+        char *buf;
     
-        if(argc != 3) {
-	        printf("Usage: ./udp_sender [ip] [timeout ms]\n");
+        if(argc != 2) {
+	        printf("Usage: ./udp_sender [ip]\n");
 	        return -1;
         }
         receiver_ip = argv[1];
-        timeout_intvl_ms = atoi(argv[2]);
-        printf("receiver_ip = %s, timeout = %ld ms, msg_size = %lu\n", receiver_ip, timeout_intvl_ms, MSGSIZE);
 
         // establish connections with local server
+        // to fetch base_time and timeout_interval
         _sockfd = socket(AF_INET, SOCK_STREAM, 0);
         local_server.sin_family = AF_INET;
         local_server.sin_addr.s_addr = inet_addr(LOCAL_IP);
@@ -78,7 +80,7 @@ int main(int argc , char *argv[]) {
         if(ret != SELF_MSGSIZE)
                 printf("Warning: send ret is %d.\n", ret);
        
-        printf("hb prep info request sent\n");
+        printf("%d hb prep info request sent\n", ret);
 
         ret = recv(_sockfd, recv_buf, SELF_MSGSIZE, 0);
         if(ret <= 0) {
@@ -93,6 +95,30 @@ int main(int argc , char *argv[]) {
         printf("packet received, ret = %d, base_time = %ld, timeout_interval = %ld.\n", 
                 ret, recv_buf[0], recv_buf[1]);
 
+        fp = fopen("/sys/kernel/debug/hb_sender_tracker/base_time", "r+");
+        if(fp == NULL)
+                printf("failed to open file!\n");
+        else {
+                buf = (char*) calloc(20, sizeof(char));
+                sprintf(buf, "%ld", recv_buf[0]);
+                fputs(buf, fp);
+                free(buf);
+        }
+        fclose(fp);
+        
+        fp = fopen("/sys/kernel/debug/hb_sender_tracker/timeout_interval", "r+");
+        if(fp == NULL)
+                printf("failed to open file!\n");
+        else {
+                buf = (char*) calloc(20, sizeof(char));
+                sprintf(buf, "%ld", recv_buf[1]);
+                fputs(buf, fp);
+                free(buf);
+        }
+        fclose(fp);
+
+        timeout_interval = recv_buf[1];
+
         // UDP
         sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         server.sin_addr.s_addr = inet_addr(receiver_ip);
@@ -101,8 +127,26 @@ int main(int argc , char *argv[]) {
 
         long begin_t = now();
         while(1) {  
-                long now_t = now();
-                int ret = sendto(sockfd, &now_t, MSGSIZE, 0, (struct sockaddr *) &server, sizeof(server));
+                long hb_send_time = now();
+                
+                // update hb_send_time as hb_send_compl_time for the first hb send
+                if(first_hb_send) {
+                        fp = fopen("/sys/kernel/debug/hb_sender_tracker/hb_send_compl_time", "r+");
+                        if(fp == NULL)
+                                printf("failed to open file!\n");
+                        else {
+                                buf = (char*) calloc(20, sizeof(char));
+                                sprintf(buf, "%ld", hb_send_time);
+                                fputs(buf, fp);
+                                free(buf);
+                        }
+                        fclose(fp);
+                        first_hb_send = 0;
+                        printf("update hb_send_compl_time as now hb_send_time %ld for the first hb send\n",
+                                hb_send_time);
+                }
+
+                int ret = sendto(sockfd, &hb_send_time, MSGSIZE, 0, (struct sockaddr *) &server, sizeof(server));
                 
                 if(ret <= 0) {
                         fprintf(stderr, "Error: sendto ret is less than 0.\n");
@@ -118,7 +162,9 @@ int main(int argc , char *argv[]) {
                         break;
                 // sleep
                 struct timespec sleep_ts = sleep_time();
-                nanosleep(&sleep_ts, NULL); 
+                nanosleep(&sleep_ts, NULL);
+                if(packet_sent == 5)
+                        nanosleep(&sleep_ts, NULL);
         }
         
         long end_t = now();

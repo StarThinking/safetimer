@@ -22,15 +22,15 @@ __attribute__((section("__versions"))) = {
 	{ 0xb7ce9e9b, __VMLINUX_SYMBOL_STR(debugfs_create_dir) },
 	{ 0x779a18af, __VMLINUX_SYMBOL_STR(kstrtoll) },
 	{ 0xc0241fac, __VMLINUX_SYMBOL_STR(register_kretprobe) },
-	{ 0xc87c1f84, __VMLINUX_SYMBOL_STR(ktime_get) },
+	{ 0xdcdefc8d, __VMLINUX_SYMBOL_STR(nf_register_hook) },
+	{ 0x2447533c, __VMLINUX_SYMBOL_STR(ktime_get_real) },
 	{ 0x8b35cde9, __VMLINUX_SYMBOL_STR(debugfs_create_file) },
-	{ 0x91715312, __VMLINUX_SYMBOL_STR(sprintf) },
 	{ 0xc9aca5d0, __VMLINUX_SYMBOL_STR(debugfs_remove_recursive) },
 	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
 	{ 0xe1ba164b, __VMLINUX_SYMBOL_STR(unregister_kretprobe) },
-	{ 0xf0fdf6cb, __VMLINUX_SYMBOL_STR(__stack_chk_fail) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
 	{ 0xbb4f4766, __VMLINUX_SYMBOL_STR(simple_write_to_buffer) },
+	{ 0x2a35968d, __VMLINUX_SYMBOL_STR(nf_unregister_hook) },
 	{ 0x4cdb3178, __VMLINUX_SYMBOL_STR(ns_to_timeval) },
 };
 
@@ -40,4 +40,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "C4EC94A386D72C98B61971F");
+MODULE_INFO(srcversion, "8559972BCF1E42C18136991");

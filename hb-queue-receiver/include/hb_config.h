@@ -2,7 +2,7 @@
 #define LOCAL_PORT 5002
 #define SELF_PORT 6001
 
-#define SELF_IP "10.0.0.12"
+#define SELF_IP "10.0.0.111"
 #define LOCAL_IP "10.0.0.11"
 
 #define MSGSIZE sizeof(long)

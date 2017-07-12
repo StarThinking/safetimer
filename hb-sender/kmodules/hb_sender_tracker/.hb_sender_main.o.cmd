@@ -557,6 +557,7 @@ deps_/root/hb-latency/hb-sender/kmodules/hb_sender_tracker/hb_sender_main.o := \
     $(wildcard include/config/modules/use/elf/rela.h) \
   /root/hb-latency/hb-sender/kmodules/hb_sender_tracker/hb_sender_debugfs.h \
   /root/hb-latency/hb-sender/kmodules/hb_sender_tracker/hb_sender_kretprobe.h \
+  /root/hb-latency/hb-sender/kmodules/hb_sender_tracker/hb_sender_netfilter.h \
 
 /root/hb-latency/hb-sender/kmodules/hb_sender_tracker/hb_sender_main.o: $(deps_/root/hb-latency/hb-sender/kmodules/hb_sender_tracker/hb_sender_main.o)
 

@@ -39,7 +39,7 @@ int main(int argc , char *argv[])
      
     server.sin_addr.s_addr = inet_addr(ip);
     server.sin_family = AF_INET;
-    server.sin_port = htons(5000);
+    server.sin_port = htons(5001);
 
     long start_time = current_time();
     long count = 0;
