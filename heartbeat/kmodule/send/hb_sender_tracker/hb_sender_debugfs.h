@@ -1,3 +1,5 @@
+#include <linux/spinlock.h>
+
 #ifndef HB_SENDER_DEBUGFS
 #define HB_SENDER_DEBUGFS
 
@@ -30,6 +32,10 @@ static inline long epoch_to_time(long id) {
 static inline int prepared(void) {
         return (base_time > 0 && timeout_interval > 0) ? 1 : 0;
 }
+
+long get_hb_send_compl_time(void);
+
+void set_hb_send_compl_time(long time);
 
 void debugfs_init(void);
 

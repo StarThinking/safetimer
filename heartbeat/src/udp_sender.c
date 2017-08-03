@@ -15,6 +15,7 @@ static int sockfd = 0;
 static long timeout_interval = 0;
 static char *receiver_ip = "";
 static int first_hb_send = 1;
+static const long frequency = 2;
 
 static int packet_sent = 0;
 
@@ -28,8 +29,9 @@ void sig_handler(int signo) {
 
 struct timespec sleep_time() {
         struct timespec ts;
-        ts.tv_sec = timeout_interval / 1000;
-        ts.tv_nsec = (timeout_interval % 1000) * 1.0e6;
+        long time = timeout_interval / frequency;
+        ts.tv_sec = time / 1000;
+        ts.tv_nsec = (time % 1000) * 1.0e6;
         return ts;
 }
 
@@ -67,7 +69,7 @@ int main(int argc , char *argv[]) {
                 fprintf(stderr, "Error: connect failed.\n");
                 exit(1);
         }
-        printf("The TCP connection with local server have been %s established.\n", LOCAL_IP);
+        printf("The TCP connection with local server %s have been established.\n", LOCAL_IP);
         
         request[0] = 0;
         request[1] = 0;
@@ -147,7 +149,8 @@ int main(int argc , char *argv[]) {
                 }
 
                 int ret = sendto(sockfd, &hb_send_time, MSGSIZE, 0, (struct sockaddr *) &server, sizeof(server));
-                
+                printf("upd sent with hb_send_time %ld\n", hb_send_time);
+
                 if(ret <= 0) {
                         fprintf(stderr, "Error: sendto ret is less than 0.\n");
                         close(sockfd);
@@ -160,11 +163,10 @@ int main(int argc , char *argv[]) {
                 packet_sent ++;
                 if(packet_sent == 10000)
                         break;
+                
                 // sleep
                 struct timespec sleep_ts = sleep_time();
                 nanosleep(&sleep_ts, NULL);
-                if(packet_sent == 5)
-                        nanosleep(&sleep_ts, NULL);
         }
         
         long end_t = now();

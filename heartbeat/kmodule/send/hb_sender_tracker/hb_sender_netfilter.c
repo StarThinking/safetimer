@@ -31,15 +31,6 @@ static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb
         iph = (struct iphdr *) skb_network_header(skb);
         saddr = (unsigned int) iph->saddr;
         daddr = (unsigned int) iph->daddr;
-
-        // 0 if not timeout; positive if timeout, the value means the exceeding time beyond timeout
-        exceeding_time = timeout();
-        
-        if(exceeding_time > 0) { // timeout
-                printk(KERN_DEBUG "[msx] send is disabled as it exceeds timeout %ld by %ld ms !\n", 
-                        get_send_timeout(), exceeding_time);                
-                return NF_DROP;
-        }
         
         if(iph->protocol == IPPROTO_TCP) { 
                 th = (struct tcphdr *) skb_transport_header(skb);
@@ -49,11 +40,22 @@ static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb
                 uh = (struct udphdr *) skb_transport_header(skb);
                 sport = (size_t) ntohs(uh->source);
                 dport = (size_t) ntohs(uh->dest);
-        } else {
-                return NF_ACCEPT;
         } 
-
-        printk(KERN_DEBUG "[msx] POST_ROUTING %pI4:%u --> %pI4:%u, skb->data_len = %u\n", &saddr, sport, &daddr, dport, skb->data_len);
+        
+        if(iph->protocol == IPPROTO_TCP || iph->protocol == IPPROTO_UDP)
+                printk(KERN_DEBUG "[msx] POST_ROUTING %pI4:%u --> %pI4:%u, skb->data_len = %u\n", &saddr, sport, &daddr, dport, skb->data_len);
+        
+        // 0 if not timeout; positive if timeout, the value means the exceeding time beyond timeout
+        exceeding_time = timeout();
+        
+        if(exceeding_time > 0) { // timeout
+                if(iph->protocol == IPPROTO_UDP && dport == 5001) {
+                        printk(KERN_DEBUG "[msx] UDP send to dport 5001 is disabled as it exceeds timeout %ld by %ld ms !\n", get_send_timeout(), exceeding_time);       
+                        return NF_DROP;
+                } else {
+                        return NF_ACCEPT; 
+                }
+        }
 
         return NF_ACCEPT; 
 }
