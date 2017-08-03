@@ -39,7 +39,7 @@ int main(int argc , char *argv[])
      
     server.sin_addr.s_addr = inet_addr(ip);
     server.sin_family = AF_INET;
-    server.sin_port = htons(5001);
+    server.sin_port = htons(5005);
 
     long start_time = current_time();
     long count = 0;
@@ -51,7 +51,7 @@ int main(int argc , char *argv[])
             break;
         }
         if(ret != msg_size) printf("warning write ret=%d\n", ret);
-        sleep(1);        
+//        sleep(1);        
 /*	ret = recvfrom(sock, buf, msg_size, 0, (struct sockaddr *) &client, &client_len);
         if(ret <= 0){
             break;

@@ -8,23 +8,33 @@
 #include <linux/skbuff.h>
 #include <net/ip.h>
 
+#include "hb_sender_debugfs.h"
 #include "hb_sender_kretprobe.h"
 
 MODULE_LICENSE("GPL");
-
-long hb_send_compl_time = 0;
-long hb_send_time = 0;
 
 long now(void) {
         //return ktime_to_ms(ktime_get());
         return ktime_to_ms(ktime_get_real());
 }
 
-long timeout(void) {
+long get_send_timeout(void) {
         long hb_epoch = time_to_epoch(hb_send_compl_time);
-        long timeout_recv = epoch_to_time(hb_epoch + 1);
-        long timeout_send = timeout_recv - get_max_transfer_delay();
-        return now() > timeout_send ? 1 : 0;
+        long recv_timeout = epoch_to_time(hb_epoch + 1);
+        return recv_timeout - get_max_transfer_delay() - get_max_clock_deviation();
+}
+
+long timeout(void) {
+        long send_timeout = 0;
+        long now_t = 0;
+        
+        if(!prepared())
+                return 0;
+
+        send_timeout = get_send_timeout();
+        now_t = now();
+        
+        return now_t - send_timeout;
 }
 
 static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
@@ -48,16 +58,14 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
                         if(dport == 5001) {
                             unsigned char *data = (unsigned char *) iph;
                             long *hb_send_time_p = (long *) (data + 28);
-                            hb_send_time = *hb_send_time_p;
+                            long hb_send_time = *hb_send_time_p;
 
-                            if(!timeout()) {
-                                printk("hb send completed before timeout so update hb_send_compl_time %ld to hb_send_time %ld\n", hb_send_compl_time, hb_send_time);
+                            long exceeding_time = timeout();
+                            if(exceeding_time <= 0) {
+                                printk("hb send completes and update hb_send_compl_time %ld to hb_send_time %ld\n", hb_send_compl_time, hb_send_time);
                                 hb_send_compl_time = hb_send_time;
                             } else {
-                                long hb_epoch = time_to_epoch(hb_send_compl_time);
-                                long timeout_recv = epoch_to_time(hb_epoch + 1);
-                                long timeout_send = timeout_recv - get_max_transfer_delay();
-                                printk("hb send completion timeout! now %ld > timeout_send %ld\n", now(), timeout_send);
+                                printk("hb send completion timeouts (%ld) by %ld!\n", get_send_timeout(), exceeding_time);
                             } 
                         }
                     }

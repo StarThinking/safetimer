@@ -5,9 +5,14 @@
 
 extern long base_time;
 extern long timeout_interval; // unit of ms
+extern long hb_send_compl_time;
 
 static inline long get_max_transfer_delay(void) { 
-        return timeout_interval * 0.25;
+        return timeout_interval * 0.1;
+}
+
+static inline long get_max_clock_deviation(void) {
+        return timeout_interval * 0.1;
 }
 
 static inline long time_to_epoch(long time) {

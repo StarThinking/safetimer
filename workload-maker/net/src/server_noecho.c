@@ -30,8 +30,8 @@ int main(int argc, char *argv[])
     memset(&server, '0', sizeof(server));
 
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = htonl(INADDR_ANY);
-    server.sin_port = htons(5001); 
+    server.sin_addr.s_addr = inet_addr("10.0.0.12");
+    server.sin_port = htons(5005); 
 
     bind(sock, (struct sockaddr*) &server, sizeof(server)); 
 

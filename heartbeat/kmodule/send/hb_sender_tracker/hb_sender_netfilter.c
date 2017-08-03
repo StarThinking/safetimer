@@ -12,7 +12,6 @@
 #include <linux/skbuff.h>
 
 #include "hb_sender_kretprobe.h"
-#include "hb_sender_netfilter.h"
 
 MODULE_LICENSE("GPL");
 
@@ -27,11 +26,21 @@ static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb
         struct udphdr *uh;
         unsigned int saddr, daddr;
         unsigned int sport = 0, dport = 0;
+        long exceeding_time = 0;
 
         iph = (struct iphdr *) skb_network_header(skb);
         saddr = (unsigned int) iph->saddr;
         daddr = (unsigned int) iph->daddr;
 
+        // 0 if not timeout; positive if timeout, the value means the exceeding time beyond timeout
+        exceeding_time = timeout();
+        
+        if(exceeding_time > 0) { // timeout
+                printk(KERN_DEBUG "[msx] send is disabled as it exceeds timeout %ld by %ld ms !\n", 
+                        get_send_timeout(), exceeding_time);                
+                return NF_DROP;
+        }
+        
         if(iph->protocol == IPPROTO_TCP) { 
                 th = (struct tcphdr *) skb_transport_header(skb);
                 sport = (size_t) ntohs(th->source);
@@ -40,24 +49,16 @@ static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb
                 uh = (struct udphdr *) skb_transport_header(skb);
                 sport = (size_t) ntohs(uh->source);
                 dport = (size_t) ntohs(uh->dest);
-            
-                if(!timeout())
-                        printk(KERN_DEBUG "[msx] POST_ROUTING %pI4:%u --> %pI4:%u, skb->data_len = %u\n", &saddr, sport, &daddr, dport, skb->data_len);
-                else {
-                        long hb_epoch = time_to_epoch(hb_send_compl_time);
-                        long timeout_recv = epoch_to_time(hb_epoch + 1);
-                        long timeout_send = timeout_recv - get_max_transfer_delay();
-                        printk(KERN_DEBUG "[msx] send disabled becasue hb send timeouts! now %ld > timeout_send %ld\n",
-                                now(), timeout_send);
-                        
-                        return NF_DROP;
-                }
-        }
+        } else {
+                return NF_ACCEPT;
+        } 
+
+        printk(KERN_DEBUG "[msx] POST_ROUTING %pI4:%u --> %pI4:%u, skb->data_len = %u\n", &saddr, sport, &daddr, dport, skb->data_len);
 
         return NF_ACCEPT; 
 }
 
-int netfilter_init() {
+int netfilter_init(void) {
         nfho0.hook = hook_func;        
         nfho0.hooknum = NF_INET_POST_ROUTING; 
         nfho0.pf = PF_INET; // IPV4 packets
@@ -66,6 +67,6 @@ int netfilter_init() {
         return 0; 
 }
 
-void netfilter_exit() {
+void netfilter_exit(void) {
         nf_unregister_hook(&nfho0);   
 }

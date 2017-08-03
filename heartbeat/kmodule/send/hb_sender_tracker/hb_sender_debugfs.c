@@ -5,12 +5,12 @@
 #include <linux/fs.h>
 
 #include "hb_sender_debugfs.h"
-#include "hb_sender_kretprobe.h"
 
 MODULE_LICENSE("GPL");
 
 long base_time = 0;
 long timeout_interval = 0;
+long hb_send_compl_time = 0;
 
 static struct dentry *dir_entry;
 static struct dentry *hb_send_compl_time_entry;
