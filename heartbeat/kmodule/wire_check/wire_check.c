@@ -20,13 +20,17 @@ MODULE_LICENSE("GPL");
 static struct nf_hook_ops nfho0, nfho1, nfho2, nfho3, nfho4;
 
 /*hook function*/
-unsigned int hook_func0(const struct nf_hook_ops *ops, struct sk_buff *skb, 
+unsigned int hook_pre(const struct nf_hook_ops *ops, struct sk_buff *skb, 
         const struct net_device *in, const struct net_device *out, 
         int (*okfn)(struct sk_buff *)) {
         struct iphdr *ip;
         unsigned int saddr, daddr;
         unsigned int irq_vec;
         char str[INET_ADDRSTRLEN];
+        const char *in_name, *out_name;
+
+        in_name = in->name;
+        out_name = out->name;
 
         ip = (struct iphdr *) skb_network_header(skb);
         saddr = (unsigned int) ip->saddr;
@@ -37,19 +41,23 @@ unsigned int hook_func0(const struct nf_hook_ops *ops, struct sk_buff *skb,
         sprintf(str, "%pI4", &saddr);
 
         if(ip->protocol ==  IPPROTO_ICMP)
-                printk(KERN_DEBUG "[msx] pre %pI4 --> %pI4, irq_vec = %u\n", 
-                        &saddr, &daddr, irq_vec);
+                printk(KERN_DEBUG "[msx] pre %pI4 --> %pI4, irq_vec = %u, in = %s, out = %s\n", 
+                        &saddr, &daddr, irq_vec, in_name, out_name);
 
         return NF_ACCEPT; 
 }
 
-unsigned int hook_func1(const struct nf_hook_ops *ops, struct sk_buff *skb, 
+unsigned int hook_post(const struct nf_hook_ops *ops, struct sk_buff *skb, 
         const struct net_device *in, const struct net_device *out, 
         int (*okfn)(struct sk_buff *)) {
         struct iphdr *ip;
         unsigned int saddr, daddr;
         unsigned int irq_vec;
         char str[INET_ADDRSTRLEN];
+        const char *in_name, *out_name;
+
+        in_name = in->name;
+        out_name = out->name;
 
         ip = (struct iphdr *) skb_network_header(skb);
         saddr = (unsigned int) ip->saddr;
@@ -60,19 +68,23 @@ unsigned int hook_func1(const struct nf_hook_ops *ops, struct sk_buff *skb,
         sprintf(str, "%pI4", &saddr);
 
         if(ip->protocol ==  IPPROTO_ICMP)
-                printk(KERN_DEBUG "[msx] post %pI4 --> %pI4, irq_vec = %u\n", 
-                        &saddr, &daddr, irq_vec);
+                printk(KERN_DEBUG "[msx] post %pI4 --> %pI4, irq_vec = %u, in = %s, out = %s\n", 
+                        &saddr, &daddr, irq_vec, in_name, out_name);
 
         return NF_ACCEPT; 
 }
 
-unsigned int hook_func2(const struct nf_hook_ops *ops, struct sk_buff *skb, 
+unsigned int hook_in(const struct nf_hook_ops *ops, struct sk_buff *skb, 
         const struct net_device *in, const struct net_device *out, 
         int (*okfn)(struct sk_buff *)) {
         struct iphdr *ip;
         unsigned int saddr, daddr;
         unsigned int irq_vec;
         char str[INET_ADDRSTRLEN];
+        const char *in_name, *out_name;
+
+        in_name = in->name;
+        out_name = out->name;
 
         ip = (struct iphdr *) skb_network_header(skb);
         saddr = (unsigned int) ip->saddr;
@@ -83,19 +95,23 @@ unsigned int hook_func2(const struct nf_hook_ops *ops, struct sk_buff *skb,
         sprintf(str, "%pI4", &saddr);
 
         if(ip->protocol ==  IPPROTO_ICMP)
-                printk(KERN_DEBUG "[msx] input %pI4 --> %pI4, irq_vec = %u\n", 
-                        &saddr, &daddr, irq_vec);
+                printk(KERN_DEBUG "[msx] in %pI4 --> %pI4, irq_vec = %u, in = %s, out = %s\n", 
+                        &saddr, &daddr, irq_vec, in_name, out_name);
 
         return NF_ACCEPT; 
 }
 
-unsigned int hook_func3(const struct nf_hook_ops *ops, struct sk_buff *skb, 
+unsigned int hook_out(const struct nf_hook_ops *ops, struct sk_buff *skb, 
         const struct net_device *in, const struct net_device *out, 
         int (*okfn)(struct sk_buff *)) {
         struct iphdr *ip;
         unsigned int saddr, daddr;
         unsigned int irq_vec;
         char str[INET_ADDRSTRLEN];
+        const char *in_name, *out_name;
+
+        in_name = in->name;
+        out_name = out->name;
 
         ip = (struct iphdr *) skb_network_header(skb);
         saddr = (unsigned int) ip->saddr;
@@ -106,19 +122,23 @@ unsigned int hook_func3(const struct nf_hook_ops *ops, struct sk_buff *skb,
         sprintf(str, "%pI4", &saddr);
 
         if(ip->protocol ==  IPPROTO_ICMP)
-                printk(KERN_DEBUG "[msx] output %pI4 --> %pI4, irq_vec = %u\n", 
-                        &saddr, &daddr, irq_vec);
+                printk(KERN_DEBUG "[msx] out %pI4 --> %pI4, irq_vec = %u, in = %s, out = %s\n", 
+                        &saddr, &daddr, irq_vec, in_name, out_name);
 
         return NF_ACCEPT; 
 }
 
-unsigned int hook_func4(const struct nf_hook_ops *ops, struct sk_buff *skb, 
+unsigned int hook_forward(const struct nf_hook_ops *ops, struct sk_buff *skb, 
         const struct net_device *in, const struct net_device *out, 
         int (*okfn)(struct sk_buff *)) {
         struct iphdr *ip;
         unsigned int saddr, daddr;
         unsigned int irq_vec;
         char str[INET_ADDRSTRLEN];
+        const char *in_name, *out_name;
+
+        in_name = in->name;
+        out_name = out->name;
 
         ip = (struct iphdr *) skb_network_header(skb);
         saddr = (unsigned int) ip->saddr;
@@ -129,34 +149,34 @@ unsigned int hook_func4(const struct nf_hook_ops *ops, struct sk_buff *skb,
         sprintf(str, "%pI4", &saddr);
 
         if(ip->protocol ==  IPPROTO_ICMP)
-                printk(KERN_DEBUG "[msx] forward %pI4 --> %pI4, irq_vec = %u\n", 
-                        &saddr, &daddr, irq_vec);
+                printk(KERN_DEBUG "[msx] forward %pI4 --> %pI4, irq_vec = %u, in = %s, out = %s\n", 
+                        &saddr, &daddr, irq_vec, in_name, out_name);
 
         return NF_ACCEPT; 
 }
 
 int init_module() {
-        nfho0.hook = hook_func0;        
+        nfho0.hook = hook_pre;        
         nfho0.hooknum = NF_INET_PRE_ROUTING; 
         nfho0.pf = PF_INET; // IPV4 packets
         nf_register_hook(&nfho0);  
         
-        nfho1.hook = hook_func1;        
+        nfho1.hook = hook_post;        
         nfho1.hooknum = NF_INET_POST_ROUTING; 
         nfho1.pf = PF_INET; // IPV4 packets
         nf_register_hook(&nfho1);  
         
-        nfho2.hook = hook_func2;        
+        nfho2.hook = hook_in;        
         nfho2.hooknum = NF_INET_LOCAL_IN; 
         nfho2.pf = PF_INET; // IPV4 packets
         nf_register_hook(&nfho2);  
         
-        nfho3.hook = hook_func3;        
+        nfho3.hook = hook_out;        
         nfho3.hooknum = NF_INET_LOCAL_OUT; 
         nfho3.pf = PF_INET; // IPV4 packets
         nf_register_hook(&nfho3);  
         
-        nfho4.hook = hook_func4;        
+        nfho4.hook = hook_forward;        
         nfho4.hooknum = NF_INET_FORWARD; 
         nfho4.pf = PF_INET; // IPV4 packets
         nf_register_hook(&nfho4);  
