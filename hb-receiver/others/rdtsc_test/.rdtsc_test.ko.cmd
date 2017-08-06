@@ -1,0 +1,1 @@
+cmd_/root/hb-latency/hb-receiver/others/rdtsc_test/rdtsc_test.ko := ld -r -m elf_x86_64 -T /usr/src/linux-3.14.33-regular/scripts/module-common.lds --build-id  -o /root/hb-latency/hb-receiver/others/rdtsc_test/rdtsc_test.ko /root/hb-latency/hb-receiver/others/rdtsc_test/rdtsc_test.o /root/hb-latency/hb-receiver/others/rdtsc_test/rdtsc_test.mod.o
