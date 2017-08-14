@@ -1,0 +1,3 @@
+0x68742e9b	send_check_tlb	/root/hb-latency/heartbeat/kmodule/send/hb_sender_tracker/hb_sender_tracker	EXPORT_SYMBOL
+0x2ec2d4fe	send_check_tlb_index	/root/hb-latency/heartbeat/kmodule/send/hb_sender_tracker/hb_sender_tracker	EXPORT_SYMBOL
+0x209d8d22	send_check_tlb_lock	/root/hb-latency/heartbeat/kmodule/send/hb_sender_tracker/hb_sender_tracker	EXPORT_SYMBOL

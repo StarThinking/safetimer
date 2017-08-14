@@ -4,8 +4,9 @@
 #include <linux/fs.h>
 #include <linux/spinlock_types.h>
 #include <linux/semaphore.h>
+#include <linux/spinlock.h>
 
-#include "hb_sender_debugfs.h"
+#include "debugfs.h"
 
 MODULE_LICENSE("GPL");
 
@@ -26,18 +27,21 @@ static char timeout_interval_str[BUFFERSIZE];
 
 long get_hb_send_compl_time(void) {
         long time;
+        //unsigned long flags;
 
-        spin_lock(&hb_send_compl_time_lock);
+        spin_lock_bh(&hb_send_compl_time_lock);
         time = hb_send_compl_time;
-        spin_unlock(&hb_send_compl_time_lock);
+        spin_unlock_bh(&hb_send_compl_time_lock);
         
         return time;
 }
 
 void set_hb_send_compl_time(long time) {
-        spin_lock(&hb_send_compl_time_lock);
+        unsigned long flags;
+       
+        spin_lock_bh(&hb_send_compl_time_lock);
         hb_send_compl_time = time;
-        spin_unlock(&hb_send_compl_time_lock);
+        spin_unlock_bh(&hb_send_compl_time_lock);
         
         return;
 }

@@ -1,9 +1,9 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
-#include "hb_sender_debugfs.h"
-#include "hb_sender_kretprobe.h"
-#include "hb_sender_netfilter.h"
+#include "debugfs.h"
+#include "kretprobe.h"
+#include "netfilter.h"
 
 MODULE_LICENSE("GPL");
 

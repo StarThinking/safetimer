@@ -11,7 +11,7 @@ void inline measured_function(volatile int *var) {
 
 static int __init hello_start(void) {
        unsigned long flags;
-       uint64_t start, end;
+       u64 start, end;
        int variable = 0;
        unsigned cycles_low, cycles_high, cycles_low1, cycles_high1;
        printk(KERN_INFO "Loading test module...\n");

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-server="10.0.0.11"
-client="10.0.0.12"
+server="10.0.0.12"
+client="10.0.0.11"
 datasize=8
 client_num=40
 path=/root/hb-latency/workload-maker

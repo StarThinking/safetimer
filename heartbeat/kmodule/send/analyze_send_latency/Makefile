@@ -1,7 +1,6 @@
 EXTRA_CFLAGS := -I./
 
-obj-m += hb_sender_tracker.o 
-hb_sender_tracker-objs := debugfs.o kretprobe.o netfilter.o main.o
+obj-m += analyze_inet_sendmsg.o 
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

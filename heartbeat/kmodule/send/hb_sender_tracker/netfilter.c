@@ -11,16 +11,37 @@
 #include <linux/ktime.h>
 #include <linux/skbuff.h>
 
-#include "hb_sender_kretprobe.h"
+#include "kretprobe.h"
 
 MODULE_LICENSE("GPL");
 
 static struct nf_hook_ops nfho0;
 
+#define send_check_tlb_max 100
+
+u64 send_check_tlb[send_check_tlb_max];
+EXPORT_SYMBOL(send_check_tlb);
+
+int send_check_tlb_index = 0;
+EXPORT_SYMBOL(send_check_tlb_index);
+
+DEFINE_SPINLOCK(send_check_tlb_lock);
+EXPORT_SYMBOL(send_check_tlb_lock);
+
+static uint64_t start, end;
+static unsigned cycles_low, cycles_high, cycles_low1, cycles_high1;
+static int index = 0;
+
 static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb, 
         const struct net_device *in, const struct net_device *out, 
         int (*okfn)(struct sk_buff *)) {
-        
+/*      
+        asm volatile ("CPUID\n\t"
+                "RDTSC\n\t"
+                "mov %%edx, %0\n\t"
+                "mov %%eax, %1\n\t": "=r" (cycles_high), "=r" (cycles_low)::
+                "%rax", "%rbx", "%rcx", "%rdx");
+*/
         struct iphdr *iph;
         struct tcphdr *th;
         struct udphdr *uh;
@@ -42,21 +63,38 @@ static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb
                 dport = (size_t) ntohs(uh->dest);
         } 
         
-        if(iph->protocol == IPPROTO_TCP || iph->protocol == IPPROTO_UDP)
-                printk(KERN_DEBUG "[msx] POST_ROUTING %pI4:%u --> %pI4:%u, skb->data_len = %u\n", &saddr, sport, &daddr, dport, skb->data_len);
+//        if(iph->protocol == IPPROTO_TCP || iph->protocol == IPPROTO_UDP)
+//                printk(KERN_DEBUG "[msx] POST_ROUTING %pI4:%u --> %pI4:%u, skb->data_len = %u\n", &saddr, sport, &daddr, dport, skb->data_len);
         
         // 0 if not timeout; positive if timeout, the value means the exceeding time beyond timeout
         exceeding_time = timeout();
         
-        if(exceeding_time > 0) { // timeout
-                if(iph->protocol == IPPROTO_UDP && dport == 5001) {
-                        printk(KERN_DEBUG "[msx] UDP send to dport 5001 is disabled as it exceeds timeout %ld by %ld ms !\n", get_send_timeout(), exceeding_time);       
-                        return NF_DROP;
-                } else {
-                        return NF_ACCEPT; 
-                }
-        }
+        if(exceeding_time > 0) { // if timeout
 
+                // filter that decides if packets should be dropped
+                if(iph->protocol == IPPROTO_UDP && dport == 5001) {
+                        //printk(KERN_DEBUG "[msx] UDP send to dport 5001 is disabled as it exceeds timeout %ld by %ld ms !\n", get_send_timeout(), exceeding_time);       
+                        return NF_DROP;
+                } 
+        } 
+/*
+        asm volatile ("CPUID\n\t"
+                "RDTSC\n\t"
+                "mov %%edx, %0\n\t"
+                "mov %%eax, %1\n\t": "=r" (cycles_high1), "=r" (cycles_low1)::
+                "%rax", "%rbx", "%rcx", "%rdx");
+
+        start = ( ((uint64_t)cycles_high << 32) | cycles_low );
+        end = ( ((uint64_t)cycles_high1 << 32) | cycles_low1 );
+         
+        spin_lock(&send_check_tlb_lock);
+
+        index = send_check_tlb_index % send_check_tlb_max;
+        send_check_tlb[index] = (end - start);
+        send_check_tlb_index++;
+        
+        spin_unlock(&send_check_tlb_lock);
+*/      
         return NF_ACCEPT; 
 }
 

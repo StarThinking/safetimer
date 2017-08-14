@@ -46,11 +46,3 @@ long random_at_most(long max) {
         // Truncated division is intentional
         return x/bin_size;
 }
-
-        // sleep [expiration_interval, 2*expiration_interval]
-        /*long rand_sleep_time = random_at_most(expiration_interval);
-        if(rand_sleep_time < 0.1 * expiration_interval) {
-                struct timespec sleep_ts = sleep_time(rand_sleep_time + expiration_interval);
-                printf("[Receiver] Sleep %ld ms.\n", rand_sleep_time + expiration_interval);
-                nanosleep(&sleep_ts, NULL);
-        }*/

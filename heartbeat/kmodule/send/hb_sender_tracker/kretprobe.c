@@ -8,8 +8,8 @@
 #include <linux/skbuff.h>
 #include <net/ip.h>
 
-#include "hb_sender_debugfs.h"
-#include "hb_sender_kretprobe.h"
+#include "debugfs.h"
+#include "kretprobe.h"
 
 MODULE_LICENSE("GPL");
 
@@ -19,8 +19,10 @@ long now(void) {
 }
 
 long get_send_timeout(void) {
+        // get_hb_send_compl_time() involves spinlock contention
         long hb_epoch = time_to_epoch(get_hb_send_compl_time());
         long recv_timeout = epoch_to_time(hb_epoch + 1);
+        
         return recv_timeout - get_max_transfer_delay() - get_max_clock_deviation();
 }
 
@@ -28,11 +30,14 @@ long timeout(void) {
         long send_timeout = 0;
         long now_t = 0;
         
-        if(!prepared())
-                return 0;
+//        if(!prepared())
+//                return 0;
 
         send_timeout = get_send_timeout();
         now_t = now();
+        
+        if(!prepared())
+                return 0;
         
         return now_t - send_timeout;
 }
@@ -62,7 +67,7 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
 
                             long exceeding_time = timeout();
                             if(exceeding_time <= 0) {
-                                printk("hb send completes and update hb_send_compl_time %ld to hb_send_time %ld\n", hb_send_compl_time, hb_send_time);
+                                //printk("hb send completes and update hb_send_compl_time %ld to hb_send_time %ld\n", hb_send_compl_time, hb_send_time);
                                 set_hb_send_compl_time(hb_send_time);
                             } else {
                                 printk("hb send completion timeouts (%ld) by %ld!\n", get_send_timeout(), exceeding_time);
