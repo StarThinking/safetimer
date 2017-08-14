@@ -18,6 +18,10 @@ static const struct modversion_info ____versions[]
 __used
 __attribute__((section("__versions"))) = {
 	{ 0x710e0d3b, __VMLINUX_SYMBOL_STR(module_layout) },
+	{ 0xaa9087c0, __VMLINUX_SYMBOL_STR(param_ops_string) },
+	{ 0xe1ba164b, __VMLINUX_SYMBOL_STR(unregister_kretprobe) },
+	{ 0xcef367c3, __VMLINUX_SYMBOL_STR(foobar2) },
+	{ 0xc0241fac, __VMLINUX_SYMBOL_STR(register_kretprobe) },
 	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
 };
@@ -25,7 +29,7 @@ __attribute__((section("__versions"))) = {
 static const char __module_depends[]
 __used
 __attribute__((section(".modinfo"))) =
-"depends=";
+"depends=kprobe_args_symbol";
 
 
-MODULE_INFO(srcversion, "2242DE5E7907BCEDB8647E3");
+MODULE_INFO(srcversion, "5DA1E2DA351C30FAAB2BB08");

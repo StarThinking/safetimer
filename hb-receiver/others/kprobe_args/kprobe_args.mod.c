@@ -19,7 +19,7 @@ __used
 __attribute__((section("__versions"))) = {
 	{ 0x710e0d3b, __VMLINUX_SYMBOL_STR(module_layout) },
 	{ 0x638fe045, __VMLINUX_SYMBOL_STR(unregister_kprobe) },
-	{ 0x6a5cdb1e, __VMLINUX_SYMBOL_STR(foobar2) },
+	{ 0xcef367c3, __VMLINUX_SYMBOL_STR(foobar2) },
 	{ 0x512b1d19, __VMLINUX_SYMBOL_STR(register_kprobe) },
 	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
@@ -31,4 +31,4 @@ __attribute__((section(".modinfo"))) =
 "depends=kprobe_args_symbol";
 
 
-MODULE_INFO(srcversion, "2F3AC70D1B90B8B594E742B");
+MODULE_INFO(srcversion, "4845D90A5ECCF678F2BF50F");

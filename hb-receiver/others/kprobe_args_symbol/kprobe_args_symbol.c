@@ -5,9 +5,11 @@
 
 #include <linux/kprobes.h>
 
-void foobar2(int arg1, int arg2, int arg3)
+int foobar2(int arg1, int arg2, int arg3)
 {
     printk(KERN_INFO "foobar called\n");
+    
+    return arg3;
 }
 EXPORT_SYMBOL(foobar2);
 

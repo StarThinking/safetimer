@@ -24,11 +24,12 @@ static void handler_post(struct kprobe *p, struct pt_regs *regs,
     printk(KERN_INFO "handler_post\n");
 }
 
-extern void foobar2(int, int, int);
+extern int foobar2(int, int, int);
 
 static int __init kprobe_args_init(void)
 {
     int ret;
+    int ret_foobar;
 
     printk(KERN_INFO "kprobe_args_init\n");
     
@@ -44,7 +45,8 @@ static int __init kprobe_args_init(void)
     
     printk(KERN_INFO "Planted kprobe at %p\n", kp.addr);
     
-    foobar2(3,2,1);
+    ret_foobar = foobar2(3,2,1);
+    printk("ret_foobar = %d\n", ret_foobar);
     
     return 0;
 }
