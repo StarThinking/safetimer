@@ -1,1 +1,0 @@
-cmd_/home/masix/KernelModules4RTAI/nftest/nftest.ko := ld -r -m elf_x86_64 -T /usr/src/linux-3.14.33-regular/scripts/module-common.lds --build-id  -o /home/masix/KernelModules4RTAI/nftest/nftest.ko /home/masix/KernelModules4RTAI/nftest/nftest.o /home/masix/KernelModules4RTAI/nftest/nftest.mod.o

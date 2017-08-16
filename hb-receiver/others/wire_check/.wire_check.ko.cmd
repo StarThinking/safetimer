@@ -1,1 +1,0 @@
-cmd_/root/hb-latency/hb-receiver/others/wire_check/wire_check.ko := ld -r -m elf_x86_64 -T /usr/src/linux-3.14.33-regular/scripts/module-common.lds --build-id  -o /root/hb-latency/hb-receiver/others/wire_check/wire_check.ko /root/hb-latency/hb-receiver/others/wire_check/wire_check.o /root/hb-latency/hb-receiver/others/wire_check/wire_check.mod.o
