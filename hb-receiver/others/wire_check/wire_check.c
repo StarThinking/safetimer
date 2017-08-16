@@ -41,8 +41,8 @@ unsigned int hook_pre(const struct nf_hook_ops *ops, struct sk_buff *skb,
         sprintf(str, "%pI4", &saddr);
 
         if(ip->protocol ==  IPPROTO_ICMP)
-                printk(KERN_DEBUG "[msx] pre %pI4 --> %pI4, irq_vec = %u, in = %s, out = %s\n", 
-                        &saddr, &daddr, irq_vec, in_name, out_name);
+                printk(KERN_DEBUG "[msx] pre %pI4 --> %pI4, irq_vec = %u, in = %s, out = %s, hash = %u\n", 
+                        &saddr, &daddr, irq_vec, in_name, out_name, skb_get_hash(skb));
 
         return NF_ACCEPT; 
 }
