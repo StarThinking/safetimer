@@ -21,7 +21,8 @@ static int handler_pre(struct kprobe *p, struct pt_regs *regs)
 static void handler_post(struct kprobe *p, struct pt_regs *regs,
                                           unsigned long flags)
 {
-    printk(KERN_INFO "handler_post\n");
+    printk(KERN_INFO "handler_post: arg1 = %lu, arg2 = %lu, arg3 = %lu\n",
+                                    regs->di, regs->si, regs->dx);
 }
 
 extern int foobar2(int, int, int);

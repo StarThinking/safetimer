@@ -57,7 +57,8 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
             if(skb != NULL) {
                 iph = ip_hdr(skb);
                 if(iph != NULL && iph->protocol == IPPROTO_UDP) {
-                    uh = udp_hdr(skb);
+                    // change form udp_hdr() to skb_transport_header()
+                    uh = (struct udphdr *) skb_transport_header(skb);
                     if(uh != NULL) {
                         u16 dport = ntohs(uh->dest);
                         if(dport == 5001) {

@@ -35,7 +35,7 @@ static int ret_handler(struct kretprobe_instance *ri, struct pt_regs *regs)
 	int retval = regs_return_value(regs);
 	printk(KERN_INFO "%s returned %d\n", func_name, retval);
 
-        regs->ax = 71;
+        regs->ax = 19;
 	return 0;
 }
 

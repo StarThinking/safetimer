@@ -31,4 +31,4 @@ __attribute__((section(".modinfo"))) =
 "depends=kprobe_args_symbol";
 
 
-MODULE_INFO(srcversion, "4845D90A5ECCF678F2BF50F");
+MODULE_INFO(srcversion, "B361C3B6A910ECC05672586");

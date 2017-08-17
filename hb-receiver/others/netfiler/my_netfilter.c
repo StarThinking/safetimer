@@ -14,7 +14,8 @@
 MODULE_LICENSE("GPL");
 
 static struct nf_hook_ops nfhos[5];
-static const int hooknums[5] = {NF_INET_PRE_ROUTING, NF_INET_LOCAL_IN, NF_INET_FORWARD, NF_INET_POST_ROUTING, NF_INET_LOCAL_OUT};
+static const int hooknums[5] = {NF_INET_PRE_ROUTING, NF_INET_LOCAL_IN, NF_INET_FORWARD,NF_INET_LOCAL_OUT, NF_INET_POST_ROUTING};
+static const char *hooknames[5] = {"PRE_ROUTING", "LOCAL_IN", "FORWARD", "LOCAL_OUT", "POST_ROUTING"};
 
 static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb, 
         const struct net_device *in, const struct net_device *out, 
@@ -24,6 +25,8 @@ static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb
         unsigned int saddr, daddr;
         char saddr_ip[INET_ADDRSTRLEN];
         char daddr_ip[INET_ADDRSTRLEN];
+        unsigned int sport, dport;
+        sport = dport = 0;
 
         iph = (struct iphdr *) skb_network_header(skb);
         saddr = (unsigned int) iph->saddr;
@@ -31,8 +34,20 @@ static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb
         sprintf(saddr_ip, "%pI4", &saddr);
         sprintf(daddr_ip, "%pI4", &daddr);
 
-        if(strcmp(saddr_ip, "10.0.0.1") != 0 && strcmp(daddr_ip, "10.0.0.1") != 0) 
-                printk(KERN_DEBUG "[msx] hooknum = %d, %pI4 --> %pI4\n",ops->hooknum,  &saddr, &daddr);
+        if(iph->protocol == IPPROTO_TCP) {
+                struct tcphdr *tcph = (struct tcphdr *) skb_transport_header(skb);
+                sport = (size_t) ntohs(tcph->source);
+                dport = (size_t) ntohs(tcph->dest);
+        } else if(iph->protocol == IPPROTO_UDP) {
+                struct udphdr *udph = (struct udphdr *) skb_transport_header(skb);
+                sport = (size_t) ntohs(udph->source);
+                dport = (size_t) ntohs(udph->dest);
+        }
+
+        if(strcmp(saddr_ip, "10.0.0.1") != 0 && strcmp(daddr_ip, "10.0.0.1") != 0) { 
+                printk(KERN_DEBUG "[msx] %s %pI4 : %u --> %pI4 : %u\n", 
+                        hooknames[ops->hooknum], &saddr, sport, &daddr, dport);
+        }
 
         return NF_ACCEPT; 
 }
