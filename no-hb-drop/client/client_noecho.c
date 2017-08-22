@@ -20,17 +20,17 @@ int main(int argc , char *argv[]) {
 
     signal(SIGINT, sig_handler);
 
-    if(argc != 4) {
-	printf("client [ip] [port] [msg_size]\n");
+    if(argc != 5) {
+	printf("client [ip] [port] [msg_size] [packets]\n");
 	return -1;
     }
     
     char *ip = argv[1];
     int port = atoi(argv[2]);
     int msg_size = atoi(argv[3]);
+    int packets_to_send = atoi(argv[4]);
     printf("ip = %s, port = %d, msg_size = %d\n", ip, port, msg_size);
 
-    int packets_to_send = 1000*1000;
     int _packets_to_send = packets_to_send;
     int sock;
     struct sockaddr_in server, client;

@@ -23,14 +23,23 @@ static struct netpoll np_t;
 int init_module() {
         //uint32_t local_ip = parseIPV4string("10.0.0.12");
         //uint32_t remote_ip = parseIPV4string("10.0.0.11");            
+        //uint32_t bytes = 0x549f35147440;
 
         np_t.name = "LRNG";
         strlcpy(np_t.dev_name, "em1", IFNAMSIZ);
         np_t.local_ip.ip = htonl((unsigned long int) 0x0a00000c);
-        np_t.remote_ip.ip = htonl((unsigned long int) 0x0a00000c);
+        np_t.remote_ip.ip = htonl((unsigned long int) 0x0a00000b);
         np_t.local_port = 6665;
         np_t.remote_port = 5001;
-        memset(np_t.remote_mac, 0xff, ETH_ALEN);
+        
+        np_t.remote_mac[0] = 0x54;
+        np_t.remote_mac[1] = 0x9f;
+        np_t.remote_mac[2] = 0x35;
+        np_t.remote_mac[3] = 0x14;
+        np_t.remote_mac[4] = 0x8f;
+        np_t.remote_mac[5] = 0xfa; 
+
+        //memset(np_t.remote_mac, 0xff, ETH_ALEN);
         netpoll_print_options(&np_t);
         netpoll_setup(&np_t);
         np = &np_t;

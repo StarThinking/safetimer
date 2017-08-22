@@ -18,12 +18,11 @@ static const struct modversion_info ____versions[]
 __used
 __attribute__((section("__versions"))) = {
 	{ 0x710e0d3b, __VMLINUX_SYMBOL_STR(module_layout) },
+	{ 0x2a35968d, __VMLINUX_SYMBOL_STR(nf_unregister_hook) },
+	{ 0xdcdefc8d, __VMLINUX_SYMBOL_STR(nf_register_hook) },
 	{ 0xf0fdf6cb, __VMLINUX_SYMBOL_STR(__stack_chk_fail) },
-	{ 0xbbafdad2, __VMLINUX_SYMBOL_STR(netpoll_send_udp) },
+	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
 	{ 0x91715312, __VMLINUX_SYMBOL_STR(sprintf) },
-	{ 0xc1201fcc, __VMLINUX_SYMBOL_STR(netpoll_setup) },
-	{ 0xc94af3f7, __VMLINUX_SYMBOL_STR(netpoll_print_options) },
-	{ 0x5792f848, __VMLINUX_SYMBOL_STR(strlcpy) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
 };
 
@@ -33,4 +32,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "5E0552CDE73456501E2A1E3");
+MODULE_INFO(srcversion, "A1C25EB71AAC313E687AFAF");

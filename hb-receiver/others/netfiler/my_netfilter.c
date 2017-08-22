@@ -44,9 +44,11 @@ static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb
                 dport = (size_t) ntohs(udph->dest);
         }
 
-        if(strcmp(saddr_ip, "10.0.0.1") != 0 && strcmp(daddr_ip, "10.0.0.1") != 0) { 
-                printk(KERN_DEBUG "[msx] %s %pI4 : %u --> %pI4 : %u\n", 
-                        hooknames[ops->hooknum], &saddr, sport, &daddr, dport);
+        if(strcmp(saddr_ip, "10.0.0.1") != 0 && strcmp(daddr_ip, "10.0.0.1") != 0) {
+                if(strcmp(saddr_ip, "0.0.0.0") != 0 && strcmp(daddr_ip, "0.0.0.0") != 0) {
+                        printk(KERN_DEBUG "[msx] %s %pI4 : %u --> %pI4 : %u\n", 
+                                hooknames[ops->hooknum], &saddr, sport, &daddr, dport);
+                }
         }
 
         return NF_ACCEPT; 
