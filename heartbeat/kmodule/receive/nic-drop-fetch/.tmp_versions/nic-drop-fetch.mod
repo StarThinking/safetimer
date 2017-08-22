@@ -1,2 +1,2 @@
-/root/hb-latency/hb-queue-receiver/kmodule/nic-drop-fetch/nic-drop-fetch.ko
-/root/hb-latency/hb-queue-receiver/kmodule/nic-drop-fetch/nic-drop-fetch.o
+/root/hb-latency/heartbeat/kmodule/receive/nic-drop-fetch/nic-drop-fetch.ko
+/root/hb-latency/heartbeat/kmodule/receive/nic-drop-fetch/nic-drop-fetch.o
