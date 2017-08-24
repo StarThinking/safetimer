@@ -26,8 +26,10 @@ static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb
         char saddr_ip[INET_ADDRSTRLEN];
         char daddr_ip[INET_ADDRSTRLEN];
         unsigned int sport, dport;
+        unsigned int irq_vec;
+        
         sport = dport = 0;
-
+        irq_vec = skb->napi_id;
         iph = (struct iphdr *) skb_network_header(skb);
         saddr = (unsigned int) iph->saddr;
         daddr = (unsigned int) iph->daddr;
@@ -46,8 +48,8 @@ static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb
 
         if(strcmp(saddr_ip, "10.0.0.1") != 0 && strcmp(daddr_ip, "10.0.0.1") != 0) {
                 if(strcmp(saddr_ip, "0.0.0.0") != 0 && strcmp(daddr_ip, "0.0.0.0") != 0) {
-                        printk(KERN_DEBUG "[msx] %s %pI4 : %u --> %pI4 : %u\n", 
-                                hooknames[ops->hooknum], &saddr, sport, &daddr, dport);
+                        printk(KERN_DEBUG "[msx] %s %pI4 : %u --> %pI4 : %u via rx queue %u\n", 
+                                hooknames[ops->hooknum], &saddr, sport, &daddr, dport, irq_vec);
                 }
         }
 
