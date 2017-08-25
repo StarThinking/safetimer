@@ -11,7 +11,6 @@
 
 MODULE_LICENSE("GPL");
 
-static struct netpoll* np = NULL;
 static struct netpoll np_t;
 
 /*uint32_t parseIPV4string(char* ipAddress) {
@@ -26,40 +25,30 @@ int init_module() {
         //uint32_t bytes = 0x549f35147440;
 
         np_t.name = "LRNG";
-        strlcpy(np_t.dev_name, "em2", IFNAMSIZ);
-        np_t.local_ip.ip = htonl((unsigned long int) 0x0a00006f);
-        np_t.remote_ip.ip = htonl((unsigned long int) 0x0a00006f);
+        strlcpy(np_t.dev_name, "em1.101", IFNAMSIZ);
+        np_t.local_ip.ip = htonl((unsigned long int) 0x0a000065);
+        np_t.remote_ip.ip = htonl((unsigned long int) 0x0a000066);
         np_t.local_port = 6665;
         np_t.remote_port = 5001;
         
-        // mac addr of 10.0.0.11
-        /*np_t.remote_mac[0] = 0x54;
-        np_t.remote_mac[1] = 0x9f;
-        np_t.remote_mac[2] = 0x35;
-        np_t.remote_mac[3] = 0x14;
-        np_t.remote_mac[4] = 0x8f;
-        np_t.remote_mac[5] = 0xfa; 
-        */
-
-        // mac addr of 10.0.0.13
+        // mac addr of 10.0.0.102
         np_t.remote_mac[0] = 0x54;
         np_t.remote_mac[1] = 0x9f;
         np_t.remote_mac[2] = 0x35;
         np_t.remote_mac[3] = 0x14;
         np_t.remote_mac[4] = 0x8f;
-        np_t.remote_mac[5] = 0xfc; 
+        np_t.remote_mac[5] = 0xfa; 
 
 //        memset(np_t.remote_mac, 0xff, ETH_ALEN);
         netpoll_print_options(&np_t);
         netpoll_setup(&np_t);
-        np = &np_t;
 
         return 0; 
 }
 
 void cleanup_module() {
         char message[MESSAGE_SIZE];
-        sprintf(message,"%d\n",123);
+        sprintf(message, "%d\n", 123);
         //int len = strlen(message);
-        netpoll_send_udp(np,message,MESSAGE_SIZE);
+        netpoll_send_udp(&np_t, message, MESSAGE_SIZE);
 }

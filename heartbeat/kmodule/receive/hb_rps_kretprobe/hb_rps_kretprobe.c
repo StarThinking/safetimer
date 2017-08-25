@@ -10,8 +10,7 @@
 
 MODULE_LICENSE("GPL");
 
-#define HB_PORT 5001
-#define LOCAL_PORT 5002
+#include "../../../include/hb_config.h"
 
 struct my_data {
         unsigned int dport;

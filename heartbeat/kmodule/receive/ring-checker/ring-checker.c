@@ -15,7 +15,7 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 
-#include "../../include/hb_config.h"
+#include "../../../include/hb_config.h"
 
 MODULE_LICENSE("GPL");
 
