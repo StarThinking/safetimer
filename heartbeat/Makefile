@@ -4,7 +4,7 @@ CFLAGS = -Wall -ggdb -D__WITH_MURMUR
 
 INCLUDE = -I./include
 
-all: bin/hb_queue bin/self_sender bin/hb_receiver bin/udp_sender
+all: bin/hb_queue bin/self_sender bin/hb_receiver bin/udp_sender bin/barrier
 
 bin/hb_queue: src/hb_queue.o src/drop.o src/utility.o
 	@mkdir -p bin
@@ -12,7 +12,11 @@ bin/hb_queue: src/hb_queue.o src/drop.o src/utility.o
 
 bin/self_sender: src/self_sender.o
 	@mkdir -p bin
-	gcc $^ -lpthread -o $@
+	$(CC) $^ -lpthread -o $@
+
+bin/barrier: src/barrier.o
+	@mkdir -p bin
+	$(CC) $^ -lpthread -o $@
 
 bin/hb_receiver: src/hb_receiver.o
 	@mkdir -p bin

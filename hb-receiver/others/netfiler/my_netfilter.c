@@ -46,12 +46,18 @@ static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb
                 struct udphdr *udph = (struct udphdr *) skb_transport_header(skb);
                 sport = (size_t) ntohs(udph->source);
                 dport = (size_t) ntohs(udph->dest);
-        }
+        } else if(iph->protocol == IPPROTO_ICMP) {
+                ;
+        } else
+                return NF_ACCEPT;
 
        if(strcmp(saddr_ip, "10.0.0.1") != 0 && strcmp(daddr_ip, "10.0.0.1") != 0) {
                 if(strcmp(saddr_ip, "0.0.0.0") != 0 && strcmp(daddr_ip, "0.0.0.0") != 0) {
-                        printk(KERN_DEBUG "[msx] %s (0x%pM) %pI4 : %u --> (0x%pM) %pI4 : %u via rx queue %u\n", 
-                                hooknames[ops->hooknum], hdr->h_source, &saddr, sport, hdr->h_dest, &daddr, dport, irq_vec);
+                        //printk(KERN_DEBUG "[msx] %s (0x%pM) %pI4 : %u --> (0x%pM) %pI4 : %u via rx queue %u\n", 
+                        //        hooknames[ops->hooknum], hdr->h_source, &saddr, sport, hdr->h_dest, &daddr, dport, irq_vec);
+                        
+                        printk(KERN_DEBUG "%s prot %u %pI4 : %u --> %pI4 : %u via rx queue %u\n", 
+                                hooknames[ops->hooknum], iph->protocol, &saddr, sport, &daddr, dport, irq_vec);
                 }
         }
 
