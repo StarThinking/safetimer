@@ -96,7 +96,7 @@ int init_module() {
         nfho0.pf = PF_INET; // IPV4 packets
         nf_register_hook(&nfho0);  
        
-        dir = debugfs_create_dir(SELF_IP, NULL);
+        dir = debugfs_create_dir(LOCAL_IP, NULL);
         for(i=0; i<IRQ_NUM; i++) {
                 char irq_str[8];
                 sprintf(irq_str, "%d", BASE_IRQ + i);
