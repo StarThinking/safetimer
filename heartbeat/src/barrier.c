@@ -44,8 +44,8 @@ int init_barrier() {
 
         memset(&server, '0', sizeof(server));
         server.sin_family = AF_INET;
-        server.sin_addr.s_addr = inet_addr(LOCAL_IP);
-        server.sin_port = htons(LOCAL_PORT);
+        server.sin_addr.s_addr = inet_addr(BARRIER_SERVER_ADDR);
+        server.sin_port = htons(BARRIER_SERVER_PORT);
         
         listen_fd = socket(AF_INET, SOCK_STREAM, 0);
         
@@ -74,7 +74,7 @@ int init_barrier() {
                 goto error;
         } else {
                 printf("It is successful to set up %u rx queue flows from %s on %s --> %s on %s.\n",
-                        IRQ_NUM, SELF_IP, BARRIER_CLIENT_IF, LOCAL_IP, BARRIER_SERVER_IF);
+                        IRQ_NUM, BARRIER_CLIENT_ADDR, BARRIER_CLIENT_IF, BARRIER_SERVER_ADDR, BARRIER_SERVER_IF);
         }
         
         printf("Barrier server and rx queue flows have been initialized successfully.\n");
@@ -255,7 +255,7 @@ static int get_sport_by_rx_queue(const int rx_queue) {
         int port = -1;
 
         sprintf(rx_queue_str, "%d", rx_queue);
-        r1 = concat("/sys/kernel/debug/", LOCAL_IP);
+        r1 = concat("/sys/kernel/debug/", BARRIER_SERVER_ADDR);
         r2 = concat(r1, "/");
         r3 = concat(r2, rx_queue_str);
 
@@ -305,8 +305,8 @@ static int setup_rx_queue_flows() {
 
         memset(&server, '0', sizeof(server));
         server.sin_family = AF_INET;
-        server.sin_addr.s_addr = inet_addr(LOCAL_IP);
-        server.sin_port = htons(LOCAL_PORT);
+        server.sin_addr.s_addr = inet_addr(BARRIER_SERVER_ADDR);
+        server.sin_port = htons(BARRIER_SERVER_PORT);
         
         while (count < 4) {        
                 /* Create the socket. */
@@ -357,7 +357,7 @@ static int clear_sport_on_rx_queues() {
         FILE *fd;
         int ret = 0;
 
-        r1 = concat("/sys/kernel/debug/", LOCAL_IP);
+        r1 = concat("/sys/kernel/debug/", BARRIER_SERVER_ADDR);
         r2 = concat(r1, "/");
         r3 = concat(r2, "clear");
 
