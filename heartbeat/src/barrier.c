@@ -62,7 +62,7 @@ int init_barrier() {
         bind(listen_fd, (struct sockaddr*) &server, sizeof(server)); 
         listen(listen_fd, 10);
 
-        /* Start barrier server. */
+        /* Start barrier server thread. */
         pthread_create(&server_tid, NULL, barrier_server, NULL);
         printf("Barrier server thread started.\n");
         
@@ -89,17 +89,19 @@ error:
 void destroy_barrier() {
         int i;
 
-        /* First, cancel barrier server thread. */
-        pthread_cancel(server_tid);
-        pthread_join(server_tid, NULL);
-        
-        /* Second, close all socket fds. */
+        /* Close all socket fds. */
         FD_ZERO(&active_fd_set);
+        FD_ZERO(&read_fd_set);
         close(listen_fd);
+
         for (i=0; i<IRQ_NUM; i++) {
                 close(client_fds[i]);
                 close(conn_fds[i]);
         }
+        
+        /* Cancel barrier server thread. */
+        pthread_cancel(server_tid);
+        pthread_join(server_tid, NULL);
 
         printf("Barrier server and clients have been destroyed.\n");
 }
@@ -143,6 +145,7 @@ static void *barrier_server(void *arg) {
         int fd;
         int i;
         long rx_queue;
+        int count;
 
         FD_ZERO(&active_fd_set);
         FD_SET(listen_fd, &active_fd_set);
@@ -166,6 +169,19 @@ static void *barrier_server(void *arg) {
                                                 perror("accept");
                                                 break;
                                         }
+                                        
+                                        /* 
+                                         * Skip validation check if connection request is from other hosts. 
+                                         * It is not necessary to save this connection socket fd besides FD_SET,
+                                         * because we will close it later.
+                                         */
+                                        if (strcmp(inet_ntoa(client.sin_addr), BARRIER_CLIENT_ADDR) != 0) {
+                                                FD_SET(fd, &active_fd_set); 
+                                                printf("Barrier server: connection from %s:%u.\n", 
+                                                        inet_ntoa(client.sin_addr), ntohs(client.sin_port));
+                                                
+                                                continue;
+                                        }
 
                                         /* 
                                          * If valid, reply client a message contains positive values (rx_queue);
@@ -178,27 +194,44 @@ static void *barrier_server(void *arg) {
                                                 /* Add this conn fd into select fd set.*/
                                                 FD_SET(fd, &active_fd_set);
                                                 
-                                                printf("Barrier server: connection from host:port %s:%u " 
+                                                printf("Barrier server: connection from %s:%u " 
                                                         "via rx queue %ld is valid.\n",
                                                         inet_ntoa(client.sin_addr), ntohs(client.sin_port), rx_queue);
                                         } else {
                                                send(fd, &rx_queue, MSGSIZE, 0);
                                                close(fd); 
                                                
-                                               printf("Barrier server: connection from host:port %s:%u " 
+                                               printf("Barrier server: connection from %s:%u " 
                                                         "via rx queue %ld is redundant.\n",
                                                         inet_ntoa(client.sin_addr), ntohs(client.sin_port), rx_queue);
                                         }
                                 } else {
-                                        /* Data arriving on an already-connected socket. */
-                                        recv(i, msg_buffer, MSGSIZE*2, 0);
-                                        printf("Barrier message %ld %ld received from host:port %s:%u\n",
-                                                msg_buffer[0], msg_buffer[1],
-                                                inet_ntoa(client.sin_addr), ntohs(client.sin_port));
-                                        /*if(strcmp(inet_ntoa(client.sin_addr), SELF_IP) == 0) {
-                                                
+                                        /* 
+                                         * Data arriving on an already-connected socket. 
+                                         * There are two possible cases:
+                                         * 1. Barrier messages [epoch_id, index] from barrier clients.
+                                         *    For these messages, just receive them.
+                                         * 2. Request messages [0, 0] from other hosts.
+                                         *    For these messages, response with [].
+                                         */
+                                        if ((count = recv(i, msg_buffer, MSGSIZE*2, 0)) != MSGSIZE*2) {
+                                                printf("Barrier server receive count is %d.\n", count);
+                                                /* Close*/
+                                                close(i);
+                                                FD_CLR(i, &active_fd_set);
+                                                break;
+                                        }
+                                        
+                                        if (strcmp(inet_ntoa(client.sin_addr), BARRIER_CLIENT_ADDR) == 0) {
+                                                printf("Barrier message [%ld, %ld] received from socket fd %d.\n",
+                                                        msg_buffer[0], msg_buffer[1], i);
                                         } else {
-                                        }*/
+                                                printf("Request message [%ld, %ld] received from socket fd %d.\n",
+                                                        msg_buffer[0], msg_buffer[1], i);
+
+                                                /* Reply */
+
+                                        } 
                                 }
                         }
                 }
@@ -337,7 +370,12 @@ static int setup_rx_queue_flows() {
                  * If positive values received, connection is valid;
                  * Otherwise, the connection is redundant.
                  */
-                recv(fd, &rx_queue, MSGSIZE, 0);
+                if (recv(fd, &rx_queue, MSGSIZE, 0) != MSGSIZE) {
+                        perror("receive for rx_queue");
+                        close(fd);
+                        goto error;
+                }
+
                 if (rx_queue > 0) {
                         /* Save client socket fd. */
                         client_fds[rx_queue - BASE_IRQ] = fd;
@@ -380,6 +418,7 @@ error:
         
 } 
 
+/*
 int main(int argc, char *argv[]) {
         int ret;
         
@@ -393,8 +432,9 @@ int main(int argc, char *argv[]) {
         ret = send_barrier_message(1);
         sleep(1);
         
-        sleep(2);
+        sleep(30);
         destroy_barrier();
 
         return 0;
 }
+*/

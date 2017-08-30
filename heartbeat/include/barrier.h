@@ -1,3 +1,6 @@
+#ifndef BARRIER
+#define BARRIER
+
 /*
  * 1. Start barrier server and configure em1 as the interface for receiving.
  * 2. Set up rx queue flows from em2 to all the rx queues on em1
@@ -17,3 +20,5 @@ void destroy_barrier();
  * 2.Index (0...IRQ_NUM) 
  */
 int send_barrier_message(long epoch_id);
+
+#endif
