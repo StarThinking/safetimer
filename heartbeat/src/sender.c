@@ -12,138 +12,114 @@
 #include "hb_config.h"
 #include "helper.h"
 
-static int client_tcp_fd;
-static int client_udp_fd;
-struct sockaddr_in hb_server;
+static int hb_fd;
+static struct sockaddr_in hb_server;
 
 extern long base_time;
 long base_time = 0;
 extern long timeout_interval;
 long timeout_interval = 0;
 
-static int fetch_parameter();
-static int init_sender_client();
-
 int init_sender();
 void destroy_sender();
-void start_send_heartbeat();
+void run_hb_loop();
     
 static void sig_handler(int signo) {
-      if (signo == SIGINT) {
-            destroy_sender();
-            exit(0);
-      }
+        if (signo == SIGINT) {
+                destroy_sender(); 
+                printf("Heartbeat sender terminates in sig_handler.\n");
+                exit(0);
+        }
 }
 
-/* Initialize TCP temporary connection and UDP client socket. */
 int init_sender() {
+        struct sockaddr_in remote;
+        unsigned int len;
         int ret = 0;
-
-        if ((ret = fetch_parameter()) < 0) {
-                fprintf(stderr, "Heartbeat sender failed to fetch parameters.\n");
-                goto error;
-        }
-        
-        if ((ret = init_sender_client()) < 0) {
-                fprintf(stderr, "Heartbeat sender failed to init heartbeat sender.\n");
-                goto error;
-        }
-
-error:
-        return ret;
-}
-
-/* Loop of heartbeat sending */
-void start_send_heartbeat() {
-        /* Sleep until the next epoch begins.*/
-        long now_t = now_time();
-        long epoch_id = time_to_epoch(now_t);
-
-        sendto(client_udp_fd, &epoch_id, MSGSIZE, 0, (struct sockaddr *) &hb_server, sizeof(hb_server));
-        printf("sent\n");
-}
-
-/* Destroy */
-void destroy_sender() {
-        close(client_udp_fd);
-}
-
-static int fetch_parameter() {
-        struct sockaddr_in server;
+        int count;
         long request_msg[2];
         long msg_buffer[2];
-        int fd;
-        int ret = 0;
         
-        /*  Connect to request server. */
-        memset(&server, '0', sizeof(server));
-        server.sin_family = AF_INET;
-        server.sin_addr.s_addr = inet_addr(HB_SERVER_ADDR);
-        server.sin_port = htons(REQUEST_SERVER_PORT);
-        
-        fd = socket(AF_INET, SOCK_STREAM, 0);
-        if ((ret = fd) < 0) {
-                perror("socket");
-                goto error;
-        }
-
-        if ((ret = connect(fd, (struct sockaddr *) &server, sizeof(server))) < 0) {
-                perror("connect");
-                close(fd);
-                goto error;
-        }
-       
-        /* Save TCP client fd. */
-        client_tcp_fd = fd;
-
-        printf("Heartbeat sender: connect to barrier server %s:%u successfully.\n", 
-                    BARRIER_SERVER_ADDR, BARRIER_SERVER_PORT);
-        
-        /* Send request message. */
-        request_msg[0] = 0;
-        request_msg[1] = 0;
-        
-        if ((send(client_tcp_fd, request_msg, MSGSIZE*2, 0)) != MSGSIZE*2) {
-                perror("send");
-                ret = -1;
-                goto error;
-        }
-       
-        printf("Request message has been sent out successfully.\n");
-
-        /* Receive base_time and timeout_interval. */
-        if (recv(client_tcp_fd, &msg_buffer, MSGSIZE*2, 0) != MSGSIZE*2) {
-                perror("recv parameters");
-                ret = -1;
-                goto error;
-        }
-
-        /* Save. */
-        base_time = msg_buffer[0];
-        timeout_interval = msg_buffer[1];
-
-        printf("Reply message: base_time is %ld and timeout_interval is %ld.\n",
-                base_time, timeout_interval);
-
-error:
-        /* Close TCP client socket. */
-        close(client_tcp_fd);
-        
-        return ret;
-}
-
-static int init_sender_client() {
-        int ret = 0;
-       
-        /* Initialize UDP socket for heartbeat sending.*/
         memset(&hb_server, '0', sizeof(hb_server));
         hb_server.sin_addr.s_addr = inet_addr(HB_SERVER_ADDR);
         hb_server.sin_family = AF_INET;
         hb_server.sin_port = htons(HB_SERVER_PORT);
         
-        client_udp_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        hb_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        
+        /* Send request message [flag=0, whatever]. */
+        request_msg[0] = 0; 
+        request_msg[1] = 0;
 
+        count = sendto(hb_fd, &request_msg, MSGSIZE*2, 0, (struct sockaddr *) &hb_server, 
+                    sizeof(hb_server));
+        
+        if (count != MSGSIZE*2) {
+                perror("request sendto");
+                ret = -1;
+                goto error;
+        }
+       
+        printf("Heartbeat sender: request message [flag=0, 0] has been sent.\n");
+        
+        /* Receive base_time and timeout_interval. */
+        memset(&remote, '0', sizeof(remote));
+        len = sizeof(remote);
+        
+        if (recvfrom(hb_fd, &msg_buffer, MSGSIZE*2, 0, (struct sockaddr *) &remote, &len) != MSGSIZE*2) {
+                perror("recvfrom");
+                ret = -1;
+                goto error;
+        }
+
+        /* Save parameters. */
+        base_time = msg_buffer[0];
+        timeout_interval = msg_buffer[1];
+
+        printf("Reply message [base_time=%ld, timeout_interval=%ld] is received.\n",
+                base_time, timeout_interval);
+
+error:
         return ret;
+}
+
+/* Loop of heartbeat sending. */
+void run_hb_loop() {
+        int count;
+        long hb_msg[2]; /* [flag=1, epoch_id] */
+        long current_epoch;
+        long sleep_time_ms;
+        struct timespec ts;
+        
+        /* Sleep until the next epoch begins. */
+        current_epoch = time_to_epoch(now_time());
+        sleep_time_ms = epoch_to_time(current_epoch + 1) - now_time();
+        ts = time_to_timespec(sleep_time_ms);
+        nanosleep(&ts, NULL);
+
+        /* Set flag to indicate this is heartbeat. */
+        hb_msg[0] = 1; 
+        
+        while(1) {        
+                hb_msg[1] = time_to_epoch(now_time()); 
+        
+                count = sendto(hb_fd, &hb_msg, MSGSIZE*2, 0, (struct sockaddr *) &hb_server, 
+                        sizeof(hb_server));
+
+                if (count != MSGSIZE*2) {
+                        perror("request sendto");
+                        break;
+                }
+                
+                printf("Heartbeat message [flag=1, epoch_id=%ld] has been sent.\n", hb_msg[1]);
+
+                sleep(10);
+        }
+}
+
+/* Destroy. */
+void destroy_sender() {
+        close(hb_fd);
 }
 
 int main(int argc, char *argv[]) {
@@ -163,10 +139,12 @@ int main(int argc, char *argv[]) {
         printf("Heartbeat sender has been initialized successfully.\n");
 
         /* Start to loop of heartbeat sending. */
-        start_send_heartbeat();
+        run_hb_loop();
 
         /* Destroy */
         destroy_sender();
+
+        printf("Heartbeat sender terminates.\n");
 
         return 0;
 }
@@ -219,26 +197,6 @@ int main(int argc, char *argv[]) {
                         printf("update hb_send_compl_time as now hb_send_time %ld for the first hb send\n",
                                 hb_send_time);
                 }
-
-                int ret = sendto(sockfd, &hb_send_time, MSGSIZE, 0, (struct sockaddr *) &server, sizeof(server));
-                printf("upd sent with hb_send_time %ld\n", hb_send_time);
-
-                if(ret <= 0) {
-                        fprintf(stderr, "Error: sendto ret is less than 0.\n");
-                        close(sockfd);
-                        break;
-                }
-        
-                if(ret != MSGSIZE) 
-                        printf("Warning: sendto ret is %d!\n", ret);
-                
-                packet_sent ++;
-                if(packet_sent == 10000)
-                        break;
-                
-                // sleep
-                struct timespec sleep_ts = sleep_time();
-                nanosleep(&sleep_ts, NULL);
         }
         
         long end_t = now();
