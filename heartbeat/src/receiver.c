@@ -9,11 +9,9 @@
 
 void sig_handler(int signo) {
         if (signo == SIGINT) {
-                /* Destroy barrier */
                 destroy_barrier();
-
-                printf("Heartbeat receiver ternimated!\n");
-
+                destroy_hb();
+                printf("Heartbeat receiver ternimates in sig_handler.\n");
                 exit(0);
         }
 }
@@ -25,12 +23,12 @@ int main(int argc, char *argv[]) {
 
          if ((ret = init_barrier()) < 0) {
                 fprintf(stderr, "Heartbeat receiver failed to init barrier.\n");
-                return ret;
+                goto error;
          }
         
          if ((ret = init_hb()) < 0) {
                 fprintf(stderr, "Heartbeat receiver failed to init heartbeat server.\n");
-                return ret;
+                goto error;
          }
 
          ret = send_barrier_message(0);
@@ -38,8 +36,11 @@ int main(int argc, char *argv[]) {
              
          sleep(30);
 
+error:
          destroy_hb();
          destroy_barrier();
             
+         printf("Heartbeat receiver ternimates.\n");
+         
          return ret;
 }

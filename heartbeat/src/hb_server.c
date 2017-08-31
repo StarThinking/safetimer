@@ -89,7 +89,7 @@ static void *hb_server(void *arg) {
                         /* For requests, reply [base_time, timeout_interval]. */
                         long reply[2];
 
-                        printf("Heartbeat server: request from %s:%u.", 
+                        printf("Heartbeat server: request from %s:%u.\n", 
                                 inet_ntoa(client.sin_addr), ntohs(client.sin_port));
                         
                         reply[0] = base_time;
