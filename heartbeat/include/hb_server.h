@@ -4,11 +4,11 @@
 /*
  * Initialize heartbeat server.
  */
-int init_hb_server();
+int init_hb();
 
 /*
  * Clear up all the resources used by heartbeat server.
  */
-void destroy_hb_server();
+void destroy_hb();
 
 #endif

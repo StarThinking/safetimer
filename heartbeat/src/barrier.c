@@ -12,9 +12,6 @@
 #include "hb_config.h"
 #include "barrier.h"
 
-long timeout_interval = 1000;
-long base_time = 12000;
-
 /* Barrier server*/
 static pthread_t server_tid; /* Barrier server pthread id */
 static fd_set active_fd_set, read_fd_set;
@@ -209,10 +206,7 @@ static void *barrier_server(void *arg) {
                                         /* 
                                          * Data arriving on an already-connected socket. 
                                          * There are two possible cases:
-                                         * 1. Barrier messages [epoch_id, index] from barrier clients.
-                                         *    For these messages, just receive them.
-                                         * 2. Request messages [0, 0] from other hosts.
-                                         *    For these messages, response with [].
+                                         * Barrier messages [epoch_id, index] from barrier clients.
                                          */
                                         if ((count = recv(i, msg_buffer, MSGSIZE*2, 0)) != MSGSIZE*2) {
                                                 printf("Barrier server receive count is %d.\n", count);
@@ -226,21 +220,9 @@ static void *barrier_server(void *arg) {
                                                 printf("Barrier message [%ld, %ld] received from socket fd %d.\n",
                                                         msg_buffer[0], msg_buffer[1], i);
                                         } else {
-                                                long reply[2];
-
-                                                printf("Request message [%ld, %ld] received from socket fd %d.\n",
-                                                        msg_buffer[0], msg_buffer[1], i);
-
-                                                /* Reply */
-                                                reply[0] = base_time;
-                                                reply[1] = timeout_interval;
-                                                
-                                                if (send(i, reply, MSGSIZE*2, 0) != MSGSIZE*2) {
-                                                        perror("send reply");
-                                                        break;
-                                                }
-                                                
-                                                printf("Request reply [%ld, %ld] is sent.\n", reply[0], reply[1]);
+                                                fprintf(stderr, "Barrier server: error happens because "
+                                                        "barrier messages can't be sent from address besides %s.\n", 
+                                                        BARRIER_CLIENT_ADDR);
                                         } 
                                 }
                         }

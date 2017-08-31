@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
                 return ret;
          }
         
-         if ((ret = init_hb_server()) < 0) {
+         if ((ret = init_hb()) < 0) {
                 fprintf(stderr, "Heartbeat receiver failed to init heartbeat server.\n");
                 return ret;
          }
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
              
          sleep(30);
 
-         destroy_hb_server();
+         destroy_hb();
          destroy_barrier();
             
          return ret;
