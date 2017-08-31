@@ -14,18 +14,6 @@ bin/receiver: src/receiver.o src/barrier.o src/hb_server.o
 	@mkdir -p bin
 	$(CC) $^ -lpthread -o $@
 
-bin/barrier: src/barrier.o
-	@mkdir -p bin
-	$(CC) $^ -o $@
-
-bin/hb_server: src/hb_server.o
-	@mkdir -p bin
-	$(CC) $^ -o $@
-
-bin/udp_sender: src/udp_sender.o
-	@mkdir -p bin
-	$(CC) $^ -o $@
-
 %.o: %.c
 	$(CC) $< $(CFLAGS) $(INCLUDE) -c -o $@
 

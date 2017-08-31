@@ -12,8 +12,8 @@
 #include "hb_config.h"
 #include "barrier.h"
 
-#define BARRIER_SERVER_IF "em1"
-#define BARRIER_CLIENT_IF "em2"
+long timeout_interval = 1000;
+long base_time = 12000;
 
 /* Barrier server*/
 static pthread_t server_tid; /* Barrier server pthread id */
@@ -226,11 +226,21 @@ static void *barrier_server(void *arg) {
                                                 printf("Barrier message [%ld, %ld] received from socket fd %d.\n",
                                                         msg_buffer[0], msg_buffer[1], i);
                                         } else {
+                                                long reply[2];
+
                                                 printf("Request message [%ld, %ld] received from socket fd %d.\n",
                                                         msg_buffer[0], msg_buffer[1], i);
 
                                                 /* Reply */
-
+                                                reply[0] = base_time;
+                                                reply[1] = timeout_interval;
+                                                
+                                                if (send(i, reply, MSGSIZE*2, 0) != MSGSIZE*2) {
+                                                        perror("send reply");
+                                                        break;
+                                                }
+                                                
+                                                printf("Request reply [%ld, %ld] is sent.\n", reply[0], reply[1]);
                                         } 
                                 }
                         }
