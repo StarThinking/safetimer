@@ -19,22 +19,27 @@ void sig_handler(int signo) {
 }
 
 int main(int argc, char *argv[]) {
-         int ret;
+         int ret = 0;
          
          signal(SIGINT, sig_handler);
 
-         ret = init_barrier();
-         if (ret < 0)
-                return -1;
-    
+         if ((ret = init_barrier()) < 0) {
+                fprintf(stderr, "Heartbeat receiver failed to init barrier.\n");
+                return ret;
+         }
+        
+         if ((ret = init_hb_server()) < 0) {
+                fprintf(stderr, "Heartbeat receiver failed to init heartbeat server.\n");
+                return ret;
+         }
+
          ret = send_barrier_message(0);
-         //sleep(1); 
-            
          ret = send_barrier_message(1);
-         sleep(1);
              
          sleep(30);
+
+         destroy_hb_server();
          destroy_barrier();
             
-         return 0;
+         return ret;
 }
