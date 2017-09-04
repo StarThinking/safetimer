@@ -8,9 +8,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pthread.h>
 
 #include "hb_config.h"
 #include "helper.h"
+
+#include "sender.h"
 
 static int hb_fd;
 static struct sockaddr_in hb_server;
@@ -20,17 +23,16 @@ long base_time = 0;
 extern long timeout_interval;
 long timeout_interval = 0;
 
-int init_sender();
-void destroy_sender();
-void run_hb_loop();
+static pthread_t tid;
+static void *run_hb_loop(void *arg);
     
-static void sig_handler(int signo) {
+/*static void sig_handler(int signo) {
         if (signo == SIGINT) {
                 destroy_sender(); 
                 printf("Heartbeat sender terminates in sig_handler.\n");
                 exit(0);
         }
-}
+}*/
 
 int init_sender() {
         struct sockaddr_in remote;
@@ -76,24 +78,45 @@ int init_sender() {
         base_time = msg_buffer[0];
         timeout_interval = msg_buffer[1];
 
+        if (base_time <= 0 || timeout_interval <=0) {
+                fprintf(stderr, "Error values of base_time or timeout_interval.\n");
+                ret = -1;
+                goto error;
+        }
+        
         printf("Reply message [base_time=%ld, timeout_interval=%ld] is received.\n",
                 base_time, timeout_interval);
+
+        /* Start sending thread. */
+        pthread_create(&tid, NULL, run_hb_loop, NULL);
+        
+        printf("Heartbeat sender has been initialized successfully.\n");
 
 error:
         return ret;
 }
 
+/* Destroy. */
+void destroy_sender() {
+        pthread_cancel(tid);
+        pthread_join(tid, NULL);
+        printf("Heartbeat sender has been destroyed.\n");
+}
+
+static void cleanup(void *arg) {
+        printf("Clean up.\n");
+        close(hb_fd);
+}
+
 /* Loop of heartbeat sending. */
-void run_hb_loop() {
+static void *run_hb_loop(void *arg) {
         int count;
         long hb_msg[2]; /* [flag=1, epoch_id] */
         long epoch;
         long diff_time;
         long timeout;
         
-        epoch = time_to_epoch(now_time());
-        if (epoch < 0)
-                goto error;
+        pthread_cleanup_push(cleanup, NULL);
 
         /* Set flag to indicate this is heartbeat. */
         hb_msg[0] = 1; 
@@ -121,40 +144,9 @@ void run_hb_loop() {
                 printf("Heartbeat message [flag=1, epoch=%ld] has been sent.\n", hb_msg[1]);
         }
 
-error:
-        return;
-}
-
-/* Destroy. */
-void destroy_sender() {
-        close(hb_fd);
-}
-
-int main(int argc, char *argv[]) {
-        if (argc != 1) {
-	        printf("Usage: ./hb_sender\n");
-	        exit(-1);
-        }
+        pthread_cleanup_pop(1);
         
-        signal(SIGINT, sig_handler);
-
-        /* Init */
-        if (init_sender() < 0) {
-               fprintf(stderr, "Error in initialize heartbeat sender.\n");
-               exit(-1);
-        }
-
-        printf("Heartbeat sender has been initialized successfully.\n");
-
-        /* Start to loop of heartbeat sending. */
-        run_hb_loop();
-
-        /* Destroy */
-        destroy_sender();
-
-        printf("Heartbeat sender terminates.\n");
-
-        return 0;
+        return NULL;
 }
         /*
 
