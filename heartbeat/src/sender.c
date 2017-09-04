@@ -87,20 +87,27 @@ error:
 void run_hb_loop() {
         int count;
         long hb_msg[2]; /* [flag=1, epoch_id] */
-        long current_epoch;
-        long sleep_time_ms;
-        struct timespec ts;
+        long epoch;
+        long diff_time;
+        long timeout;
         
-        /* Sleep until the next epoch begins. */
-        current_epoch = time_to_epoch(now_time());
-        sleep_time_ms = epoch_to_time(current_epoch + 1) - now_time();
-        ts = time_to_timespec(sleep_time_ms);
-        nanosleep(&ts, NULL);
+        epoch = time_to_epoch(now_time());
+        if (epoch < 0)
+                goto error;
 
         /* Set flag to indicate this is heartbeat. */
         hb_msg[0] = 1; 
         
-        while(1) {        
+        while(1) {     
+                epoch = time_to_epoch(now_time());
+                timeout = epoch_to_time(epoch);
+
+                /* Sleep until the next epoch begins. */
+                if ((diff_time = timeout - now_time()) > 0) {
+                        struct timespec ts = time_to_timespec(diff_time);
+                        nanosleep(&ts, NULL);
+                }
+
                 hb_msg[1] = time_to_epoch(now_time()); 
         
                 count = sendto(hb_fd, &hb_msg, MSGSIZE*2, 0, (struct sockaddr *) &hb_server, 
@@ -111,10 +118,11 @@ void run_hb_loop() {
                         break;
                 }
                 
-                printf("Heartbeat message [flag=1, epoch_id=%ld] has been sent.\n", hb_msg[1]);
-
-                sleep(10);
+                printf("Heartbeat message [flag=1, epoch=%ld] has been sent.\n", hb_msg[1]);
         }
+
+error:
+        return;
 }
 
 /* Destroy. */
