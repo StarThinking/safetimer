@@ -7,8 +7,10 @@
 int init_hb();
 
 /*
- * Clear up all the resources used by heartbeat server.
+ * Cancel.
  */
-void destroy_hb();
+void cancel_hb();
+
+void join_hb();
 
 #endif

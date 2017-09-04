@@ -11,42 +11,19 @@
 
 #include "hb_config.h"
 #include "hb_server.h"
-#include "queue.h" /* For base_time and timeout_interval.*/
+
+extern long base_time;
+extern long timeout_interval;
 
 static pthread_t server_tid; /* Heartbeat server pthread id. */
 static int server_fd;
 
-static int init_hb_server();
 static void *hb_server(void *arg);
+static void cleanup(void *arg);
 
 int init_hb() {
         int ret = 0;
-
-        if ((ret = init_hb_server()) < 0) {
-                fprintf(stderr, "Failed to init heartbeat server.\n");
-                return ret;
-        }
         
-        printf("Heartbeat server has been initialized successfully.\n");
-
-        return ret;
-}
-
-/*
- * Clear up all the resources used by heartbeat server.
- */
-void destroy_hb() {
-        close(server_fd);
-
-        pthread_cancel(server_tid);
-        pthread_join(server_tid, NULL);
-        
-        printf("Heartbeat server has been destroyed.\n");
-}
-/*
- * Initialize heartbeat server.
- */
-static int init_hb_server() {
         struct sockaddr_in server;
 
         memset(&server, '0', sizeof(server));
@@ -61,8 +38,22 @@ static int init_hb_server() {
         pthread_create(&server_tid, NULL, hb_server, NULL);
         
         printf("Heartbeat server thread started.\n");
+       
+        return ret;
+}
 
-        return 0;
+void cancel_hb() {
+        pthread_cancel(server_tid);
+}
+
+void join_hb() {
+        pthread_join(server_tid, NULL);
+        printf("Heartbeat server thread joined.\n");
+}
+
+static void cleanup(void *arg) {  
+        printf("Clean up heartbeat server.\n");
+        close(server_fd);
 }
 
 /*
@@ -76,7 +67,9 @@ static void *hb_server(void *arg) {
         long flag, epoch_id;
         struct sockaddr_in client;
         unsigned int len = sizeof(client);
-        
+
+        pthread_cleanup_push(cleanup, NULL);
+
         while (1) {
                 if((recvfrom(server_fd, &msg_buffer, MSGSIZE*2, 0, (struct sockaddr *) &client, &len)) != MSGSIZE*2) {
                         perror("recvfrom");
@@ -104,11 +97,12 @@ static void *hb_server(void *arg) {
                         /* Heartbeats. */
                         epoch_id = msg_buffer[1];
                         
-                        printf("Heartbeat server: heartbeat from %s:%u for epoch %ld.\n",
-                                inet_ntoa(client.sin_addr), ntohs(client.sin_port), epoch_id);
+                        //printf("Heartbeat server: heartbeat from %s:%u for epoch %ld.\n",
+                        //        inet_ntoa(client.sin_addr), ntohs(client.sin_port), epoch_id);
                 }
 
         }
 
+        pthread_cleanup_pop(1);
         return NULL;
 }

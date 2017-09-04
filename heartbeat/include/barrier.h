@@ -9,9 +9,11 @@
 int init_barrier() ;
 
 /*
- * Clear up all the resources used for barrier client and server.
+ * Cancel.
  */
-void destroy_barrier();
+void cancel_barrier();
+
+void join_barrier();
 
 /*
  * Send barrier message via all connected rx queue flows from em2 to em1.

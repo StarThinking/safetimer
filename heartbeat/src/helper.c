@@ -18,8 +18,14 @@ struct timespec time_to_timespec(long time_ms) {
         return ts;
 }
 
-/* Round up to the epoch id that time belongs to. */
+/*
+ * Round up to the epoch id that time belongs to.
+ * If error happens, reruen -1.
+ */
 long time_to_epoch(long time) {
+        if(timeout_interval == 0)
+                return -1;
+
         time -= base_time;
         return time < 0 ? -1 : (long)(time / timeout_interval + 1);
 }
