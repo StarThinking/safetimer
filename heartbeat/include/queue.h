@@ -1,7 +1,8 @@
 #ifndef QUEUE
 #define QUEUE
 
-extern long base_time;
-extern long timeout_interval;
+int init_queue();
+
+void stop_queue();
 
 #endif

@@ -12,12 +12,14 @@
 #include "hb_config.h"
 #include "barrier.h"
 
-/* Barrier server*/
+/* Barrier server */
 static pthread_t server_tid; /* Barrier server pthread id */
+//static pthread_t setup_tid; /* Pthread id of setting up queues */
 static fd_set active_fd_set, read_fd_set;
 static int listen_fd;
 static int conn_fds[IRQ_NUM];
 
+static void cleanup(void *arg);
 static void *barrier_server(void *arg);
 static int validate_connection(int client_port, long *rx_queue);
 static int get_sport_by_rx_queue(const int rx_queue);
@@ -63,30 +65,42 @@ int init_barrier() {
         pthread_create(&server_tid, NULL, barrier_server, NULL);
         printf("Barrier server thread started.\n");
         
-        sleep(1);
-
-        /* Set up rx queue flows from em2 to em1 via all the rx queues on em1. */
-        if ((ret = setup_rx_queue_flows()) < 0) {
-                fprintf(stderr, "Error: setup_rx_queue_flows() failed with ret %d.\n", ret);
-                goto error;
+        //pthread_create(&setup_tid, NULL, setup_queues, NULL);
+        /*Set up rx queue flows from em2 to em1 via all the rx queues on em1. */
+        if ((setup_rx_queue_flows()) < 0) {
+                fprintf(stderr, "Error: setup_rx_queue_flows() failed.\n");
         } else {
                 printf("It is successful to set up %u rx queue flows from %s on %s --> %s on %s.\n",
                         IRQ_NUM, BARRIER_CLIENT_ADDR, BARRIER_CLIENT_IF, BARRIER_SERVER_ADDR, BARRIER_SERVER_IF);
         }
         
         printf("Barrier server and rx queue flows have been initialized successfully.\n");
-
+        
 error:
         return ret;
 }
 
-/*
- * Clear up all the resources used for barrier client and server.
- */
-void destroy_barrier() {
-        int i;
+void cancel_barrier() {
+        pthread_cancel(server_tid);
+        //pthread_cancel(setup_tid);
+}
 
-        /* Close all socket fds. */
+void join_barrier() {
+        pthread_join(server_tid, NULL);
+        printf("Barrier server_tid thread joined.\n");
+        
+        //pthread_join(setup_tid, NULL);        
+        //printf("Barrier setup_tid thread joined.\n");
+}
+
+/*
+ * Clean up all the resources used for barrier client and server.
+ */
+static void cleanup(void *arg) {
+        int i;
+       
+        printf("Clean up barrier server.\n");
+
         FD_ZERO(&active_fd_set);
         FD_ZERO(&read_fd_set);
         close(listen_fd);
@@ -95,12 +109,6 @@ void destroy_barrier() {
                 close(client_fds[i]);
                 close(conn_fds[i]);
         }
-        
-        /* Cancel barrier server thread. */
-        pthread_cancel(server_tid);
-        pthread_join(server_tid, NULL);
-
-        printf("Barrier server and clients have been destroyed.\n");
 }
 
 /*
@@ -147,10 +155,12 @@ static void *barrier_server(void *arg) {
         FD_ZERO(&active_fd_set);
         FD_SET(listen_fd, &active_fd_set);
  
+        pthread_cleanup_push(cleanup, NULL);
+
         while (1) {
                 /* Block until input arrives on one or more active sockets. */
                 read_fd_set = active_fd_set;
-                if (select (FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) < 0) {
+                if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) < 0) {
                         perror ("select");
                         break;
                 }
@@ -217,7 +227,7 @@ static void *barrier_server(void *arg) {
                                         }
                                         
                                         if (strcmp(inet_ntoa(client.sin_addr), BARRIER_CLIENT_ADDR) == 0) {
-                                                printf("Barrier message [%ld, %ld] received from socket fd %d.\n",
+                                                printf("Barrier message [epoch=%ld, index=%ld] received from socket fd %d.\n",
                                                         msg_buffer[0], msg_buffer[1], i);
                                         } else {
                                                 fprintf(stderr, "Barrier server: error happens because "
@@ -228,6 +238,8 @@ static void *barrier_server(void *arg) {
                         }
                 }
         }
+
+        pthread_cleanup_pop(1);
 
         return NULL;
 }
