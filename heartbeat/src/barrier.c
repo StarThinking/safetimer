@@ -196,7 +196,7 @@ static void *barrier_server(void *arg) {
                                          */
                                         if (validate_connection((int)htons(client.sin_port), &rx_queue)) {
                                                 send(fd, &rx_queue, MSGSIZE, 0);
-                                                conn_fds[rx_queue - IRQ_NUM] = fd;
+                                                conn_fds[rx_queue - BASE_IRQ] = fd;
                                                 
                                                 /* Add this conn fd into select fd set.*/
                                                 FD_SET(fd, &active_fd_set);

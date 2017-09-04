@@ -64,19 +64,9 @@ void destroy_receiver() {
         
         cancel_hb();
         join_hb();
-
-        /* 
-         * It's wiered that this thread cann't be canceled or joined, as 
-         * segment fault errors will happen. The only way I figured out is 
-         * 1. detaching this thread;
-         * 2. making queue recv non-blocking;
-         * 3. using a runnable flag in while loop.
-         */
-        stop_queue();
-        sleep(2);
         
-//        cancel_expire();
-//        join_expire();
+        cancel_queue();
+        join_queue();
 
         printf("Heartbeat receiver has been destroyed.\n");
 }
