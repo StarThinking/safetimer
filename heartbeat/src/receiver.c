@@ -19,8 +19,8 @@ long base_time = 0;
 extern long timeout_interval;
 long timeout_interval = 0;
 
-extern sem_t sem_init_done;
-sem_t init_done_sem;
+extern sem_t init_done;
+sem_t init_done;
 
 typedef void (*cb_t)();
 
@@ -29,9 +29,9 @@ int init_receiver(cb_t callback) {
 
          /* Set the valus of parameters. */
          base_time = now_time();
-         timeout_interval = 1000;
+         timeout_interval = 10000;
     
-         sem_init(&init_done_sem, 0, 0);
+         sem_init(&init_done, 0, 0);
 
          if ((ret = init_queue()) < 0) {
                 fprintf(stderr, "Heartbeat receiver failed to init queue.\n");
@@ -51,7 +51,7 @@ int init_receiver(cb_t callback) {
          printf("Heartbeat receiver has been initialized successfully.\n");
         
          /* Begin to check expiration until init is done. */
-         sem_post(&init_done_sem);
+         sem_post(&init_done);
 
 error:
             

@@ -64,7 +64,7 @@ static void cleanup(void *arg) {
  */
 static void *hb_server(void *arg) {
         long msg_buffer[2];
-        long flag, epoch_id;
+        long flag;
         struct sockaddr_in client;
         unsigned int len = sizeof(client);
 
@@ -82,8 +82,8 @@ static void *hb_server(void *arg) {
                         /* For requests, reply [base_time, timeout_interval]. */
                         long reply[2];
 
-                        printf("Heartbeat server: request from %s:%u.\n", 
-                                inet_ntoa(client.sin_addr), ntohs(client.sin_port));
+                        //printf("Heartbeat server: request from %s:%u.\n", 
+                        //        inet_ntoa(client.sin_addr), ntohs(client.sin_port));
                         
                         reply[0] = base_time;
                         reply[1] = timeout_interval;
@@ -95,10 +95,13 @@ static void *hb_server(void *arg) {
                         }           
                 } else if (flag == 1) {
                         /* Heartbeats. */
+                        /*
+                        long epoch_id;
                         epoch_id = msg_buffer[1];
                         
-                        //printf("Heartbeat server: heartbeat from %s:%u for epoch %ld.\n",
-                        //        inet_ntoa(client.sin_addr), ntohs(client.sin_port), epoch_id);
+                        printf("Heartbeat server: heartbeat from %s:%u for epoch %ld.\n",
+                                inet_ntoa(client.sin_addr), ntohs(client.sin_port), epoch_id);
+                        */
                 }
 
         }

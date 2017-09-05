@@ -133,8 +133,8 @@ int send_barrier_message(long epoch_id) {
                 }
         }
 
-        printf("Barrier client: barrier messages for epoch_id %ld "
-                "have been sent out along all the flows.\n", epoch_id);
+        //printf("Barrier client: barrier messages for epoch_id %ld "
+        //        "have been sent out along all the flows.\n", epoch_id);
 
 error:
         return ret;
@@ -227,8 +227,9 @@ static void *barrier_server(void *arg) {
                                         }
                                         
                                         if (strcmp(inet_ntoa(client.sin_addr), BARRIER_CLIENT_ADDR) == 0) {
-                                                printf("Barrier message [epoch=%ld, index=%ld] received from socket fd %d.\n",
-                                                        msg_buffer[0], msg_buffer[1], i);
+                                                ;
+                                                //printf("Barrier message [epoch=%ld, index=%ld] received from socket fd %d.\n",
+                                                //        msg_buffer[0], msg_buffer[1], i);
                                         } else {
                                                 fprintf(stderr, "Barrier server: error happens because "
                                                         "barrier messages can't be sent from address besides %s.\n", 
