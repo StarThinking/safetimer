@@ -25,14 +25,8 @@ long timeout_interval = 0;
 
 static pthread_t tid;
 static void *run_hb_loop(void *arg);
-    
-/*static void sig_handler(int signo) {
-        if (signo == SIGINT) {
-                destroy_sender(); 
-                printf("Heartbeat sender terminates in sig_handler.\n");
-                exit(0);
-        }
-}*/
+static void debugfs_save(long base_time, long timeout_interval);    
+static void clear_debugfs();
 
 int init_sender() {
         struct sockaddr_in remote;
@@ -40,8 +34,8 @@ int init_sender() {
         int ret = 0;
         int count;
         long request_msg[2];
-        long msg_buffer[2];
-        
+        long msg_buffer[2]; 
+
         memset(&hb_server, '0', sizeof(hb_server));
         hb_server.sin_addr.s_addr = inet_addr(HB_SERVER_ADDR);
         hb_server.sin_family = AF_INET;
@@ -78,6 +72,9 @@ int init_sender() {
         base_time = msg_buffer[0];
         timeout_interval = msg_buffer[1];
 
+        /* Save parameters into debugfs so that hb_sender_tracker can read them. */
+        debugfs_save(base_time, timeout_interval);
+        
         if (base_time <= 0 || timeout_interval <=0) {
                 fprintf(stderr, "Error values of base_time or timeout_interval.\n");
                 ret = -1;
@@ -100,6 +97,10 @@ error:
 void destroy_sender() {
         pthread_cancel(tid);
         pthread_join(tid, NULL);
+        
+        clear_debugfs();
+        printf("Debugfs cleared.\n");
+        
         printf("Heartbeat sender has been destroyed.\n");
 }
 
@@ -112,9 +113,10 @@ static void cleanup(void *arg) {
 static void *run_hb_loop(void *arg) {
         int count;
         long hb_msg[2]; /* [flag=1, epoch_id] */
-        long epoch;
+        long current_epoch, sending_epoch;
         long diff_time;
         long timeout;
+        int first_hb = 1;
         
         pthread_cleanup_push(cleanup, NULL);
 
@@ -122,22 +124,49 @@ static void *run_hb_loop(void *arg) {
         hb_msg[0] = 1; 
         
         while(1) {     
-                epoch = time_to_epoch(now_time());
-                timeout = epoch_to_time(epoch);
+                current_epoch = time_to_epoch(now_time());
+                timeout = epoch_to_time(current_epoch);
 
                 /* Sleep until the next epoch begins. */
-                if ((diff_time = timeout - now_time()) > 0) {
+                while ((diff_time = timeout - now_time()) > 0) {
                         struct timespec ts = time_to_timespec(diff_time);
                         nanosleep(&ts, NULL);
                 }
 
-                hb_msg[1] = time_to_epoch(now_time()); 
-        
+                sending_epoch = time_to_epoch(now_time());
+                hb_msg[1] = sending_epoch;
+
+                /* 
+                 * Before trying to send the FIRST heartbeat, set the value of "sent_epoch" as sending_epoch - 1.
+                 * So that this heartbeat sending should be completed before sending timeout, 
+                 * which is time of epoch - transmision time - clock diff.
+                 */
+                if (first_hb) {
+                        FILE *fp;
+                        char *buf;
+                        long sent_epoch = sending_epoch -1;
+
+                        if ((fp = fopen("/sys/kernel/debug/hb_sender_tracker/sent_epoch", "r+")) == NULL) {
+                                perror("fopen sent_epoch");
+                                fclose(fp);
+                                break;
+                        }
+
+                        buf = (char*) calloc(20, sizeof(char));
+                        sprintf(buf, "%ld", sent_epoch);
+                        fputs(buf, fp);
+                        free(buf);
+                        fclose(fp);
+                        first_hb = 0;
+                        
+                        printf("Update sent_epoch as %ld before sending the first heartbeat.\n", sent_epoch);
+                }
+
                 count = sendto(hb_fd, &hb_msg, MSGSIZE*2, 0, (struct sockaddr *) &hb_server, 
                         sizeof(hb_server));
 
                 if (count != MSGSIZE*2) {
-                        perror("request sendto");
+                        perror("heartbeat sendto");
                         break;
                 }
                 
@@ -148,57 +177,46 @@ static void *run_hb_loop(void *arg) {
         
         return NULL;
 }
-        /*
 
-        printf("packet received, ret = %d, base_time = %ld, timeout_interval = %ld.\n", 
-                ret, recv_buf[0], recv_buf[1]);
+static void debugfs_save(long base_time, long timeout_interval) {
+        FILE *fp1, *fp2;
+        char *buf;
 
-        fp = fopen("/sys/kernel/debug/hb_sender_tracker/base_time", "r+");
-        if(fp == NULL)
-                printf("failed to open file!\n");
-        else {
-                buf = (char*) calloc(20, sizeof(char));
-                sprintf(buf, "%ld", recv_buf[0]);
-                fputs(buf, fp);
-                free(buf);
+        if ((fp1 = fopen("/sys/kernel/debug/hb_sender_tracker/base_time", "r+")) == NULL) {
+                perror("fopen base_time");
+                fclose(fp1);
+                goto error;
         }
-        fclose(fp);
+
+        buf = (char*) calloc(20, sizeof(char));
+        sprintf(buf, "%ld", base_time);
+        fputs(buf, fp1);
+        free(buf);
+        fclose(fp1);
         
-        fp = fopen("/sys/kernel/debug/hb_sender_tracker/timeout_interval", "r+");
-        if(fp == NULL)
-                printf("failed to open file!\n");
-        else {
-                buf = (char*) calloc(20, sizeof(char));
-                sprintf(buf, "%ld", recv_buf[1]);
-                fputs(buf, fp);
-                free(buf);
+        if ((fp2 = fopen("/sys/kernel/debug/hb_sender_tracker/timeout_interval", "r+")) == NULL) {
+                perror("fopen timeout_interval");
+                fclose(fp2);
+                goto error;
         }
-        fclose(fp);
 
-        timeout_interval = recv_buf[1];
+        buf = (char*) calloc(20, sizeof(char));
+        sprintf(buf, "%ld", timeout_interval);
+        fputs(buf, fp2);
+        free(buf);
+        fclose(fp2);
 
-        long begin_t = now();
-        while(1) {  
-                long hb_send_time = now();
-                
-                // update hb_send_time as hb_send_compl_time for the first hb send
-                if(first_hb_send) {
-                        fp = fopen("/sys/kernel/debug/hb_sender_tracker/hb_send_compl_time", "r+");
-                        if(fp == NULL)
-                                printf("failed to open file!\n");
-                        else {
-                                buf = (char*) calloc(20, sizeof(char));
-                                sprintf(buf, "%ld", hb_send_time);
-                                fputs(buf, fp);
-                                free(buf);
-                        }
-                        fclose(fp);
-                        first_hb_send = 0;
-                        printf("update hb_send_compl_time as now hb_send_time %ld for the first hb send\n",
-                                hb_send_time);
-                }
+error:
+        return;
+}
+
+static void clear_debugfs() {
+        FILE *fp;
+        
+        if ((fp = fopen("/sys/kernel/debug/hb_sender_tracker/clear", "r+")) == NULL) {
+                perror("fopen clear");
         }
         
-        long end_t = now();
-        printf("Time used to send 10000 packets is %ld\n", end_t - begin_t);
-  */
+        fputs("1", fp);
+        fclose(fp);
+}
