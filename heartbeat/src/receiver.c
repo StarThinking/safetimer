@@ -22,18 +22,16 @@ long timeout_interval = 0;
 extern sem_t init_done;
 sem_t init_done;
 
-typedef void (*cb_t)();
-
 int init_receiver(cb_t callback) {
          int ret = 0;
 
          /* Set the valus of parameters. */
          base_time = now_time();
-         timeout_interval = 10000;
+         timeout_interval = 1000;
     
          sem_init(&init_done, 0, 0);
 
-         if ((ret = init_queue()) < 0) {
+         if ((ret = init_queue(callback)) < 0) {
                 fprintf(stderr, "Heartbeat receiver failed to init queue.\n");
                 goto error;
          }

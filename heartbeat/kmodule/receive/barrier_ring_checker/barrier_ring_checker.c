@@ -69,7 +69,7 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
 
                 sprintf(str, "%pI4", &saddr);
                 
-                if(dport == LOCAL_PORT && strcmp(str, SELF_IP) == 0) {
+                if(dport == BARRIER_SERVER_PORT && strcmp(str, BARRIER_CLIENT_ADDR) == 0) {
                         int index;
                         
                         printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, irq_vec = %u, prot = %u, in = %s, out = %s\n", ops->hooknum, &saddr, sport, &daddr, dport, irq_vec, proto, in_name, out_name);
@@ -96,7 +96,7 @@ int init_module() {
         nfho0.pf = PF_INET; // IPV4 packets
         nf_register_hook(&nfho0);  
        
-        dir = debugfs_create_dir(LOCAL_IP, NULL);
+        dir = debugfs_create_dir(HB_SERVER_ADDR, NULL);
         for(i=0; i<IRQ_NUM; i++) {
                 char irq_str[8];
                 sprintf(irq_str, "%d", BASE_IRQ + i);

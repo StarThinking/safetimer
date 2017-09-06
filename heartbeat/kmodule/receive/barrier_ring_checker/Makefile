@@ -1,4 +1,4 @@
-obj-m += ring-checker.o 
+obj-m += barrier_ring_checker.o 
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

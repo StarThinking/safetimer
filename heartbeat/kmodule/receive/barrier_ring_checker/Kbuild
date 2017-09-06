@@ -26,6 +26,6 @@ clean:
 
 else
     # called from kernel build system: just declare what our modules are
-    obj-m := ring-checker.o
+    obj-m := barrier_ring_checker.o
 
 endif

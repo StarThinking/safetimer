@@ -59,7 +59,9 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 static int ip_equal(void *a, void *b);
 static void free_val(void *val);
 
-int init_queue() {
+cb_t timeout_cb;
+
+int init_queue(cb_t callback) {
         int ret = 0;
         struct timeval read_timeout;
 
@@ -103,6 +105,7 @@ int init_queue() {
 
         /* Start expiration checker thread. */
         pthread_create(&expire_checker_tid, NULL, expire_checker, NULL);
+        timeout_cb = callback;
         printf("Queue: expire checker thread started.\n");
        
         printf("Queue has been initialized successfully.\n");
@@ -330,6 +333,7 @@ static void *expire_checker(void *arg) {
                         while (next != NULL) {  
                                 printf("\tChecker: node %s timeout for epoch %ld !\n", 
                                         (char*) next->val, epoch);
+                                timeout_cb();
                                 
                                 list_remove(*ip_list, next);
                                 next = list_iterator_next(it);
