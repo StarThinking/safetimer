@@ -10,6 +10,7 @@
 
 #include "debugfs.h"
 #include "kretprobe.h"
+#include "../../../include/hb_config.h"
 
 MODULE_LICENSE("GPL");
 
@@ -18,10 +19,15 @@ long now(void) {
         return ktime_to_ms(ktime_get_real());
 }
 
+/* If sent_epoch = 0, return -1 to indicate not prepared. */
 long get_send_timeout(void) {
-        // get_hb_send_compl_time() involves spinlock contention
-        long hb_epoch = time_to_epoch(get_hb_send_compl_time());
-        long recv_timeout = epoch_to_time(hb_epoch + 1);
+        long sent_epoch, recv_timeout;
+        
+        /* get_sent_epoch() involves spinlock contention. */
+        if ((sent_epoch = get_sent_epoch()) == 0)
+                return -1;
+        
+        recv_timeout = epoch_to_time(sent_epoch + 1);
         
         return recv_timeout - get_max_transfer_delay() - get_max_clock_deviation();
 }
@@ -30,14 +36,16 @@ long timeout(void) {
         long send_timeout = 0;
         long now_t = 0;
         
-//        if(!prepared())
-//                return 0;
+        if (!prepared())
+                return 0;
 
         send_timeout = get_send_timeout();
-        now_t = now();
-        
-        if(!prepared())
+
+        /* Not prepared. */
+        if(send_timeout < 0)
                 return 0;
+        
+        now_t = now();
         
         return now_t - send_timeout;
 }
@@ -46,32 +54,42 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
         struct sk_buff *skb = NULL;
         struct iphdr *iph = NULL;
         struct udphdr *uh = NULL;
+        unsigned short offset;
+        unsigned short iphdr_size;
+        unsigned short udphdr_size = 8;
 
 //        if(ri->ret_addr != (void *) 0xffffffffa004a0b5)
 //                return 0;
-        if(!prepared())
+        if (!prepared())
                 return 0;
 
-        if(regs != NULL) {
+        if (regs != NULL) {
             skb = (struct sk_buff *) regs->di;
-            if(skb != NULL) {
+            if (skb != NULL) {
                 iph = ip_hdr(skb);
-                if(iph != NULL && iph->protocol == IPPROTO_UDP) {
-                    // change form udp_hdr() to skb_transport_header()
+                if (iph != NULL && iph->protocol == IPPROTO_UDP) {
+                    // change from udp_hdr() to skb_transport_header()
                     uh = (struct udphdr *) skb_transport_header(skb);
-                    if(uh != NULL) {
+                    if (uh != NULL) {
                         u16 dport = ntohs(uh->dest);
-                        if(dport == 5001) {
-                            unsigned char *data = (unsigned char *) iph;
-                            long *hb_send_time_p = (long *) (data + 28);
-                            long hb_send_time = *hb_send_time_p;
+                        if (dport == HB_SERVER_PORT) {
+                            unsigned char *data;
+                            long flag, epoch;
+                            long exceeding_time;
+                            
+                            data = (unsigned char *) iph;
+                            iphdr_size = iph->ihl << 2;
+                            offset = iphdr_size + udphdr_size;
+                            flag = *((long *) (data + offset));
+                            epoch = *((long *) (data + offset + MSGSIZE));
 
-                            long exceeding_time = timeout();
-                            if(exceeding_time <= 0) {
-                                //printk("hb send completes and update hb_send_compl_time %ld to hb_send_time %ld\n", hb_send_compl_time, hb_send_time);
-                                set_hb_send_compl_time(hb_send_time);
+                            if ((exceeding_time = timeout()) <= 0) {
+                                set_sent_epoch(epoch);
+                                printk("heartbeat sending completes and set sent_epoch as %ld\n", 
+                                        epoch);
                             } else {
-                                printk("hb send completion timeouts (%ld) by %ld!\n", get_send_timeout(), exceeding_time);
+                                printk("heartbeat sending completion timeouts (%ld) by %ld!\n", 
+                                        get_send_timeout(), exceeding_time);
                             } 
                         }
                     }
