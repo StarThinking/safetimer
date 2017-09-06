@@ -133,8 +133,8 @@ int send_barrier_message(long epoch_id) {
                 }
         }
 
-        printf("Barrier client: barrier messages for epoch_id %ld "
-                "have been sent out along all the flows.\n", epoch_id);
+        //printf("Barrier client: barrier messages for epoch_id %ld "
+        //        "have been sent out along all the flows.\n", epoch_id);
 
 error:
         return ret;
@@ -196,7 +196,7 @@ static void *barrier_server(void *arg) {
                                          */
                                         if (validate_connection((int)htons(client.sin_port), &rx_queue)) {
                                                 send(fd, &rx_queue, MSGSIZE, 0);
-                                                conn_fds[rx_queue - IRQ_NUM] = fd;
+                                                conn_fds[rx_queue - BASE_IRQ] = fd;
                                                 
                                                 /* Add this conn fd into select fd set.*/
                                                 FD_SET(fd, &active_fd_set);
@@ -227,8 +227,9 @@ static void *barrier_server(void *arg) {
                                         }
                                         
                                         if (strcmp(inet_ntoa(client.sin_addr), BARRIER_CLIENT_ADDR) == 0) {
-                                                printf("Barrier message [epoch=%ld, index=%ld] received from socket fd %d.\n",
-                                                        msg_buffer[0], msg_buffer[1], i);
+                                                ;
+                                                //printf("Barrier message [epoch=%ld, index=%ld] received from socket fd %d.\n",
+                                                //        msg_buffer[0], msg_buffer[1], i);
                                         } else {
                                                 fprintf(stderr, "Barrier server: error happens because "
                                                         "barrier messages can't be sent from address besides %s.\n", 
