@@ -5,7 +5,6 @@
 #include <linux/spinlock_types.h>
 #include <linux/semaphore.h>
 #include <linux/spinlock.h>
-#include <linux/debugfs.h>
 
 #include "debugfs.h"
 

@@ -67,12 +67,15 @@ int init_sender() {
                 ret = -1;
                 goto error;
         }
-        
-        /* Get parameters. */
+
+        /* Save parameters. */
         base_time = msg_buffer[0];
         timeout_interval = msg_buffer[1];
+
+        /* Save parameters into debugfs so that hb_sender_tracker can read them. */
+        //debugfs_save(base_time, timeout_interval);
         
-        if (base_time <= 0 || timeout_interval <=0) {
+        if (base_time <= 0 && timeout_interval <= 0) {
                 fprintf(stderr, "Error values of base_time or timeout_interval.\n");
                 ret = -1;
                 goto error;
@@ -81,8 +84,6 @@ int init_sender() {
         printf("Reply message [base_time=%ld, timeout_interval=%ld] is received.\n",
                 base_time, timeout_interval);
 
-        /* Save parameters into debugfs so that hb_sender_tracker can read them. */
-        debugfs_save(base_time, timeout_interval);
 
         /* Start sending thread. */
         pthread_create(&tid, NULL, run_hb_loop, NULL);
@@ -98,7 +99,7 @@ void destroy_sender() {
         pthread_cancel(tid);
         pthread_join(tid, NULL);
         
-        clear_debugfs();
+//        clear_debugfs();
         printf("Debugfs cleared.\n");
         
         printf("Heartbeat sender has been destroyed.\n");
@@ -116,7 +117,7 @@ static void *run_hb_loop(void *arg) {
         long current_epoch, sending_epoch;
         long diff_time;
         long timeout;
-        int first_hb = 1;
+  //      int first_hb = 1;
         //int count_tmp = 0;
         
         pthread_cleanup_push(cleanup, NULL);
@@ -125,14 +126,14 @@ static void *run_hb_loop(void *arg) {
         hb_msg[0] = 1; 
         
         while(1) {     
-                current_epoch = time_to_epoch(now_time());
-                timeout = epoch_to_time(current_epoch);
+                //current_epoch = time_to_epoch(now_time());
+                //timeout = epoch_to_time(current_epoch);
 
                 /* Sleep until the next epoch begins. */
-                while ((diff_time = timeout - now_time()) > 0) {
-                        struct timespec ts = time_to_timespec(diff_time);
-                        nanosleep(&ts, NULL);
-                }
+                //while ((diff_time = timeout - now_time()) > 0) {
+                //        struct timespec ts = time_to_timespec(diff_time);
+                //        nanosleep(&ts, NULL);
+                //}
 
                 sending_epoch = time_to_epoch(now_time());
                 hb_msg[1] = sending_epoch;
@@ -142,7 +143,7 @@ static void *run_hb_loop(void *arg) {
                  * So that this heartbeat sending should be completed before sending timeout, 
                  * which is time of epoch - transmision time - clock diff.
                  */
-                if (first_hb) {
+        /*        if (first_hb) {
                         FILE *fp;
                         char *buf;
                         long sent_epoch = sending_epoch -1;
@@ -162,7 +163,7 @@ static void *run_hb_loop(void *arg) {
                         
                         printf("Update sent_epoch as %ld before sending the first heartbeat.\n", sent_epoch);
                 }
-
+*/
                 count = sendto(hb_fd, &hb_msg, MSGSIZE*2, 0, (struct sockaddr *) &hb_server, 
                         sizeof(hb_server));
 
@@ -171,7 +172,7 @@ static void *run_hb_loop(void *arg) {
                         break;
                 }
                 
-                printf("Heartbeat message [flag=1, epoch=%ld] has been sent.\n", hb_msg[1]);
+                //printf("Heartbeat message [flag=1, epoch=%ld] has been sent.\n", hb_msg[1]);
 
                 /* Adding delay to test kernel module. */
                 /*count_tmp ++;
