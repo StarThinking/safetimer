@@ -1,7 +1,7 @@
 #ifndef HB_CONFIG
 #define HB_CONFIG
 
-typedef void (*cb_t)();
+typedef void (*cb_t)(void);
 
 #define HB_SERVER_ADDR "10.0.0.11"
 #define HB_SERVER_PORT 5001

@@ -90,6 +90,7 @@ int init_queue(cb_t callback) {
         /* Save queue fd. */
         fd = nfq_fd(h);
 
+        /* Set queue recv to be on-blocking. */
         read_timeout.tv_sec = 1;
         read_timeout.tv_usec = 0;
         setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
@@ -182,6 +183,7 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                         epoch = *((long *)(nf_packet + offset + MSGSIZE));
                 } else {
                         printf("Queue: UDP payload size less than %ld!\n", MSGSIZE*2);
+                        goto ret;
                 }
                 
                 /* Skip furthur process for requests. */
@@ -254,7 +256,7 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                                 goto ret;
                         }
                         
-                        //printf("Qeueu: epoch = %ld, queue_index = %ld\n", epoch, queue_index);
+                        //printf("Queue: epoch = %ld, queue_index = %ld\n", epoch, queue_index);
                 } else {
                         printf("Queue: error happens as tcp payload size less than %ld!\n", MSGSIZE*2);
                 }
@@ -320,7 +322,9 @@ static void *expire_checker(void *arg) {
                 
                 send_barrier_message(epoch);
                 printf("\tChecker: barrier messages for epoch %ld are sent, waiting for sem post.\n", epoch);
+                pthread_mutex_unlock(&epoch_list_ht_lock);
                 sem_wait(&barrier_all_processed);
+                pthread_mutex_lock(&epoch_list_ht_lock);
                 printf("\tChecker: all barrier messages for epoch %ld are processed.\n", epoch);
 
 #endif
@@ -378,7 +382,7 @@ static void *queue_recv_loop(void *arg) {
                 }
 
                 if ((err == EAGAIN) || (err == EWOULDBLOCK)) {
-                        /* non-blocking operation returned EAGAIN or EWOULDBLOCK */
+                        // non-blocking operation returned EAGAIN or EWOULDBLOCK
                         continue;
                 }
 
