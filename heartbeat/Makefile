@@ -6,7 +6,7 @@ INCLUDE = -I./include
 
 all: receiver sender
 
-receiver: src/receiver.o src/barrier.o src/hb_server.o src/queue.o src/helper.o
+receiver: src/receiver.o src/barrier.o src/hb_server.o src/queue.o src/helper.o src/drop.o
 	@mkdir -p build
 	$(CC) $(CFLAGS) -o build/libreceiver.so $^ -lc
 	#$(CC) $^ -L./lib -lnfnetlink -lnetfilter_queue -lpthread -lrt ./lib/liblist.a -lhashtable -o $@

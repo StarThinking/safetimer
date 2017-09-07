@@ -1,16 +1,16 @@
-#include <sys/types.h>
-#include <unistd.h>
+#ifndef DROP
+#define DROP
 
-struct kernel_drop_stats {
-        pid_t nfqueue_pid;
-        
-        // stats
-        long udp_errors;
-        long netlink_drops;
-};
+#define NICDROP 100
+#define DEVDROP 10
+#define QUEUEDROP 1
 
-int init_kernel_drop(struct kernel_drop_stats *stats);
+extern unsigned long queue_dropped_pkt_current;
 
-int check_kernel_drop(struct kernel_drop_stats *last_stats);
+int init_drop();
 
-int check_nic_drop();
+void destroy_drop();
+
+int if_drop_happened();
+
+#endif

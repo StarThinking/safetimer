@@ -3,6 +3,9 @@
 
 typedef void (*cb_t)(void);
 
+#define CONFIG_DROP
+#define CONFIG_BARRIER
+
 #define HB_SERVER_ADDR "10.0.0.11"
 #define HB_SERVER_PORT 5001
 #define BARRIER_SERVER_ADDR HB_SERVER_ADDR

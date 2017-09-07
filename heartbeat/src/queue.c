@@ -19,11 +19,10 @@
 #include "queue.h"
 #include "helper.h"
 #include "barrier.h" // for send_barrier_message()
+#include "drop.h"
 
 #include "hashtable.h"
 #include "list.h"
-
-#define CONFIG_BARRIER
 
 #ifdef CONFIG_BARRIER
 
@@ -33,6 +32,12 @@ static sem_t barrier_all_processed;
 /* Recond the round so that clear is not needed for new round. */
 static int array_round = 1;
 static int received_barrier_msg_array[ARRAY_SIZE][IRQ_NUM];
+
+#endif
+
+#ifdef CONFIG_DROP
+
+static long waive_check_epoch;
 
 #endif
 
@@ -52,6 +57,7 @@ static void cleanup(void *arg);
 
 static pthread_t expire_checker_tid;
 static void *expire_checker(void *arg);
+static void expiration_check_for_epoch(long epoch);
 
 static u_int32_t process_packet(struct nfq_data *tb);
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, 
@@ -96,6 +102,7 @@ int init_queue(cb_t callback) {
         setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
         
         ht_init(&epoch_list_ht, HT_NONE, 0.05);
+
 #ifdef CONFIG_BARRIER
         sem_init(&barrier_all_processed, 0, 0);
 #endif
@@ -221,7 +228,7 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                         tmp->free = free_val;
                         ip_list = &tmp;
                         ht_insert(&epoch_list_ht, &epoch, sizeof(long), ip_list, sizeof(list_t*));
-                        printf("Queue: create new node list for epoch %ld.\n", epoch);
+                        //printf("Queue: create new node list for epoch %ld.\n", epoch);
                 } 
 	
 		if (list_find(*ip_list, saddr) == NULL) {
@@ -295,10 +302,8 @@ ret:
  * Thread for expiration check
  */
 static void *expire_checker(void *arg) {
-        list_t **ip_list;
-        size_t value_size;
         long timeout;
-        long epoch;
+        long epoch_to_check, epoch_now;
         long diff_time;
         
         sem_wait(&init_done);
@@ -307,52 +312,102 @@ static void *expire_checker(void *arg) {
         printf("Checker: initialization is done and start to expiration check loop.\n");
 
         while (1) {
-                epoch = time_to_epoch(now_time());
-                timeout = epoch_to_time(epoch);
+                epoch_to_check = time_to_epoch(now_time());
+                timeout = epoch_to_time(epoch_to_check);
 
                 if ((diff_time = timeout - now_time()) > 0) {
                         struct timespec ts = time_to_timespec(diff_time);
                         nanosleep(&ts, NULL);
                 }
+               
+                do {
+                        expiration_check_for_epoch(epoch_to_check);
+                        epoch_now = time_to_epoch(now_time());
 
-                // Expiration check. 
-                pthread_mutex_lock(&epoch_list_ht_lock);
+                        if (epoch_to_check + 1 < epoch_now)
+                                printf("Checker: more than 1 epoch should be checked!\n");
 
-#ifdef CONFIG_BARRIER
-                
-                send_barrier_message(epoch);
-                printf("\tChecker: barrier messages for epoch %ld are sent, waiting for sem post.\n", epoch);
-                pthread_mutex_unlock(&epoch_list_ht_lock);
-                sem_wait(&barrier_all_processed);
-                pthread_mutex_lock(&epoch_list_ht_lock);
-                printf("\tChecker: all barrier messages for epoch %ld are processed.\n", epoch);
+                        epoch_to_check ++;
+                } while (epoch_to_check < epoch_now);
 
-#endif
-
-                printf("\tChecker: good to check expiration for epoch %ld.\n", epoch);
-                ip_list = (list_t**) ht_get(&epoch_list_ht, &epoch, sizeof(long), &value_size);
-                if (ip_list != NULL) {
-                        list_iterator_t *it = list_iterator_new(*ip_list, LIST_HEAD);
-                        list_node_t *next = list_iterator_next(it);
-                        while (next != NULL) {  
-                                printf("\tChecker: node %s timeout for epoch %ld !\n", 
-                                        (char*) next->val, epoch);
-                                timeout_cb();
-                                
-                                list_remove(*ip_list, next);
-                                next = list_iterator_next(it);
-                        }
-
-                        // Delete iterator, list and hashtable kv entry.
-                        list_iterator_destroy(it);
-                        list_destroy(*ip_list);
-                        ht_remove(&epoch_list_ht, &epoch, sizeof(long));
-                } 
-
-                pthread_mutex_unlock(&epoch_list_ht_lock);
         }
         
         return NULL;
+}
+
+static void expiration_check_for_epoch(long epoch) {
+        list_t **ip_list;
+        size_t value_size;
+        int ret;
+
+#ifdef CONFIG_BARRIER
+                
+        send_barrier_message(epoch);
+        printf("\tChecker: barrier messages for epoch %ld are sent, waiting for sem post.\n", epoch);
+        sem_wait(&barrier_all_processed);
+        printf("\tChecker: all barrier messages for epoch %ld are processed.\n", epoch);
+
+#endif
+
+#ifdef CONFIG_DROP
+
+        if ((ret = if_drop_happened()) > 0) {
+                if (ret / NICDROP) {
+                        ret = ret % NICDROP;
+                        printf("\tChecker: drop happens in NIC.");
+                }
+
+                if (ret / DEVDROP) {
+                        ret = ret % DEVDROP;
+                        printf("\tChecker: drop happens in driver or kernel_dev.");
+                }
+                
+                if (ret / QUEUEDROP) {
+                        printf("\tChecker: drop happens in NFQueue.");
+                }
+
+                waive_check_epoch = time_to_epoch(now_time());
+                
+                printf(" Waive expire check for epoch <= %ld.\n", waive_check_epoch);
+        } else {
+                printf("\tChecker: no drop.\n");
+        }
+
+#endif
+
+        printf("\tChecker: good to check expiration for epoch %ld.\n", epoch);
+                
+        /* Before perfroming expiration check, grab the lock. */ 
+        pthread_mutex_lock(&epoch_list_ht_lock);
+                
+        ip_list = (list_t**) ht_get(&epoch_list_ht, &epoch, sizeof(long), &value_size);
+        if (ip_list != NULL) {
+               list_iterator_t *it = list_iterator_new(*ip_list, LIST_HEAD);
+               list_node_t *next = list_iterator_next(it);
+               while (next != NULL) {  
+                        if (epoch <= waive_check_epoch) {
+                                printf("\n\tChecker: although node %s timeouts for epoch %ld "
+                                        "but it's waived due to packet drop.\n\n", 
+                                        (char*) next->val, epoch);
+                        } else {
+                                printf("\n\tChecker: node %s timeout for epoch %ld !\n\n", 
+                                        (char*) next->val, epoch);
+                                
+                                /* Invoke application-defined callback function. */
+                                timeout_cb();
+                        }
+                                
+                        list_remove(*ip_list, next);
+                        next = list_iterator_next(it);
+               }
+
+               // Delete iterator, list and hashtable kv entry.
+               list_iterator_destroy(it);
+               list_destroy(*ip_list);
+               ht_remove(&epoch_list_ht, &epoch, sizeof(long));
+        } 
+        
+        pthread_mutex_unlock(&epoch_list_ht_lock);
 }
 
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
@@ -377,6 +432,7 @@ static void *queue_recv_loop(void *arg) {
                 err = errno;
 
                 if (rv < 0 && err == ENOBUFS) {
+                        queue_dropped_pkt_current ++;
                         fprintf(stderr, "Queue is dropping packets.\n");
                         continue;
                 }
