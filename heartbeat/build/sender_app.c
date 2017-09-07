@@ -18,8 +18,10 @@ int main(int argc, char *argv[]) {
 
         init_sender();
 
-        while(1)
+        while (1) {
+                printf("main thread sleeps.\n");
                 sleep(1);
+        };
 
         destroy_sender();
 

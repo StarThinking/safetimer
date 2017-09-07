@@ -117,6 +117,7 @@ static void *run_hb_loop(void *arg) {
         long diff_time;
         long timeout;
         int first_hb = 1;
+        //int count_tmp = 0;
         
         pthread_cleanup_push(cleanup, NULL);
 
@@ -171,6 +172,13 @@ static void *run_hb_loop(void *arg) {
                 }
                 
                 printf("Heartbeat message [flag=1, epoch=%ld] has been sent.\n", hb_msg[1]);
+
+                /* Adding delay to test kernel module. */
+                /*count_tmp ++;
+                if (count_tmp == 60) {
+                        struct timespec ts = time_to_timespec(timeout_interval);
+                        nanosleep(&ts, NULL);
+                }*/
         }
 
         pthread_cleanup_pop(1);
