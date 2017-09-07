@@ -5,12 +5,14 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+#include "hb_config.h"
+
 #include "receiver.h"
 
-#include "hb_config.h"
 #include "helper.h"
 #include "barrier.h"
 #include "hb_server.h"
+#include "drop.h"
 #include "queue.h"
 
 extern long base_time;
@@ -30,6 +32,10 @@ int init_receiver(cb_t callback) {
          timeout_interval = 1000;
     
          sem_init(&init_done, 0, 0);
+
+#ifdef CONFIG_DROP
+         init_drop();
+#endif
 
          if ((ret = init_queue(callback)) < 0) {
                 fprintf(stderr, "Heartbeat receiver failed to init queue.\n");
@@ -57,6 +63,9 @@ error:
 }
 
 void destroy_receiver() {
+#ifdef CONFIG_DROP
+        destroy_drop();
+#endif
         cancel_barrier();
         join_barrier();
         

@@ -1,168 +1,102 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <stdio.h>
+#include <errno.h>
 #include <unistd.h>
-#include <linux/types.h>
-#include <time.h>
+#include <string.h>
 
 #include "drop.h"
+#define BUFFERSIZE 20
 
-// fetch UDP InErrors in /proc/net/snmp
-static long fetch_udp_inerrors() {
-        long udp_inerrors = -1;
-        FILE *fp;
-        char line[256] = "";
-        char *url = "/proc/net/snmp";
-        // note that the last charactor of char array should be reserved for terminator
-        char delim[3] = " :";
-        char *token, *eptr;
-        int line_counter = 0;
-        int column_counter = 0;
-        
-        if((fp = fopen(url, "r")) == NULL) {
-                printf("can't open file %s!\n", url);
-                return udp_inerrors;
-        }
+static unsigned long nic_dropped();
 
-        while(fgets(line, sizeof(line), fp)) {
-                if(line_counter == 10) {
-                        token = strtok(line, delim);
-                        while(token != NULL) {
-                                if(column_counter == 3) {
-                                        udp_inerrors = strtol(token, &eptr, 10);
-                                        break;
-                                }
-                                token = strtok(NULL, delim);
-                                column_counter ++;
-                        }
-                        break;
-                }
-                line_counter ++;
-        }
-        
-        fclose(fp);
-        return udp_inerrors;
-}
+static unsigned long dev_dropped();
+static FILE *dev_dropped_fp;
+unsigned long dev_dropped_pkt_current;
+static unsigned long dev_dropped_pkt_prev;
 
-// fetch netlink drops by the process of nfqueuein /proc/net/netlink
-static long fetch_netlink_drops(pid_t pid) {
-        long netlink_drops = -1;
-        FILE *fp;
-        char line[256] = "";
-        char *token, *eptr;
-        int column_counter = 0;
-        char *url = "/proc/net/netlink";
-        char delim[2] = " ";
-        long nfqueue_pid = (long) pid;
-        long _pid;
+static unsigned long queue_dropped();
+unsigned long queue_dropped_pkt_current;
+static unsigned long queue_dropped_pkt_prev;
 
-        if((fp = fopen(url, "r")) == NULL) {
-                printf("can't open file %s!\n", url);
-                return netlink_drops;
-        }
-
-        while(fgets(line, sizeof(line), fp)) {
-                token = strtok(line, delim);
-                column_counter = 0;
-                while(token != NULL) {
-                        // compare the 3rd column of each which is the pid of netlink program
-                        if(column_counter == 2) {
-                                _pid = strtol(token, &eptr, 10);
-                                if(_pid != nfqueue_pid) 
-                                        break;
-                        }
-
-                        // column of drops
-                        if(column_counter == 8) { 
-                                netlink_drops = strtol(token, &eptr, 10);
-                                goto found;
-                        }
-
-                        token = strtok(NULL, delim);
-                        column_counter ++;
-                }
-        }
-
-found:        
-        fclose(fp);
-        return netlink_drops;
-}
-
-static int fetch_all_kernel_drop_stats(struct kernel_drop_stats *stats) {
-        long _udp_inerrors = 0;
-        long _netlink_drops = 0;
-
-        if((_udp_inerrors = fetch_udp_inerrors()) < 0) {
-                printf("failed to fetch udp inerrors!\n");
-                return -1;
-        } 
-        
-        if((_netlink_drops = fetch_netlink_drops(stats->nfqueue_pid)) < 0) {
-                printf("failed to fetch netlink drops!\n");
-                return -1;
-        }
-
-        stats->udp_errors = _udp_inerrors;
-        stats->netlink_drops = _netlink_drops;
-
-        return 0;
-}
-
-int init_kernel_drop(struct kernel_drop_stats *stats) {
-        if(fetch_all_kernel_drop_stats(stats) < 0) {
-                printf("\n\nfetch kernel drop stats error!\n\n");
-                return -1;
-        }
-        return 0;
-}
-
-int check_kernel_drop(struct kernel_drop_stats *last_stats) {
-        struct kernel_drop_stats current_stats;
-        long udp_errors_diff, netlink_drops_diff;
-
-        current_stats.nfqueue_pid = last_stats->nfqueue_pid;
-        if(fetch_all_kernel_drop_stats(&current_stats) < 0) {
-                printf("\n\nfetch kernel drop stats error!\n\n");
-                return -1;
-        }       
-
-        udp_errors_diff = current_stats.udp_errors - last_stats->udp_errors;
-        netlink_drops_diff = current_stats.netlink_drops - last_stats->netlink_drops;
-
-        printf("\t[Drop] udp_errors_diff = %ld, netlink_drops_diff = %ld.\n", 
-                udp_errors_diff, netlink_drops_diff);
-        *last_stats = current_stats;
-        
-        return (udp_errors_diff > 0) || (netlink_drops_diff > 0); 
-}
-
-// return 1 if drop, 0 if not, <0 if error
-int check_nic_drop() {
-        long nic_drop = -1;
-        FILE *fp;
-        char buffer[20] = "";
-        char *url = "/sys/kernel/debug/nic-drop/pkt_dropped";
+int init_drop() {
+        int ret = 0;
+        char buffer[BUFFERSIZE];
         char *ptr;
-
-        if((fp = fopen(url, "r")) == NULL) {
-                printf("can't open file %s!\n", url);
+       
+        /* Init dev drop. */
+        dev_dropped_fp = fopen("/sys/kernel/debug/dev_drop_reader/dropped_packets", "r+"); 
+        if (dev_dropped_fp == NULL) {
+                perror("fopen dev_dropped_fp");
+                fclose(dev_dropped_fp);
+                ret = -1;
                 goto error;
         }
 
-        fscanf(fp, "%s", buffer);
-        nic_drop = strtol(buffer, &ptr, 10);
-       
-        printf("\t[Drop] nic_drop = %ld.\n", nic_drop);
-        fclose(fp);        
-    
-        return nic_drop > 0;
+        memset(buffer, '\0', BUFFERSIZE);
+        fgets(buffer, BUFFERSIZE, dev_dropped_fp);
+        dev_dropped_pkt_prev = (unsigned long) strtol(buffer, &ptr, 10);
+        
+        /* Init queue drop. */
+        queue_dropped_pkt_prev = 0;
 
+        printf("Drop has been initialized successfully.\n");
 
-error:
-        return nic_drop;
+ error:
+        return ret;
 }
 
-/*int main(int argc, char *argv[]) {
-        check_nic_drop();   
+void destroy_drop() {
+        fclose(dev_dropped_fp);
+
+        printf("Drop has been destroyed.\n");
+} 
+
+int if_drop_happened() {
+        int ret = 0;
+
+        if (nic_dropped() > 0)
+                ret += NICDROP;
+
+        if (dev_dropped() > 0)
+                ret += DEVDROP;
+
+        if (queue_dropped() > 0)
+                ret += QUEUEDROP;
+
+        return ret;
+}
+
+static unsigned long nic_dropped() {
         return 0;
-}*/
+}
+
+static unsigned long dev_dropped() {
+        char buffer[BUFFERSIZE];
+        unsigned long diff = 0;
+        char *ptr;
+
+        memset(buffer, '\0', BUFFERSIZE);
+        fgets(buffer, BUFFERSIZE, dev_dropped_fp);
+        dev_dropped_pkt_current = (unsigned long) strtol(buffer, &ptr, 10);
+
+        if ((diff = dev_dropped_pkt_current - dev_dropped_pkt_prev) > 0) {
+                dev_dropped_pkt_prev = dev_dropped_pkt_current;
+        }
+
+//        printf("dev_dropped diff is %lu\n", diff);
+
+        return diff;
+}
+
+static unsigned long queue_dropped() {
+        unsigned long diff = 0;
+
+        if ((diff = queue_dropped_pkt_current - queue_dropped_pkt_prev) > 0) {
+                queue_dropped_pkt_prev = queue_dropped_pkt_current;
+        }
+        
+//        printf("queue_dropped diff is %lu\n", diff);
+
+        return diff;
+}
+
