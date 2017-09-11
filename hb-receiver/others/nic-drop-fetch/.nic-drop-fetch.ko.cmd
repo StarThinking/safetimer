@@ -1,0 +1,1 @@
+cmd_/root/hb-latency/hb-receiver/others/nic-drop-fetch/nic-drop-fetch.ko := ld -r -m elf_x86_64 -T /usr/src/linux-3.14.33-regular/scripts/module-common.lds --build-id  -o /root/hb-latency/hb-receiver/others/nic-drop-fetch/nic-drop-fetch.ko /root/hb-latency/hb-receiver/others/nic-drop-fetch/nic-drop-fetch.o /root/hb-latency/hb-receiver/others/nic-drop-fetch/nic-drop-fetch.mod.o

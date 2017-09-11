@@ -352,23 +352,24 @@ static void expiration_check_for_epoch(long epoch) {
 #ifdef CONFIG_DROP
 
         if ((ret = if_drop_happened()) > 0) {
+                printf("\tChecker: drop happened in");
                 if (ret / NICDROP) {
                         ret = ret % NICDROP;
-                        printf("\tChecker: drop happens in NIC.");
+                        printf(" NIC");
                 }
 
                 if (ret / DEVDROP) {
                         ret = ret % DEVDROP;
-                        printf("\tChecker: drop happens in driver or kernel_dev.");
+                        printf(" driver/kernel_dev");
                 }
                 
                 if (ret / QUEUEDROP) {
-                        printf("\tChecker: drop happens in NFQueue.");
+                        printf(" NFQueue");
                 }
 
                 waive_check_epoch = time_to_epoch(now_time());
                 
-                printf(" Waive expire check for epoch <= %ld.\n", waive_check_epoch);
+                printf(". Waive expire check for epoch <= %ld.\n", waive_check_epoch);
         } else {
                 printf("\tChecker: no drop.\n");
         }

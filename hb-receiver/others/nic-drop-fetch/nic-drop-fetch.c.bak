@@ -1,0 +1,56 @@
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/debugfs.h> /* this is for DebugFS libraries */
+#include <linux/fs.h>   
+#include <linux/kernel.h>
+#include <linux/version.h>
+#include <linux/moduleparam.h>
+#include <linux/io.h>
+
+MODULE_LICENSE("GPL");
+
+// copied from the drivers/net/ethernet/broadcom/tg3.h
+#define B2HRX_Drop 0x000024f8
+#define RCVLPC_IN_DISCARDS_CNT          0x00002250
+typedef struct {
+        u32 high, low;
+} tg3_stat64_t;
+
+static inline u64 get_stat64(tg3_stat64_t *val) {
+        return ((u64)val->high << 32) | ((u64)val->low);
+}
+
+#define TG3_STAT_ADD32(PSTAT, REGS, OFF) \
+do {    u32 __val = ioread32(REGS + OFF); \
+        (PSTAT)->low += __val; \
+        if ((PSTAT)->low < __val) \
+        (PSTAT)->high += 1; \
+} while (0)
+
+extern void *my_tp_regs[];
+extern int my_tp_regs_count;
+
+int init_module() {
+        u64 drop_pkt = 0;
+        u64 discard_pkt = 0;
+        int i;
+
+        for(i = 0; i < my_tp_regs_count; i++) {
+                tg3_stat64_t drop, discard;
+
+                drop.high = drop.low = 0;
+                discard.high = discard.low = 0;
+                TG3_STAT_ADD32(&drop, my_tp_regs[i], B2HRX_Drop);
+                TG3_STAT_ADD32(&discard, my_tp_regs[i], RCVLPC_IN_DISCARDS_CNT);
+                drop_pkt += get_stat64(&drop);
+                discard_pkt += get_stat64(&discard);
+        } 
+
+        printk("B2HRX_Drop = %llu, RCVLPC_IN_DISCARDS_CNT = %llu\n", 
+                    drop_pkt, discard_pkt);
+ 
+        return 0;
+}
+ 
+void cleanup_module() {
+}
