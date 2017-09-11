@@ -25,13 +25,13 @@ int init_module() {
         //uint32_t bytes = 0x549f35147440;
 
         np_t.name = "LRNG";
-        strlcpy(np_t.dev_name, "em1.101", IFNAMSIZ);
-        np_t.local_ip.ip = htonl((unsigned long int) 0x0a000065);
-        np_t.remote_ip.ip = htonl((unsigned long int) 0x0a000066);
+        strlcpy(np_t.dev_name, "em1", IFNAMSIZ);
+        np_t.local_ip.ip = htonl((unsigned long int) 0x0a000066);
+        np_t.remote_ip.ip = htonl((unsigned long int) 0x0a000065);
         np_t.local_port = 6665;
-        np_t.remote_port = 5001;
+        np_t.remote_port = 5000;
         
-        // mac addr of 10.0.0.102
+        // mac addr of 10.0.0.101
         np_t.remote_mac[0] = 0x54;
         np_t.remote_mac[1] = 0x9f;
         np_t.remote_mac[2] = 0x35;
@@ -47,8 +47,13 @@ int init_module() {
 }
 
 void cleanup_module() {
-        char message[MESSAGE_SIZE];
-        sprintf(message, "%d\n", 123);
+        char message[MESSAGE_SIZE] = "";
+        long data = 1314;
+        int count = 5000000;
+        int i;
+
+        sprintf(message, "%ld\n", data);
         //int len = strlen(message);
-        netpoll_send_udp(&np_t, message, MESSAGE_SIZE);
+        for (i=0; i<count; i++)
+            netpoll_send_udp(&np_t, message, MESSAGE_SIZE);
 }
