@@ -23,8 +23,8 @@ static ssize_t dropped_packets_read(struct file *fp, char __user *user_buffer,
         struct net_device* dev;
         const struct net_device_ops *ops;
         struct rtnl_link_stats64 storage;
-        long driver_dropped_pkts = 0;
-        long kerneldev_dropped_pkts = 0;
+        unsigned long driver_dropped_pkts = 0;
+        unsigned long kerneldev_dropped_pkts = 0;
         unsigned long dropped_packets = 0;
 
         if ((dev = dev_get_by_name(&init_net, BARRIER_SERVER_IF)) == NULL) {
@@ -45,34 +45,23 @@ static ssize_t dropped_packets_read(struct file *fp, char __user *user_buffer,
         }
 
         dropped_packets = driver_dropped_pkts + kerneldev_dropped_pkts;
-
+        memset(dropped_packets_str, '\0', BUFFERSIZE);
         snprintf(dropped_packets_str, 10, "%lu", dropped_packets);
         
         return simple_read_from_buffer(user_buffer, count, position, dropped_packets_str, BUFFERSIZE);
 }
 
-static ssize_t dropped_packets_write(struct file *fp, const char __user *user_buffer,
-                                    size_t count, loff_t *position) {
-        ssize_t ret;
-
-        if (count > BUFFERSIZE)
-                return -EINVAL;
-
-        ret =  simple_write_to_buffer(dropped_packets_str, BUFFERSIZE, position, user_buffer, count);
-
-        return ret;
-}
-
 static const struct file_operations dropped_packets_fops = {
-        .read = dropped_packets_read,
-        .write = dropped_packets_write
+        .read = dropped_packets_read
 };
 
 static int dev_drop_reader_init(void) {
         printk(KERN_INFO "dev_drop_reader init\n");
 
+        memset(dropped_packets_str, '\0', BUFFERSIZE);
+        
         dir_entry = debugfs_create_dir("dev_drop_reader", NULL);
-        dropped_packets_entry = debugfs_create_file("dropped_packets", 0644, dir_entry, NULL, &dropped_packets_fops);
+        dropped_packets_entry = debugfs_create_file("dropped_packets", 0444, dir_entry, NULL, &dropped_packets_fops);
 
         return 0;
 }
@@ -80,7 +69,7 @@ static int dev_drop_reader_init(void) {
 static void dev_drop_reader_exit(void) {
         debugfs_remove_recursive(dir_entry);
 
-        printk(KERN_INFO "dev_drop_checker_exit\n");
+        printk(KERN_INFO "dev_drop_reader exit\n");
 }
 
 module_init(dev_drop_reader_init)

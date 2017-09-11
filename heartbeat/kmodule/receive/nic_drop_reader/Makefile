@@ -1,6 +1,4 @@
-EXTRA_CFLAGS := -I./
-
-obj-m += nic-drop-fetch.o 
+obj-m += nic_drop_reader.o 
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
