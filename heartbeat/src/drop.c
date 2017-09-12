@@ -4,7 +4,9 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "hb_common.h"
 #include "drop.h"
+
 #define BUFFERSIZE 20
 
 static unsigned long nic_dropped();
@@ -103,8 +105,9 @@ static unsigned long nic_dropped() {
                 nic_dropped_pkt_prev = nic_dropped_pkt_current;
         }
 
-        if (diff > 0)
+        if (diff > 0) {
                 printf("Drop: nic dropped_pkt = %lu.\n", diff);
+        }
 
         return diff;
 }
@@ -131,8 +134,10 @@ static unsigned long dev_dropped() {
                 dev_dropped_pkt_prev = dev_dropped_pkt_current;
         }
 
-        if (diff > 0)
+        if (diff > 0) {
+                recv_stats.dev_drop_pkts ++;
                 printf("Drop: dev dropped_pkt = %lu.\n", diff);
+        }
 
         return diff;
 }
@@ -144,8 +149,10 @@ static unsigned long queue_dropped() {
                 queue_dropped_pkt_prev = queue_dropped_pkt_current;
         }
         
-        if (diff > 0)
+        if (diff > 0) {
+                recv_stats.queue_drop_pkts ++;
                 printf("Drop: queue dropped_pkt = %lu.\n", diff);
+        }
 
         return diff;
 }

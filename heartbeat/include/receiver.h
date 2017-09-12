@@ -1,4 +1,4 @@
-#include "hb_config.h"
+#include "hb_common.h"
 
 #ifndef RECEIVER
 #define RECEIVER

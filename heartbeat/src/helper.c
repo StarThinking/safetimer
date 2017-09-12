@@ -5,9 +5,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-/* Link from sender. */
-extern long base_time;
-extern long timeout_interval;
+#include "hb_common.h"
 
 /* Convert time (ms) to timespec. */
 struct timespec time_to_timespec(long time_ms) {

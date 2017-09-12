@@ -9,11 +9,8 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 
-#include "hb_config.h"
+#include "hb_common.h"
 #include "hb_server.h"
-
-extern long base_time;
-extern long timeout_interval;
 
 static pthread_t server_tid; /* Heartbeat server pthread id. */
 static int server_fd;

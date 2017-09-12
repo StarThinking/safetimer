@@ -10,18 +10,16 @@
 #include <signal.h>
 #include <pthread.h>
 
-#include "hb_config.h"
+#include "hb_common.h"
 #include "helper.h"
 
 #include "sender.h"
 
+long base_time = 0;
+long timeout_interval = 0;
+
 static int hb_fd;
 static struct sockaddr_in hb_server;
-
-extern long base_time;
-long base_time = 0;
-extern long timeout_interval;
-long timeout_interval = 0;
 
 static pthread_t tid;
 static void *run_hb_loop(void *arg);

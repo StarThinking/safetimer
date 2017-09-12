@@ -15,7 +15,7 @@
 #include <libnetfilter_queue/libnetfilter_queue.h>
 #include <semaphore.h>
 
-#include "hb_config.h"
+#include "hb_common.h"
 #include "queue.h"
 #include "helper.h"
 #include "barrier.h" // for send_barrier_message()
@@ -41,7 +41,6 @@ static long waive_check_epoch;
 
 #endif
 
-extern sem_t init_done;
 static int init_done_flag = 0;
 
 static hash_table epoch_list_ht;
@@ -198,13 +197,14 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                         printf("Queue: request [flag=%ld, epoch=%ld] from node %s.\n", flag, epoch, saddr);
                         goto ret;
                 } 
-
-                printf("Queue: heartbeat for epoch %ld from node %s.\n",  epoch, saddr);
-                
+ 
                 if (epoch < 0) {
                         fprintf(stderr, "Queue error: epoch < 0.\n");
                         goto ret;
                 }
+                
+                printf("Queue: heartbeat for epoch %ld from node %s.\n",  epoch, saddr);
+                recv_stats.hb_cnt ++;
 
                 pthread_mutex_lock(&epoch_list_ht_lock);
 
@@ -340,35 +340,30 @@ static void expiration_check_for_epoch(long epoch) {
         size_t value_size;
         int ret;
 
-#ifdef CONFIG_BARRIER
-                
-        send_barrier_message(epoch);
-        printf("\tChecker: barrier messages for epoch %ld are sent, waiting for sem post.\n", epoch);
-        sem_wait(&barrier_all_processed);
-        printf("\tChecker: all barrier messages for epoch %ld are processed.\n", epoch);
-
-#endif
-
 #ifdef CONFIG_DROP
 
         if ((ret = if_drop_happened()) > 0) {
                 printf("\tChecker: drop happened in");
                 if (ret / NICDROP) {
                         ret = ret % NICDROP;
+                        recv_stats.nic_drop_cnt ++;
                         printf(" NIC");
                 }
 
                 if (ret / DEVDROP) {
                         ret = ret % DEVDROP;
+                        recv_stats.dev_drop_cnt ++;
                         printf(" driver/kernel_dev");
                 }
                 
                 if (ret / QUEUEDROP) {
+                        recv_stats.queue_drop_cnt ++;
                         printf(" NFQueue");
                 }
 
                 waive_check_epoch = time_to_epoch(now_time());
-                
+               
+                recv_stats.hb_drop_cnt ++;
                 printf(". Waive expire check for epoch <= %ld.\n", waive_check_epoch);
         } else {
                 printf("\tChecker: no drop.\n");
@@ -376,7 +371,19 @@ static void expiration_check_for_epoch(long epoch) {
 
 #endif
 
-        printf("\tChecker: good to check expiration for epoch %ld.\n", epoch);
+#ifdef CONFIG_BARRIER
+        
+        /* Only send barrier message when there's no drop. */
+        if (ret == 0) {        
+                send_barrier_message(epoch);
+                printf("\tChecker: barrier messages for epoch %ld are sent, waiting for sem post.\n", epoch);
+                sem_wait(&barrier_all_processed);
+                printf("\tChecker: all barrier messages for epoch %ld are processed.\n", epoch);
+        }
+
+#endif
+
+        printf("\tChecker: now safe to check expiration for epoch %ld.\n", epoch);
                 
         /* Before perfroming expiration check, grab the lock. */ 
         pthread_mutex_lock(&epoch_list_ht_lock);
@@ -387,10 +394,12 @@ static void expiration_check_for_epoch(long epoch) {
                list_node_t *next = list_iterator_next(it);
                while (next != NULL) {  
                         if (epoch <= waive_check_epoch) {
+                                recv_stats.waived_timeout_cnt ++;
                                 printf("\n\tChecker: although node %s timeouts for epoch %ld "
                                         "but it's waived due to packet drop.\n\n", 
                                         (char*) next->val, epoch);
                         } else {
+                                recv_stats.timeout_cnt ++;
                                 printf("\n\tChecker: node %s timeout for epoch %ld !\n\n", 
                                         (char*) next->val, epoch);
                                 

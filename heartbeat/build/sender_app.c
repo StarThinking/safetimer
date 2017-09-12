@@ -6,15 +6,15 @@
 #include "sender.h"
 
 void sig_handler(int signo) {
-        if (signo == SIGINT) {
-                destroy_sender();
-                printf("Heartbeat sender ternimates in sig_handler.\n");
-                exit(0);
-        }
+        destroy_sender();
+        printf("Heartbeat sender ternimates in sig_handler.\n");
+        exit(0);
 }
 
 int main(int argc, char *argv[]) {
         signal(SIGINT, sig_handler);
+        signal(SIGTERM, sig_handler);
+        signal(SIGKILL, sig_handler);
 
         init_sender();
 

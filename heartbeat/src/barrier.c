@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-#include "hb_config.h"
+#include "hb_common.h"
 #include "barrier.h"
 
 /* Barrier server */
