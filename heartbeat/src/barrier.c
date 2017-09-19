@@ -12,6 +12,9 @@
 #include "hb_common.h"
 #include "barrier.h"
 
+static int server_runnable = 1;
+static int sender_runnable = 1;
+
 /* Barrier server */
 static pthread_t server_tid; /* Barrier server pthread id */
 //static pthread_t setup_tid; /* Pthread id of setting up queues */
@@ -19,7 +22,7 @@ static fd_set active_fd_set, read_fd_set;
 static int listen_fd;
 static int conn_fds[IRQ_NUM];
 
-static void cleanup(void *arg);
+//static void cleanup(void *arg);
 static void *barrier_server(void *arg);
 static int validate_connection(int client_port, long *rx_queue);
 static int get_sport_by_rx_queue(const int rx_queue);
@@ -81,7 +84,19 @@ error:
 }
 
 void cancel_barrier() {
-        pthread_cancel(server_tid);
+        int i;
+
+        sender_runnable = 0;
+        for (i=0; i<IRQ_NUM; i++) {
+                close(client_fds[i]);
+                //close(conn_fds[i]);
+        }
+        
+        /* Wait for clients to quit gracefully. */
+        sleep(2);
+        server_runnable = 0;
+        printf("Barrier cancel.\n");
+        //pthread_cancel(server_tid);
         //pthread_cancel(setup_tid);
 }
 
@@ -96,20 +111,19 @@ void join_barrier() {
 /*
  * Clean up all the resources used for barrier client and server.
  */
-static void cleanup(void *arg) {
+/*static void cleanup(void *arg) {
         int i;
        
         printf("Clean up barrier server.\n");
 
-        FD_ZERO(&active_fd_set);
-        FD_ZERO(&read_fd_set);
-        close(listen_fd);
-
         for (i=0; i<IRQ_NUM; i++) {
                 close(client_fds[i]);
-                close(conn_fds[i]);
+                //close(conn_fds[i]);
         }
-}
+        sleep(2);
+        //FD_ZERO(&active_fd_set);
+        //FD_ZERO(&read_fd_set);
+}*/
 
 /*
  * Send barrier message via all connected rx queue flows from em2 to em1.
@@ -126,8 +140,12 @@ int send_barrier_message(long epoch_id) {
                 long message[2];
                 message[0] = epoch_id;
                 message[1] = i;
+                
+                if (!sender_runnable)
+                        return 0;
+
                 if (send(client_fds[i], message, msg_size, 0) != msg_size) {
-                        perror("send");
+                        perror("send_barrier_message");
                         ret = -1;
                         goto error;
                 }
@@ -151,16 +169,19 @@ static void *barrier_server(void *arg) {
         int i;
         long rx_queue;
         int count;
+        struct timeval timeout;
 
         FD_ZERO(&active_fd_set);
         FD_SET(listen_fd, &active_fd_set);
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
  
-        pthread_cleanup_push(cleanup, NULL);
+        //pthread_cleanup_push(cleanup, NULL);
 
-        while (1) {
+        while (server_runnable) {
                 /* Block until input arrives on one or more active sockets. */
                 read_fd_set = active_fd_set;
-                if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) < 0) {
+                if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, &timeout) < 0) {
                         perror ("select");
                         break;
                 }
@@ -206,7 +227,8 @@ static void *barrier_server(void *arg) {
                                                         inet_ntoa(client.sin_addr), ntohs(client.sin_port), rx_queue);
                                         } else {
                                                send(fd, &rx_queue, MSGSIZE, 0);
-                                               close(fd); 
+                                               /* Sender will kill itself. */
+                                               //close(fd); 
                                                
                                                printf("Barrier server: connection from %s:%u " 
                                                         "via rx queue %ld is redundant.\n",
@@ -215,8 +237,6 @@ static void *barrier_server(void *arg) {
                                 } else {
                                         /* 
                                          * Data arriving on an already-connected socket. 
-                                         * There are two possible cases:
-                                         * Barrier messages [epoch_id, index] from barrier clients.
                                          */
                                         if ((count = recv(i, msg_buffer, MSGSIZE*2, 0)) != MSGSIZE*2) {
                                                 printf("Barrier server receive count is %d.\n", count);
@@ -239,8 +259,10 @@ static void *barrier_server(void *arg) {
                         }
                 }
         }
-
-        pthread_cleanup_pop(1);
+        
+        close(listen_fd);
+        printf("Barrier server exits.\n");
+        //pthread_cleanup_pop(1);
 
         return NULL;
 }
