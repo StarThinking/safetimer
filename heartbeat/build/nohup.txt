@@ -1,0 +1,229 @@
+connect: Connection timed out
+Error: setup_rx_queue_flows() failed.
+send_barrier_message: Socket operation on non-socket
+Heartbeat receiver configuration parameters: timeout_interval = 1000, base_time = 1505312642620
+Drop has been initialized successfully.
+Queue: receive loop thread started.
+Queue: expire checker thread started.
+Queue has been initialized successfully.
+Barrier server thread started.
+Barrier server and rx queue flows have been initialized successfully.
+Heartbeat server thread started.
+Heartbeat receiver has been initialized successfully.
+Checker: initialization is done and start to expiration check loop.
+Queue: heartbeat for epoch 46 from node 10.0.0.12.
+Queue: add node 10.0.0.12 into the node list for epoch 47.
+	Checker: no drop.
+	Checker: barrier messages for epoch 128 are sent, waiting for sem post.
+Queue: heartbeat for epoch 47 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 47.
+Queue: add node 10.0.0.12 into the node list for epoch 48.
+Queue: heartbeat for epoch 48 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 48.
+Queue: add node 10.0.0.12 into the node list for epoch 49.
+Queue: heartbeat for epoch 49 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 49.
+Queue: add node 10.0.0.12 into the node list for epoch 50.
+Queue: heartbeat for epoch 50 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 50.
+Queue: add node 10.0.0.12 into the node list for epoch 51.
+Queue: heartbeat for epoch 51 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 51.
+Queue: add node 10.0.0.12 into the node list for epoch 52.
+Queue: heartbeat for epoch 52 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 52.
+Queue: add node 10.0.0.12 into the node list for epoch 53.
+Queue: heartbeat for epoch 53 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 53.
+Queue: add node 10.0.0.12 into the node list for epoch 54.
+Queue: heartbeat for epoch 54 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 54.
+Queue: add node 10.0.0.12 into the node list for epoch 55.
+Queue: heartbeat for epoch 55 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 55.
+Queue: add node 10.0.0.12 into the node list for epoch 56.
+Queue: heartbeat for epoch 56 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 56.
+Queue: add node 10.0.0.12 into the node list for epoch 57.
+Queue: heartbeat for epoch 57 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 57.
+Queue: add node 10.0.0.12 into the node list for epoch 58.
+Queue: heartbeat for epoch 58 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 58.
+Queue: add node 10.0.0.12 into the node list for epoch 59.
+Queue: heartbeat for epoch 59 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 59.
+Queue: add node 10.0.0.12 into the node list for epoch 60.
+Queue: heartbeat for epoch 60 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 60.
+Queue: add node 10.0.0.12 into the node list for epoch 61.
+Queue: heartbeat for epoch 61 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 61.
+Queue: add node 10.0.0.12 into the node list for epoch 62.
+Queue: heartbeat for epoch 62 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 62.
+Queue: add node 10.0.0.12 into the node list for epoch 63.
+Queue: heartbeat for epoch 63 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 63.
+Queue: add node 10.0.0.12 into the node list for epoch 64.
+Queue: heartbeat for epoch 64 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 64.
+Queue: add node 10.0.0.12 into the node list for epoch 65.
+Queue: heartbeat for epoch 65 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 65.
+Queue: add node 10.0.0.12 into the node list for epoch 66.
+Queue: heartbeat for epoch 66 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 66.
+Queue: add node 10.0.0.12 into the node list for epoch 67.
+Queue: heartbeat for epoch 67 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 67.
+Queue: add node 10.0.0.12 into the node list for epoch 68.
+Queue: heartbeat for epoch 68 from node 10.0.0.1src/hashtable.c:377 - ht_resize(old=64, new=128)
+2.
+Queue: remove node 10.0.0.12 from epoch list 68.
+Queue: add node 10.0.0.12 into the node list for epoch 69.
+Queue: heartbeat for epoch 69 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 69.
+Queue: add node 10.0.0.12 into the node list for epoch 70.
+Queue: heartbeat for epoch 70 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 70.
+Queue: add node 10.0.0.12 into the node list for epoch 71.
+Queue: heartbeat for epoch 71 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 71.
+Queue: add node 10.0.0.12 into the node list for epoch 72.
+Queue: heartbeat for epoch 72 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 72.
+Queue: add node 10.0.0.12 into the node list for epoch 73.
+Queue: heartbeat for epoch 73 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 73.
+Queue: add node 10.0.0.12 into the node list for epoch 74.
+Queue: heartbeat for epoch 74 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 74.
+Queue: add node 10.0.0.12 into the node list for epoch 75.
+Queue: heartbeat for epoch 75 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 75.
+Queue: add node 10.0.0.12 into the node list for epoch 76.
+Queue: heartbeat for epoch 76 from node 10.0.0.12.
+Queue: remove node 10.0.0.12 from epoch list 76.
+Queue: add node 10.0.0.12 into the node list for epoch 77.
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Queue: error happens as tcp payload size less than 16!
+Heartbeat receiver statistics have been saved into log.
+timeout_interval = 1000
+hb_cnt = 31
+waived_timeout_cnt = 0
+timeout_cnt = 0
+hb_drop_cnt = 0
+nic_drop_cnt = 0
+dev_drop_cnt = 0
+dev_drop_pkts = 0
+queue_drop_cnt = 0
+queue_drop_pkts = 0
+end of show_receiver_stats
+Drop has been destroyed.
+Barrier cancel.
+Barrier server exits.
+Barrier server_tid thread joined.
+Clean up heartbeat server.
+Heartbeat server thread joined.
+Clean up queue.
+Queue expire_checker thread joined.
+Queue queue recv thread joined.
+Heartbeat receiver has been destroyed.
+Heartbeat receiver ternimates in sig_handler.

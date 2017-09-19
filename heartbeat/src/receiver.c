@@ -119,7 +119,11 @@ static long read_timeout_interval() {
         return ret;
 }
 
-#define SHOW_STAT(val) fprintf(log_fp, "%s = %ld\n", #val, recv_stats.val);
+#define SHOW_STAT(val) \
+if(1) { \
+    printf("%s = %ld\n", #val, recv_stats.val); \
+    fprintf(log_fp, "%s = %ld\n", #val, recv_stats.val); \
+} 
 
 static void show_receiver_stats() {
         log_fp = fopen("/root/hb-latency/heartbeat/build/receiver.log", "w");

@@ -1,5 +1,3 @@
-#include <semaphore.h>
-
 #ifndef HB_COMMON
 #define HB_COMMON
 
@@ -20,6 +18,9 @@
 #define IRQ_NUM 4
 #define BASE_IRQ 49
 
+#ifndef __KERNEL__
+
+#include <semaphore.h>
 typedef void (*cb_t)(void);
 
 struct receiver_stats {
@@ -46,5 +47,7 @@ extern long base_time;
 extern long timeout_interval;
 
 extern sem_t init_done;
+
+#endif // KERNEL
 
 #endif

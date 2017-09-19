@@ -8,7 +8,7 @@
 #include <linux/sched.h>
 #include <linux/netdevice.h>
 
-#include "../../../include/hb_config.h"
+#include "../../../include/hb_common.h"
 
 #define BUFFERSIZE 20
 

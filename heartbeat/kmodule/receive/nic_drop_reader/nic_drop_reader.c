@@ -8,7 +8,7 @@
 #include <linux/sched.h>
 #include <linux/netdevice.h>
 
-#include "../../../include/hb_config.h"
+#include "../../../include/hb_common.h"
 
 #define HOSTCC_FLOW_ATTN    0x00003c48
 #define HOSTCC_FLOW_ATTN_MBUF_LWM   0x00000040
@@ -47,7 +47,9 @@ static ssize_t dropped_packets_read(struct file *fp, char __user *user_buffer,
          */
         for (i = 0; i < my_tp_regs_count; i++) {
                 u32 val = readl(my_tp_regs[i] + HOSTCC_FLOW_ATTN);
+//                printk("[nic drop reader] val = %08x %u\n", val, val);
                 val = (val & HOSTCC_FLOW_ATTN_MBUF_LWM) ? 1 : 0;
+//                printk("val = %u\n", val);
                 if (val) {
                         writel(HOSTCC_FLOW_ATTN_MBUF_LWM, my_tp_regs[i] + HOSTCC_FLOW_ATTN);
                         rx_discards.low += val;
@@ -62,8 +64,8 @@ static ssize_t dropped_packets_read(struct file *fp, char __user *user_buffer,
                 memset(accum_nic_drop_str, '\0', BUFFERSIZE);
                 snprintf(accum_nic_drop_str, 10, "%lu", accum_nic_drop);
                 
-                printk("[msx] accum_nic_drop is %lu, this time added %lu pkts\n", 
-                            accum_nic_drop, dropped_packets); 
+//                printk("[msx] accum_nic_drop is %lu, this time added %lu pkts\n", 
+//                            accum_nic_drop, dropped_packets); 
         }
 
         return simple_read_from_buffer(user_buffer, count, position, accum_nic_drop_str, BUFFERSIZE);

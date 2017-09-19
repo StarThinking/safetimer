@@ -1,0 +1,74 @@
+Queue: error during nfq_create_queue().
+Heartbeat receiver configuration parameters: timeout_interval = 1000, base_time = 1505312725407
+Drop has been initialized successfully.
+Barrier server thread started.
+Barrier server: connection from 10.0.0.111:35788 via rx queue 50 is valid.
+Barrier server: connection from 10.0.0.111:35789 via rx queue 49 is valid.
+Barrier server: connection from 10.0.0.111:35790 via rx queue -1 is redundant.
+Barrier server: connection from 10.0.0.111:35791 via rx queue -1 is redundant.
+Barrier server: connection from 10.0.0.111:35792 via rx queue -1 is redundant.
+Barrier server: connection from 10.0.0.111:35793 via rx queue -1 is redundant.
+Barrier server: connection from 10.0.0.111:35794 via rx queue -1 is redundant.
+Barrier server: connection from 10.0.0.111:35795 via rx queue -1 is redundant.
+Barrier server: connection from 10.0.0.111:35796 via rx queue -1 is redundant.
+Barrier server: connection from 10.0.0.111:35797 via rx queue -1 is redundant.
+Barrier server: connection from 10.0.0.111:35798 via rx queue -1 is redundant.
+Barrier server: connection from 10.0.0.111:35799 via rx queue -1 is redundant.
+Barrier server: connection from 10.0.0.111:35800 via rx queue 51 is valid.
+Barrier server: connection from 10.0.0.111:35801 via rx queue 52 is valid.
+It is successful to set up 4 rx queue flows from 10.0.0.111 on em2 --> 10.0.0.11 on em1.
+Barrier server and rx queue flows have been initialized successfully.
+Heartbeat server thread started.
+Heartbeat receiver has been initialized successfully.
+Heartbeat receiver statistics have been saved into log.
+timeout_interval = 1000
+hb_cnt = 0
+waived_timeout_cnt = 0
+timeout_cnt = 0
+hb_drop_cnt = 0
+nic_drop_cnt = 0
+dev_drop_cnt = 0
+dev_drop_pkts = 0
+queue_drop_cnt = 0
+queue_drop_pkts = 0
+end of show_receiver_stats
+Drop has been destroyed.
+Barrier server receive count is 0.
+Barrier server receive count is 0.
+Barrier server receive count is 0.
+Barrier server receive count is 0.
+Heartbeat receiver statistics have been saved into log.
+timeout_interval = 1000
+hb_cnt = 0
+waived_timeout_cnt = 0
+timeout_cnt = 0
+hb_drop_cnt = 0
+nic_drop_cnt = 0
+dev_drop_cnt = 0
+dev_drop_pkts = 0
+queue_drop_cnt = 0
+queue_drop_pkts = 0
+end of show_receiver_stats
+Drop has been destroyed.
+Barrier cancel.
+Heartbeat receiver statistics have been saved into log.
+timeout_interval = 1000
+hb_cnt = 0
+waived_timeout_cnt = 0
+timeout_cnt = 0
+hb_drop_cnt = 0
+nic_drop_cnt = 0
+dev_drop_cnt = 0
+dev_drop_pkts = 0
+queue_drop_cnt = 0
+queue_drop_pkts = 0
+end of show_receiver_stats
+Drop has been destroyed.
+Barrier cancel.
+Barrier server_tid thread joined.
+Clean up heartbeat server.
+Heartbeat server thread joined.
+Queue expire_checker thread joined.
+Queue queue recv thread joined.
+Heartbeat receiver has been destroyed.
+Heartbeat receiver ternimates in sig_handler.
