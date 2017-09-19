@@ -1,0 +1,95 @@
+Heartbeat sender: request message [flag=0, 0] has been sent.
+Reply message [base_time=1505312725407, timeout_interval=1000] is received.
+Heartbeat sender has been initialized successfully.
+main thread sleeps.
+Update sent_epoch as 33 before sending the first heartbeat.
+Heartbeat message [flag=1, epoch=34] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=35] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=36] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=37] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=38] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=39] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=40] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=41] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=42] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=43] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=44] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=45] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=46] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=47] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=48] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=49] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=50] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=51] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=52] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=53] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=54] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=55] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=56] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=57] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=58] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=59] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=60] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=61] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=62] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=63] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=64] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=65] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=66] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=67] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=68] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=69] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=70] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=71] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=72] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=73] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=74] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=75] has been sent.
+main thread sleeps.
+Heartbeat message [flag=1, epoch=76] has been sent.
+main thread sleeps.
+Clean up.
+Debugfs cleared.
+Heartbeat sender has been destroyed.
+Heartbeat sender ternimates in sig_handler.
