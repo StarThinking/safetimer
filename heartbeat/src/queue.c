@@ -95,7 +95,7 @@ int init_queue(cb_t callback) {
         /* Save queue fd. */
         fd = nfq_fd(h);
 
-        /* Set queue recv to be on-blocking. */
+        /* Set queue recv to be non-blocking. */
         read_timeout.tv_sec = 1;
         read_timeout.tv_usec = 0;
         setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
