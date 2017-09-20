@@ -45,7 +45,7 @@ int init_sender() {
         request_msg[0] = 0; 
         request_msg[1] = 0;
 
-        count = sendto(hb_fd, &request_msg, MSGSIZE*2, 0, (struct sockaddr *) &hb_server, 
+        count = sendto(hb_fd, request_msg, MSGSIZE*2, 0, (struct sockaddr *) &hb_server, 
                     sizeof(hb_server));
         
         if (count != MSGSIZE*2) {
@@ -60,7 +60,7 @@ int init_sender() {
         memset(&remote, '0', sizeof(remote));
         len = sizeof(remote);
         
-        if (recvfrom(hb_fd, &msg_buffer, MSGSIZE*2, 0, (struct sockaddr *) &remote, &len) != MSGSIZE*2) {
+        if (recvfrom(hb_fd, msg_buffer, MSGSIZE*2, 0, (struct sockaddr *) &remote, &len) != MSGSIZE*2) {
                 perror("recvfrom");
                 ret = -1;
                 goto error;
