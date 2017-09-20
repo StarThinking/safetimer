@@ -10,7 +10,7 @@ receiver: nhb_receiver.o helper.o
 	$(CC) $(CFLAGS) -o nhb_receiver $^ -lpthread -lrt ./liblist.a -L. -lhashtable
 
 sender: nhb_sender.o helper.o
-	$(CC) $(CFLAGS) -o sender_app $^ -lpthread -lrt
+	$(CC) $(CFLAGS) -o nhb_sender $^ -lpthread -lrt
 
 %.o: %.c
 	$(CC) $< $(CFLAGS) $(INCLUDE) -c -o $@
