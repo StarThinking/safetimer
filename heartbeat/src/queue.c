@@ -430,10 +430,18 @@ static void *queue_recv_loop(void *arg) {
         int rv;
         char buf[2048] __attribute__ ((aligned));
         int err;
+        /* For correctness test. */
+        int count = 0;
 
 	pthread_cleanup_push(cleanup, NULL);
 
         while (1) {
+                if (0 == (count++ % 20)) {
+                        struct timespec ts = time_to_timespec(2500);
+                        printf("sleep 2.5s\n");
+                        nanosleep(&ts, NULL);
+                }
+
                 if ((rv = recv(fd, buf, sizeof(buf), 0)) >= 0) { 
                         nfq_handle_packet(h, buf, rv);
                         continue;
