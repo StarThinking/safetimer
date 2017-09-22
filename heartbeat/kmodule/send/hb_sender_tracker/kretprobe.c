@@ -88,8 +88,8 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
 //                                printk("heartbeat sending completes and set sent_epoch as %ld\n", 
 //                                        epoch);
                             } else {
-                                printk("heartbeat sending completion timeouts (%ld) by %ld!\n", 
-                                        get_send_timeout(), exceeding_time);
+                                printk("The completion of heartbeat sending for epoch %ld exceeds sending_timeouts (%ld) by %ld!\n", 
+                                        epoch ,get_send_timeout(), exceeding_time);
                             } 
                         }
                     }

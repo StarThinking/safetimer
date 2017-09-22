@@ -131,7 +131,7 @@ static void *run_hb_loop(void *arg) {
 
                 if (count != MSGSIZE*2) {
                         perror("heartbeat sendto");
-                        break;
+                        //break;
                 }
                 
                 printf("NHeartbeat message [flag=1, epoch=%ld] has been sent.\n", hb_msg[1]);

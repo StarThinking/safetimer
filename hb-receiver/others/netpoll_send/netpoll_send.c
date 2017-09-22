@@ -29,7 +29,7 @@ int init_module() {
         np_t.local_ip.ip = htonl((unsigned long int) 0x0a000066);
         np_t.remote_ip.ip = htonl((unsigned long int) 0x0a000065);
         np_t.local_port = 6665;
-        np_t.remote_port = 5000;
+        np_t.remote_port = 5002;
         
         // mac addr of 10.0.0.101
         np_t.remote_mac[0] = 0x54;
