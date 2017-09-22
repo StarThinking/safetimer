@@ -57,12 +57,13 @@ int init_receiver(cb_t callback) {
                 fprintf(stderr, "Heartbeat receiver failed to init queue.\n");
                 goto error;
          }
-         
+
+#ifdef CONFIG_BARRIER         
          if ((ret = init_barrier()) < 0) {
                 fprintf(stderr, "Heartbeat receiver failed to init barrier.\n");
                 goto error;
          }
-        
+#endif
          if ((ret = init_hb()) < 0) {
                 fprintf(stderr, "Heartbeat receiver failed to init heartbeat server.\n");
                 goto error;
@@ -84,9 +85,12 @@ void destroy_receiver() {
 #ifdef CONFIG_DROP
         destroy_drop();
 #endif
+
+#ifdef CONFIG_BARRIER
         cancel_barrier();
         join_barrier();
-        
+#endif
+      
         cancel_hb();
         join_hb();
         

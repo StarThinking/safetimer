@@ -10,7 +10,7 @@
 
 MODULE_LICENSE("GPL");
 
-#include "../../../include/hb_config.h"
+#include "../../../include/hb_common.h"
 
 struct my_data {
         unsigned int dport;
@@ -21,9 +21,9 @@ static int ret_handler(struct kretprobe_instance *ri, struct pt_regs *regs)
         struct my_data *data = (struct my_data *)ri->data;
         unsigned int dport = data->dport;
 
-        printk("dport = %u\n", dport);
+//        printk("dport = %u\n", dport);
         
-        if(dport == HB_PORT || dport == LOCAL_PORT) {
+        if(dport == HB_SERVER_PORT || dport == BARRIER_SERVER_PORT) {
             printk("[hb_rps_kretprobe] change retval to -1 to disable rps for heartbeats and self msgs\n");
             regs->ax = -1;
         }

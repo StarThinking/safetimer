@@ -1,8 +1,8 @@
 #ifndef HB_COMMON
 #define HB_COMMON
 
-#define CONFIG_DROP
-#define CONFIG_BARRIER
+//#define CONFIG_DROP
+//#define CONFIG_BARRIER
 
 #define HB_SERVER_ADDR "10.0.0.11"
 #define HB_SERVER_PORT 5001

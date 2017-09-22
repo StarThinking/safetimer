@@ -81,17 +81,17 @@ static void *hb_server(void *arg) {
         long flag;
         struct sockaddr_in client;
         unsigned int len = sizeof(client);
-        int count = 0;
+        //int count = 0;
 
         pthread_cleanup_push(cleanup, NULL);
 
         while (1) {
-                if (10 == count++) {
+          /*      if (10 == count++) {
                         struct timespec ts = time_to_timespec(2500);
                         printf("sleep 2.5 second.\n");
                         nanosleep(&ts, NULL);
                 }
-                        
+            */            
                 if((recvfrom(server_fd, &msg_buffer, MSGSIZE*2, 0, (struct sockaddr *) &client, &len)) != MSGSIZE*2) {
                         perror("recvfrom");
                         break;
@@ -103,6 +103,9 @@ static void *hb_server(void *arg) {
                         /* For requests, reply [base_time]. */
                         long reply = base_time;
 
+                        printf("NHeartbeat server: request from %s:%u.\n",
+                                inet_ntoa(client.sin_addr), ntohs(client.sin_port));
+                        
                         if(sendto(server_fd, &reply, MSGSIZE, 0, (struct sockaddr *) &client,
                                     sizeof(client)) != MSGSIZE) {
                                 perror("send reply");

@@ -393,12 +393,17 @@ static void expiration_check_for_epoch(long epoch) {
                list_iterator_t *it = list_iterator_new(*ip_list, LIST_HEAD);
                list_node_t *next = list_iterator_next(it);
                while (next != NULL) {  
+
+#ifdef CONFIG_DROP
                         if (epoch <= waive_check_epoch) {
                                 recv_stats.waived_timeout_cnt ++;
                                 printf("\n\tChecker: although node %s timeouts for epoch %ld "
                                         "but it's waived due to packet drop.\n\n", 
                                         (char*) next->val, epoch);
-                        } else {
+                        } else
+#endif
+      
+                        {
                                 recv_stats.timeout_cnt ++;
                                 printf("\n\tChecker: node %s timeout for epoch %ld !\n\n", 
                                         (char*) next->val, epoch);
@@ -431,16 +436,16 @@ static void *queue_recv_loop(void *arg) {
         char buf[2048] __attribute__ ((aligned));
         int err;
         /* For correctness test. */
-        int count = 0;
+        //int count = 0;
 
 	pthread_cleanup_push(cleanup, NULL);
 
         while (1) {
-                if (0 == (count++ % 20)) {
+                /*if (0 == (count++ % 20)) {
                         struct timespec ts = time_to_timespec(2500);
                         printf("sleep 2.5s\n");
                         nanosleep(&ts, NULL);
-                }
+                }*/
 
                 if ((rv = recv(fd, buf, sizeof(buf), 0)) >= 0) { 
                         nfq_handle_packet(h, buf, rv);
