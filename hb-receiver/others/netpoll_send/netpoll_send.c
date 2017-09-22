@@ -25,11 +25,11 @@ int init_module() {
         //uint32_t bytes = 0x549f35147440;
 
         np_t.name = "LRNG";
-        strlcpy(np_t.dev_name, "em1", IFNAMSIZ);
+        strlcpy(np_t.dev_name, "em2", IFNAMSIZ);
         np_t.local_ip.ip = htonl((unsigned long int) 0x0a000066);
         np_t.remote_ip.ip = htonl((unsigned long int) 0x0a000065);
         np_t.local_port = 6665;
-        np_t.remote_port = 5000;
+        np_t.remote_port = 5003;
         
         // mac addr of 10.0.0.101
         np_t.remote_mac[0] = 0x54;
@@ -49,7 +49,7 @@ int init_module() {
 void cleanup_module() {
         char message[MESSAGE_SIZE] = "";
         long data = 1314;
-        int count = 5000000;
+        int count = 10000000;
         int i;
 
         sprintf(message, "%ld\n", data);
