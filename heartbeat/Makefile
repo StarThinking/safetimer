@@ -2,7 +2,7 @@ CC = gcc
 
 CFLAGS = -fPIC -shared -Wall -ggdb -D__WITH_MURMUR
 
-INCLUDE = -I./include
+INCLUDE = -I./include -I/usr/lib/jvm/java-7-openjdk-amd64/include
 
 all: receiver sender
 

@@ -50,6 +50,9 @@ long timeout(void) {
         return now_t - send_timeout;
 }
 
+extern long prev_sent_epoch;
+long prev_sent_epoch;
+
 static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
         struct sk_buff *skb = NULL;
         struct iphdr *iph = NULL;
@@ -76,6 +79,7 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
                             unsigned char *data;
                             long flag, epoch;
                             long exceeding_time;
+                            long epoch_inc;
                             
                             data = (unsigned char *) iph;
                             iphdr_size = iph->ihl << 2;
@@ -84,9 +88,10 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
                             epoch = *((long *) (data + offset + MSGSIZE));
 
                             if ((exceeding_time = timeout()) <= 0) {
-                                set_sent_epoch(epoch);
-//                                printk("heartbeat sending completes and set sent_epoch as %ld\n", 
-//                                        epoch);
+                                epoch_inc = epoch - prev_sent_epoch;
+                                inc_sent_epoch(epoch_inc);
+//                                printk("heartbeat sending completes and set sent_epoch as %ld, int %ld, prev %ld\n", 
+ //                                       epoch, epoch_inc, prev_sent_epoch);
                             } else {
                                 printk("The completion of heartbeat sending for epoch %ld exceeds sending_timeouts (%ld) by %ld!\n", 
                                         epoch ,get_send_timeout(), exceeding_time);

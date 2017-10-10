@@ -10,6 +10,8 @@
 #include <signal.h>
 #include <pthread.h>
 
+#include <jni.h>
+
 #include "hb_common.h"
 #include "helper.h"
 
@@ -27,6 +29,9 @@ static void debugfs_save(long base_time, long timeout_interval);
 static void clear_debugfs();
 
 int init_sender() {
+
+//JNIEXPORT jint JNICALL Java_org_apache_hadoop_hdfs_server_datanode_SenderWrapper_init_1sender
+//(JNIEnv *env, jclass jobj) {
         struct sockaddr_in remote;
         unsigned int len;
         int ret = 0;
@@ -93,6 +98,8 @@ error:
 
 /* Destroy. */
 void destroy_sender() {
+//JNIEXPORT void JNICALL Java_org_apache_hadoop_hdfs_server_datanode_SenderWrapper_destroy_1sender
+//(JNIEnv *env, jclass jobj) {
         pthread_cancel(tid);
         pthread_join(tid, NULL);
         
