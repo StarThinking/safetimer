@@ -7,7 +7,6 @@
 
 extern long base_time;
 extern long timeout_interval; // unit of ms
-extern long sent_epoch;
 
 static inline long get_max_transfer_delay(void) { 
         return timeout_interval * 0.1;
@@ -35,7 +34,7 @@ static inline int prepared(void) {
 
 long get_sent_epoch(void);
 
-void set_sent_epoch(long epoch);
+void inc_sent_epoch(long epoch);
 
 void debugfs_init(void);
 
