@@ -1,7 +1,7 @@
 #ifndef QUEUE
 #define QUEUE
 
-int init_queue(cb_t callback);
+int init_queue();
 
 void cancel_queue();
 

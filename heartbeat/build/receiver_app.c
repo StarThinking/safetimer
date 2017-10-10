@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
         signal(SIGTERM, sig_handler);
         signal(SIGKILL, sig_handler);
 
-        if (init_receiver(callback) == 0) {
+        if (init_receiver() == 0) {
                 while(1) {
                         sleep(1);
                 }

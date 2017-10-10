@@ -5,7 +5,7 @@
 
 //typedef void (*cb_t)();
 
-int init_receiver(cb_t callback);
+int init_receiver();
 
 void destroy_receiver();
 

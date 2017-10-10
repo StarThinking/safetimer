@@ -6,6 +6,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+#include <jni.h>
+
 #include "hb_common.h"
 
 #include "receiver.h"
@@ -28,8 +30,18 @@ static FILE *log_fp;
 static long read_timeout_interval();
 static void show_receiver_stats();
 
-int init_receiver(cb_t callback) {
-         int ret = 0;
+int node_state = 0;
+
+//JNIEXPORT jint JNICALL Java_org_apache_hadoop_hdfs_server_blockmanagement_ReceiverWrapper_get_1state
+//(JNIEnv *env, jclass o) {
+//        printf("JNICALL is called\n");
+//        return node_state;
+//}
+
+//JNIEXPORT jint JNICALL Java_org_apache_hadoop_hdfs_server_blockmanagement_ReceiverWrapper_init_1receiver
+//(JNIEnv *env, jclass o) {
+int init_receiver() {
+        int ret = 0;
 
          /* Set the values of parameters. */
          base_time = now_time();
@@ -53,7 +65,7 @@ int init_receiver(cb_t callback) {
          init_drop();
 #endif
 
-         if ((ret = init_queue(callback)) < 0) {
+         if ((ret = init_queue()) < 0) {
                 fprintf(stderr, "Heartbeat receiver failed to init queue.\n");
                 goto error;
          }
@@ -79,8 +91,10 @@ error:
          return ret;
 }
 
+//JNIEXPORT void JNICALL Java_org_apache_hadoop_hdfs_server_blockmanagement_ReceiverWrapper_destroy_1receiver
+//(JNIEnv *env, jclass o) {        
 void destroy_receiver() {
-        show_receiver_stats();
+    show_receiver_stats();
 
 #ifdef CONFIG_DROP
         destroy_drop();
