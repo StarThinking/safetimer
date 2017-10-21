@@ -17,16 +17,16 @@
 
 #include "../../../include/hb_common.h"
 
-MODULE_LICENSE("GPL");
+//#define ONE_TO_ONE
+#define TWO_CPUS
 
-/* dport for heartbear receiving */
-/*static int port = 5002;
-module_param(port, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-MODULE_PARM_DESC(port, "An integer");*/
+MODULE_LICENSE("GPL");
 
 static struct nf_hook_ops nfho0;
 
 static struct dentry *clear;
+static u32 queue_index;
+static struct dentry *queue_index_entry;
 static struct dentry *dir;
 static u32 sports[IRQ_NUM];
 static struct dentry *files[IRQ_NUM];
@@ -63,27 +63,40 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
         in_name = in->name;
         out_name = out->name;
 
-        if(ip->protocol == IPPROTO_TCP) { 
+        if (ip->protocol == IPPROTO_TCP) { 
                 tcp = (struct tcphdr *) skb_transport_header(skb);
                 sport = (size_t) ntohs(tcp->source);
                 dport = (size_t) ntohs(tcp->dest);
 
                 sprintf(str, "%pI4", &saddr);
                 
-                if(dport == BARRIER_SERVER_PORT && strcmp(str, BARRIER_CLIENT_ADDR) == 0) {
-                        int index;
-                        
-                        printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, irq_vec = %u, cpu = %d, prot = %u, in = %s, out = %s\n", ops->hooknum, &saddr, sport, &daddr, dport, irq_vec, cpu, proto, in_name, out_name);
-                        
-                        index = irq_vec - BASE_IRQ;
-                        if(index < 0 || index > 4)
-                                printk("[msx] Error: irq index out of bound!\n");
+                if (dport == BARRIER_SERVER_PORT && strcmp(str, BARRIER_CLIENT_ADDR) == 0) {
+                        printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, irq_vec = %u,"
+                                " cpu = %d, prot = %u, in = %s, out = %s\n", ops->hooknum, &saddr, 
+                                sport, &daddr, dport, irq_vec, cpu, proto, in_name, out_name);
+                     
+#ifdef ONE_TO_ONE                        
+                        if (cpu < 0 || cpu > 4)
+                                printk("[msx] Error: cpu id out of bound!\n");
                         else {
-                                if(sports[index] == 0) { // no tcp connection before, record the sport 
-                                        printk("[msx] sport[%d] = %u\n", index, sport);
-                                        sports[index] = sport;
+                                if (sports[cpu] == 0) { // no tcp connection before, record the sport 
+                                        printk("[msx] The sport of queue with cpu %d is %u\n", cpu, sport);
+                                        sports[cpu] = sport;
                                 }
                         }
+#endif
+
+#ifdef TWO_CPUS
+                        if (cpu != 0 && cpu != 1)
+                                printk("[msx] Error: cpu id out of bound!\n");
+                        else {
+                                if (cpu == 1 && sports[queue_index] == 0) {
+                                        printk("[msx] The sport of queue %d with cpu %d is %u\n", 
+                                                BASE_IRQ + queue_index, cpu, sport);
+                                        sports[queue_index] = sport;
+                                }
+                        }
+#endif
                 }
         } 
         return NF_ACCEPT; 
@@ -98,17 +111,24 @@ int init_module() {
         nf_register_hook(&nfho0);  
        
         dir = debugfs_create_dir(HB_SERVER_ADDR, NULL);
-        for(i=0; i<IRQ_NUM; i++) {
+        for (i=0; i<IRQ_NUM; i++) {
                 char irq_str[8];
                 sprintf(irq_str, "%d", BASE_IRQ + i);
                 files[i] = debugfs_create_u32(irq_str, 0644, dir, &sports[i]);
         }
 
+        queue_index_entry = debugfs_create_u32("queue_index", 0644, dir, &queue_index);
+        if (!queue_index_entry) {
+                // Abort module load.
+                printk(KERN_ALERT "[msx] Failed to create queue_index_entry\n");
+                return -1;
+        }
+        
         clear = debugfs_create_file("clear", 0222, dir, NULL, &clear_fops);
         if (!clear) {
                 // Abort module load.
                 printk(KERN_ALERT "[msx] Failed to create clear\n");
-                        return -1;
+                return -1;
         }
         
         return 0; 
@@ -119,9 +139,10 @@ void cleanup_module() {
 
         nf_unregister_hook(&nfho0);   
         
-        for(i=0; i<IRQ_NUM; i++) {
+        for (i=0; i<IRQ_NUM; i++) {
                 debugfs_remove(files[i]);
         }
         debugfs_remove(clear);
+        debugfs_remove(queue_index_entry);
         debugfs_remove(dir);
 }

@@ -1,3 +1,7 @@
+cd ./barrier_ring_checker_mapping
+make clean
+cd ..
+
 cd ./barrier_ring_checker
 make clean
 cd ..
