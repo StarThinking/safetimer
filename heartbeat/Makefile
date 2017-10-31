@@ -6,7 +6,7 @@ INCLUDE = -I./include -I/usr/lib/jvm/java-7-openjdk-amd64/include
 
 all: receiver sender
 
-receiver: src/receiver.o src/barrier.o src/hb_server.o src/queue.o src/helper.o src/drop.o
+receiver: src/receiver.o src/barrier.o src/hb_server.o src/state_server.o src/queue.o src/helper.o src/drop.o
 	@mkdir -p build
 	$(CC) $(CFLAGS) -o build/libreceiver.so $^ -lc
 	#$(CC) $^ -L./lib -lnfnetlink -lnetfilter_queue -lpthread -lrt ./lib/liblist.a -lhashtable -o $@

@@ -1,7 +1,7 @@
 timeout_interval = 1000
-hb_cnt = 0
+hb_cnt = 408
 waived_timeout_cnt = 0
-timeout_cnt = 0
+timeout_cnt = 1
 hb_drop_cnt = 0
 nic_drop_cnt = 0
 dev_drop_cnt = 0

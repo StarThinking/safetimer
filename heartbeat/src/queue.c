@@ -20,11 +20,10 @@
 #include "helper.h"
 #include "barrier.h" // for send_barrier_message()
 #include "drop.h"
+#include "state_server.h" // for node_state
 
 #include "hashtable.h"
 #include "list.h"
-
-extern int node_state;
 
 #ifdef CONFIG_BARRIER
 
@@ -342,8 +341,6 @@ static void expiration_check_for_epoch(long epoch) {
         list_t **ip_list;
         size_t value_size;
         int ret;
-        FILE *fp;
-        char *buf;
 
 #ifdef CONFIG_DROP
 
@@ -428,12 +425,12 @@ static void expiration_check_for_epoch(long epoch) {
                ht_remove(&epoch_list_ht, &epoch, sizeof(long));
         } 
         
-        fp = fopen("/root/hb-latency/heartbeat/build/node_state", "w+");
+        /*fp = fopen("/root/hb-latency/heartbeat/build/node_state", "w+");
         buf = (char*) calloc(20, sizeof(char));
-        sprintf(buf, "%d", node_state);
+        sprintf(buf, "%ld", node_state);
         fputs(buf, fp);
         free(buf);
-        fclose(fp);
+        fclose(fp);*/
         
         pthread_mutex_unlock(&epoch_list_ht_lock);
 }

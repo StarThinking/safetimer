@@ -15,6 +15,7 @@
 #include "helper.h"
 #include "barrier.h"
 #include "hb_server.h"
+#include "state_server.h"
 #include "drop.h"
 #include "queue.h"
 
@@ -29,8 +30,6 @@ sem_t init_done;
 static FILE *log_fp;
 static long read_timeout_interval();
 static void show_receiver_stats();
-
-int node_state = 0;
 
 //JNIEXPORT jint JNICALL Java_org_apache_hadoop_hdfs_server_blockmanagement_ReceiverWrapper_get_1state
 //(JNIEnv *env, jclass o) {
@@ -81,6 +80,11 @@ int init_receiver() {
                 goto error;
          }
          
+         if ((ret = init_state_server()) < 0) {
+                fprintf(stderr, "Heartbeat receiver failed to init state server.\n");
+                goto error;
+         }
+         
          printf("Heartbeat receiver has been initialized successfully.\n");
         
          /* Begin to check expiration until init is done. */
@@ -110,6 +114,9 @@ void destroy_receiver() {
         
         cancel_queue();
         join_queue();        
+        
+        cancel_state_server();
+        join_state_server();
 
         printf("Heartbeat receiver has been destroyed.\n");
 }
