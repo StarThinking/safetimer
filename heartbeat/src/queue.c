@@ -181,6 +181,7 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                 unsigned short offset = iphdr_size + udphdr_size;
                 long flag = -1;
                 long epoch = -1;
+                long app_id;
                 size_t value_size;
                 list_t **ip_list;
 
@@ -195,7 +196,7 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                 }
                 
                 /* Skip furthur process for requests. */
-                if (flag == 0) {
+                if (flag == 0 || epoch == 0) {
                         printf("Queue: request [flag=%ld, epoch=%ld] from node %s.\n", flag, epoch, saddr);
                         goto ret;
                 } 
@@ -205,7 +206,15 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                         goto ret;
                 }
                 
-                printf("Queue: heartbeat for epoch %ld from node %s.\n",  epoch, saddr);
+                /* 
+                 * If it's not request, then it must be heartbeat.
+                 * The flag field now indicates app_id.
+                 */
+                app_id = flag;
+                
+                printf("Queue: heartbeat for [app_id=%ld, epoch=%ld] from node %s.\n", app_id, epoch, saddr);
+                put_state(app_id, saddr, 0);
+
                 recv_stats.hb_cnt ++;
 
                 pthread_mutex_lock(&epoch_list_ht_lock);
@@ -410,7 +419,11 @@ static void expiration_check_for_epoch(long epoch) {
                                 recv_stats.timeout_cnt ++;
                                 printf("\n\tChecker: node %s timeout for epoch %ld !\n\n", 
                                         (char*) next->val, epoch);
-                                node_state = 1;
+                               
+                                // app_id = 1. state = 1 to indicate node crash. 
+                                put_state(1, (char*) next->val, 1);
+                                
+                                //node_state = 1;
                                 /* Invoke application-defined callback function. */
                                 //timeout_cb();
                         }

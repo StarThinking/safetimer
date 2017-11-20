@@ -15,4 +15,6 @@ void cancel_state_server();
 
 void join_state_server();
 
+void put_state(long app_id, char *node_ip, long state);
+    
 #endif

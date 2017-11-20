@@ -14,7 +14,7 @@
 
 MODULE_LICENSE("GPL");
 
-static int p_id = 12510;
+static int p_id = 29197;
 static struct pid *pid_struct;
 static struct task_struct *task;
 
