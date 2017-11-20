@@ -20,6 +20,8 @@
 long base_time = 0;
 long timeout_interval = 0;
 
+static long const app_id = 1; // Unique positive value.
+
 static int hb_fd;
 static struct sockaddr_in hb_server;
 
@@ -59,7 +61,7 @@ int init_sender() {
                 goto error;
         }
        
-        printf("Heartbeat sender: request message [flag=0, 0] has been sent.\n");
+        printf("Heartbeat sender: request message [0, 0] has been sent.\n");
         
         /* Receive base_time and timeout_interval. */
         memset(&remote, '0', sizeof(remote));
@@ -117,7 +119,7 @@ static void cleanup(void *arg) {
 /* Loop of heartbeat sending. */
 static void *run_hb_loop(void *arg) {
         int count;
-        long hb_msg[2]; /* [flag=1, epoch_id] */
+        long hb_msg[2]; /* [app_id, epoch_id] */
         long current_epoch, sending_epoch;
         long diff_time;
         long timeout;
@@ -126,8 +128,8 @@ static void *run_hb_loop(void *arg) {
         
         pthread_cleanup_push(cleanup, NULL);
 
-        /* Set flag to indicate this is heartbeat. */
-        hb_msg[0] = 1; 
+        /* Set the first long to indicate app_id, which should be positive. */
+        hb_msg[0] = app_id; 
         
         while(1) {     
                 current_epoch = time_to_epoch(now_time());
@@ -176,7 +178,8 @@ static void *run_hb_loop(void *arg) {
                         break;
                 }
                 
-                printf("Heartbeat message [flag=1, epoch=%ld] has been sent.\n", hb_msg[1]);
+                printf("Heartbeat message [app_id=%ld, epoch=%ld] has been sent.\n", 
+                            hb_msg[0], hb_msg[1]);
 
                 /* Adding delay to test kernel module. */
                 /*count_tmp ++;
