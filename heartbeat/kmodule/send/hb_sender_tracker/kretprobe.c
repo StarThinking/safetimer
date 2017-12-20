@@ -1,5 +1,3 @@
-#include <linux/kernel.h>
-#include <linux/module.h>
 #include <linux/kprobes.h>
 #include <linux/ktime.h>
 #include <linux/limits.h>
@@ -12,7 +10,7 @@
 #include "kretprobe.h"
 #include "../../../include/hb_common.h"
 
-MODULE_LICENSE("GPL");
+//MODULE_LICENSE("GPL");
 
 long now(void) {
         //return ktime_to_ms(ktime_get());
@@ -20,7 +18,7 @@ long now(void) {
 }
 
 /* If sent_epoch = 0, return -1 to indicate not prepared. */
-long get_send_timeout(void) {
+long get_send_hb_timeout(void) {
         long sent_epoch, recv_timeout;
         
         /* get_sent_epoch() involves spinlock contention. */
@@ -32,17 +30,35 @@ long get_send_timeout(void) {
         return recv_timeout - get_max_transfer_delay() - get_max_clock_deviation();
 }
 
-long timeout(void) {
+long get_send_block_timeout(void) {
+        return get_send_hb_timeout() + get_max_transfer_delay();
+}
+
+int block_send(void) {
+        long now_t = now();
+        long send_block_timeout = get_send_block_timeout();
+
+        if (!prepared())
+                return 0;
+
+        if (send_block_timeout < 0)
+                return 0;
+        
+        printk("now is %ld, send_block_timeout is %ld\n", now_t, send_block_timeout);
+        return now_t < send_block_timeout ? 0 : 1;
+}
+
+long is_send_hb_timeout(void) {
         long send_timeout = 0;
         long now_t = 0;
         
         if (!prepared())
                 return 0;
 
-        send_timeout = get_send_timeout();
+        send_timeout = get_send_hb_timeout();
 
         /* Not prepared. */
-        if(send_timeout < 0)
+        if (send_timeout < 0)
                 return 0;
         
         now_t = now();
@@ -87,14 +103,14 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
                             flag = *((long *) (data + offset));
                             epoch = *((long *) (data + offset + MSGSIZE));
 
-                            if ((exceeding_time = timeout()) <= 0) {
+                            if ((exceeding_time = is_send_hb_timeout()) <= 0) {
                                 epoch_inc = epoch - prev_sent_epoch;
                                 inc_sent_epoch(epoch_inc);
 //                                printk("heartbeat sending completes and set sent_epoch as %ld, int %ld, prev %ld\n", 
  //                                       epoch, epoch_inc, prev_sent_epoch);
                             } else {
                                 printk("The completion of heartbeat sending for epoch %ld exceeds sending_timeouts (%ld) by %ld!\n", 
-                                        epoch ,get_send_timeout(), exceeding_time);
+                                        epoch ,get_send_hb_timeout(), exceeding_time);
                             } 
                         }
                     }
