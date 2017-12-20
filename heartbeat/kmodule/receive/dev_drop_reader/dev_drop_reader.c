@@ -14,11 +14,12 @@
 
 MODULE_LICENSE("GPL");
 
-static char dropped_packets_str[BUFFERSIZE];
+static char incr_dropped_packets_str[BUFFERSIZE];
 static struct dentry *dir_entry;
-static struct dentry *dropped_packets_entry;
+static struct dentry *incr_dropped_packets_entry;
+static long prev_dropped_packets;
 
-static ssize_t dropped_packets_read(struct file *fp, char __user *user_buffer,
+static ssize_t incr_dropped_packets_read(struct file *fp, char __user *user_buffer,
                                     size_t count, loff_t *position) { 
         struct net_device* dev;
         const struct net_device_ops *ops;
@@ -26,6 +27,7 @@ static ssize_t dropped_packets_read(struct file *fp, char __user *user_buffer,
         unsigned long driver_dropped_pkts = 0;
         unsigned long kerneldev_dropped_pkts = 0;
         unsigned long dropped_packets = 0;
+        unsigned long incr = 0;
 
         if ((dev = dev_get_by_name(&init_net, BARRIER_SERVER_IF)) == NULL) {
                 printk("dev_drop_reader: dev_get_by_name failed.\n");
@@ -45,23 +47,25 @@ static ssize_t dropped_packets_read(struct file *fp, char __user *user_buffer,
         }
 
         dropped_packets = driver_dropped_pkts + kerneldev_dropped_pkts;
-        memset(dropped_packets_str, '\0', BUFFERSIZE);
-        snprintf(dropped_packets_str, 10, "%lu", dropped_packets);
+        incr = dropped_packets - prev_dropped_packets;
+        prev_dropped_packets = dropped_packets;
+        memset(incr_dropped_packets_str, '\0', BUFFERSIZE);
+        snprintf(incr_dropped_packets_str, 10, "%lu", incr);
         
-        return simple_read_from_buffer(user_buffer, count, position, dropped_packets_str, BUFFERSIZE);
+        return simple_read_from_buffer(user_buffer, count, position, incr_dropped_packets_str, BUFFERSIZE);
 }
 
 static const struct file_operations dropped_packets_fops = {
-        .read = dropped_packets_read
+        .read = incr_dropped_packets_read
 };
 
 static int dev_drop_reader_init(void) {
         printk(KERN_INFO "dev_drop_reader init\n");
 
-        memset(dropped_packets_str, '\0', BUFFERSIZE);
+        memset(incr_dropped_packets_str, '\0', BUFFERSIZE);
         
         dir_entry = debugfs_create_dir("dev_drop_reader", NULL);
-        dropped_packets_entry = debugfs_create_file("dropped_packets", 0444, dir_entry, NULL, &dropped_packets_fops);
+        incr_dropped_packets_entry = debugfs_create_file("dropped_packets", 0444, dir_entry, NULL, &dropped_packets_fops);
 
         return 0;
 }

@@ -7,10 +7,6 @@
 
 extern unsigned long queue_dropped_pkt_current;
 
-int init_drop();
-
-void destroy_drop();
-
 int if_drop_happened();
 
 #endif

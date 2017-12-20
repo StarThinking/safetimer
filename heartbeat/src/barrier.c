@@ -84,20 +84,9 @@ error:
 }
 
 void cancel_barrier() {
-        int i;
-
-        sender_runnable = 0;
-        for (i=0; i<IRQ_NUM; i++) {
-                close(client_fds[i]);
-                //close(conn_fds[i]);
-        }
-        
-        /* Wait for clients to quit gracefully. */
-        sleep(2);
-        server_runnable = 0;
-        printf("Barrier cancel.\n");
-        //pthread_cancel(server_tid);
         //pthread_cancel(setup_tid);
+        printf("Barrier cancel.\n");
+        pthread_cancel(server_tid);
 }
 
 void join_barrier() {
@@ -111,19 +100,35 @@ void join_barrier() {
 /*
  * Clean up all the resources used for barrier client and server.
  */
-/*static void cleanup(void *arg) {
+static void cleanup(void *arg) {
         int i;
        
         printf("Clean up barrier server.\n");
 
+        sender_runnable = 0;
+        
         for (i=0; i<IRQ_NUM; i++) {
+                close(client_fds[i]);
+        }
+        close(listen_fd);
+        
+        for (i=0; i<IRQ_NUM; i++) {
+                close(conn_fds[i]);
+        }
+        
+        /* Wait for clients to quit gracefully. */
+        //sleep(2);
+//        server_runnable = 0;
+
+        /*for (i=0; i<IRQ_NUM; i++) {
                 close(client_fds[i]);
                 //close(conn_fds[i]);
         }
-        sleep(2);
+        sleep(2);*/
+        
         //FD_ZERO(&active_fd_set);
         //FD_ZERO(&read_fd_set);
-}*/
+}
 
 /*
  * Send barrier message via all connected rx queue flows from em2 to em1.
@@ -151,8 +156,8 @@ int send_barrier_message(long epoch_id) {
                 }
         }
 
-        //printf("Barrier client: barrier messages for epoch_id %ld "
-        //        "have been sent out along all the flows.\n", epoch_id);
+        printf("Barrier client: barrier messages for epoch_id %ld "
+                "have been sent out along all the flows.\n", epoch_id);
 
 error:
         return ret;
@@ -176,7 +181,7 @@ static void *barrier_server(void *arg) {
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
  
-        //pthread_cleanup_push(cleanup, NULL);
+        pthread_cleanup_push(cleanup, NULL);
 
         while (server_runnable) {
                 /* Block until input arrives on one or more active sockets. */
@@ -248,8 +253,8 @@ static void *barrier_server(void *arg) {
                                         
                                         if (strcmp(inet_ntoa(client.sin_addr), BARRIER_CLIENT_ADDR) == 0) {
                                                 ;
-                                                //printf("Barrier message [epoch=%ld, index=%ld] received from socket fd %d.\n",
-                                                //        msg_buffer[0], msg_buffer[1], i);
+                                                printf("Barrier message [epoch=%ld, index=%ld] received from socket fd %d.\n",
+                                                        msg_buffer[0], msg_buffer[1], i);
                                         } else {
                                                 fprintf(stderr, "Barrier server: error happens because "
                                                         "barrier messages can't be sent from address besides %s.\n", 
@@ -260,9 +265,9 @@ static void *barrier_server(void *arg) {
                 }
         }
         
-        close(listen_fd);
-        printf("Barrier server exits.\n");
-        //pthread_cleanup_pop(1);
+        //close(listen_fd);
+        //printf("Barrier server exits.\n");
+        pthread_cleanup_pop(1);
 
         return NULL;
 }

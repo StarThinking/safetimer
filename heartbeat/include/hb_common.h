@@ -38,7 +38,7 @@ struct receiver_stats {
         long dev_drop_pkts;
         long queue_drop_pkts;
 
-        long waived_timeout_cnt;
+        long barrier_cnt;
         long timeout_cnt;
 };
 

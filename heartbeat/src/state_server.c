@@ -25,12 +25,14 @@ static long get_state(long app_id, char *node);
 
 static long get_state(long app_id, char *node_ip) {
         size_t value_size;
-        hash_table *node_states_ht;
-        long *node_state;
+        hash_table * node_states_ht_p;
+        hash_table ** node_states_ht_pp;
+        long * node_state;
 
-        node_states_ht = (hash_table *) ht_get(&app_nodes_ht, &app_id, sizeof(long), &value_size);
-        if (node_states_ht != NULL) {
-                node_state = (long *) ht_get(node_states_ht, node_ip, strlen(node_ip), &value_size);
+        node_states_ht_pp = (hash_table **) ht_get(&app_nodes_ht, &app_id, sizeof(long), &value_size);
+        if (node_states_ht_pp != NULL) {
+                node_states_ht_p = *node_states_ht_pp;
+                node_state = (long *) ht_get(node_states_ht_p, node_ip, strlen(node_ip), &value_size);
                 if (node_state != NULL) {
                         printf("The state of node %s for app %ld is %ld.\n",
                                     node_ip, app_id, *node_state);
@@ -49,31 +51,35 @@ static long get_state(long app_id, char *node_ip) {
 
 void put_state(long app_id, char *node_ip, long state) {
         size_t value_size;
-        hash_table *node_states_ht;
+        hash_table * node_states_ht_p;
+        hash_table **node_states_ht_pp; // pointer of pointer
         long *node_state_p;
-        long *tmp;
+        //long *tmp;
 
-        node_states_ht = (hash_table *) ht_get(&app_nodes_ht, &app_id, sizeof(long), &value_size);
-        if (node_states_ht == NULL) {
-                node_states_ht = (hash_table *) calloc(sizeof(hash_table), 1);
-                ht_init(node_states_ht, HT_NONE, 0.05);
-                ht_insert(&app_nodes_ht, &app_id, sizeof(long), node_states_ht, sizeof(hash_table));
+        node_states_ht_pp = (hash_table **) ht_get(&app_nodes_ht, &app_id, sizeof(long), &value_size);
+        if (node_states_ht_pp == NULL) {
+                node_states_ht_p = (hash_table *) calloc(sizeof(hash_table), 1);
+                ht_init(node_states_ht_p, HT_NONE, 0.05);
+                node_states_ht_pp = &node_states_ht_p;
+                ht_insert(&app_nodes_ht, &app_id, sizeof(long), node_states_ht_pp, sizeof(hash_table **));
                 printf("State server: inserted new hashtable for app %ld.\n", app_id);
+        } else {
+                node_states_ht_p = *node_states_ht_pp;
         }
         
         //printf("sizeof(*node_ip) = %lu\n", sizeof(*node_ip));
 
-        node_state_p = (long *) ht_get(node_states_ht, node_ip, strlen(node_ip), &value_size);
+        node_state_p = (long *) ht_get(node_states_ht_p, node_ip, strlen(node_ip), &value_size);
         if (node_state_p == NULL) {
-                node_state_p = (long *) calloc(sizeof(long), 1);
-                ht_insert(node_states_ht, node_ip, strlen(node_ip), node_state_p, sizeof(long));
+                long _node_state = 0;
+                ht_insert(node_states_ht_p, node_ip, strlen(node_ip), &_node_state, sizeof(long));
                 printf("State server: inserted new entry for node %s\n", node_ip);
-        }
-        
-        if (*node_state_p != state) {
-                printf("State server: change the state of app %ld, node %s to %ld\n", 
-                            app_id, node_ip, state);
-                *node_state_p = state;
+        } else {
+                if (*node_state_p != state) {
+                        printf("State server: change the state of app %ld, node %s to %ld\n", 
+                                app_id, node_ip, state);
+                        *node_state_p = state;
+                }
         }
 
         return;
@@ -111,10 +117,31 @@ void join_state_server() {
 }
 
 static void cleanup(void *arg) {  
+        unsigned int key_count;
+        int i;
+        void **keys;
+        hash_table ** node_states_ht_pp;
+        size_t value_size;
+        
         printf("Clean up state server.\n");
         close(server_fd);
 
+        keys = ht_keys(&app_nodes_ht, &key_count);
+        if (keys != NULL) {
+                for (i=0; i<key_count; i++) {
+                        long * key = keys[i];
+                        printf("key = %ld\n", *key);
+                        node_states_ht_pp = (hash_table **) ht_get(&app_nodes_ht, key, sizeof(long), &value_size);
+                        if (node_states_ht_pp != NULL && *node_states_ht_pp != NULL) {
+                                ht_destroy(*node_states_ht_pp);
+                                free(*node_states_ht_pp);
+                                printf("ht_destroy node_states_ht for app %ld\n", *key);
+                        }
+                }
+                free(keys);
+        }
         ht_destroy(&app_nodes_ht);
+        sleep(1);
 }
 
 /*

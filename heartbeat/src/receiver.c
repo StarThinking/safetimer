@@ -60,10 +60,6 @@ int init_receiver() {
     
          sem_init(&init_done, 0, 0);
 
-#ifdef CONFIG_DROP
-         init_drop();
-#endif
-
          if ((ret = init_queue()) < 0) {
                 fprintf(stderr, "Heartbeat receiver failed to init queue.\n");
                 goto error;
@@ -98,11 +94,7 @@ error:
 //JNIEXPORT void JNICALL Java_org_apache_hadoop_hdfs_server_blockmanagement_ReceiverWrapper_destroy_1receiver
 //(JNIEnv *env, jclass o) {        
 void destroy_receiver() {
-    show_receiver_stats();
-
-#ifdef CONFIG_DROP
-        destroy_drop();
-#endif
+        show_receiver_stats();
 
 #ifdef CONFIG_BARRIER
         cancel_barrier();
@@ -162,7 +154,7 @@ static void show_receiver_stats() {
 
         SHOW_STAT(timeout_interval);
         SHOW_STAT(hb_cnt);
-        SHOW_STAT(waived_timeout_cnt);
+        SHOW_STAT(barrier_cnt);
         SHOW_STAT(timeout_cnt);
         SHOW_STAT(hb_drop_cnt);
         SHOW_STAT(nic_drop_cnt);

@@ -17,8 +17,8 @@
 
 MODULE_LICENSE("GPL");
 
-static char accum_nic_drop_str[BUFFERSIZE];
-static unsigned long accum_nic_drop;
+static char incr_nic_drop_str[BUFFERSIZE];
+//static unsigned long accum_nic_drop;
 static struct dentry *dir_entry;
 static struct dentry *dropped_packets_entry;
 
@@ -60,15 +60,15 @@ static ssize_t dropped_packets_read(struct file *fp, char __user *user_buffer,
         dropped_packets = get_stat64(&rx_discards);
 
         if (dropped_packets > 0) {
-                accum_nic_drop += dropped_packets;
-                memset(accum_nic_drop_str, '\0', BUFFERSIZE);
-                snprintf(accum_nic_drop_str, 10, "%lu", accum_nic_drop);
+                //accum_nic_drop += dropped_packets;
+                memset(incr_nic_drop_str, '\0', BUFFERSIZE);
+                snprintf(incr_nic_drop_str, 10, "%lu", dropped_packets);
                 
 //                printk("[msx] accum_nic_drop is %lu, this time added %lu pkts\n", 
 //                            accum_nic_drop, dropped_packets); 
         }
 
-        return simple_read_from_buffer(user_buffer, count, position, accum_nic_drop_str, BUFFERSIZE);
+        return simple_read_from_buffer(user_buffer, count, position, incr_nic_drop_str, BUFFERSIZE);
 }
 
 static const struct file_operations dropped_packets_fops = {
@@ -78,7 +78,7 @@ static const struct file_operations dropped_packets_fops = {
 static int nic_drop_reader_init(void) {
         printk(KERN_INFO "nic_drop_reader init\n");
 
-        memset(accum_nic_drop_str, '\0', BUFFERSIZE);
+        memset(incr_nic_drop_str, '\0', BUFFERSIZE);
         
         dir_entry = debugfs_create_dir("nic_drop_reader", NULL);
         dropped_packets_entry = debugfs_create_file("dropped_packets", 0444, dir_entry, NULL, &dropped_packets_fops);

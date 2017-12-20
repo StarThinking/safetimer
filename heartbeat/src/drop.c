@@ -9,85 +9,33 @@
 
 #define BUFFERSIZE 20
 
-static unsigned long nic_dropped();
-unsigned long nic_dropped_pkt_current;
-static unsigned long nic_dropped_pkt_prev;
+static unsigned long nic_incr_dropped();
+static unsigned long dev_incr_dropped();
+static unsigned long queue_incr_dropped();
 
-static unsigned long dev_dropped();
-unsigned long dev_dropped_pkt_current;
-static unsigned long dev_dropped_pkt_prev;
-
-static unsigned long queue_dropped();
 unsigned long queue_dropped_pkt_current;
 static unsigned long queue_dropped_pkt_prev;
-
-int init_drop() {
-        FILE *fp;
-        int ret = 0;
-        char buffer[BUFFERSIZE];
-        char *ptr;
-      
-        /* Init nic drop. */
-        fp = fopen("/sys/kernel/debug/nic_drop_reader/dropped_packets", "r");
-        if (fp == NULL) {
-                perror("fopen nic_drop_reader");
-                fclose(fp);
-                ret = -1;
-                goto error;
-        }
-
-        memset(buffer, '\0', BUFFERSIZE);
-        fgets(buffer, BUFFERSIZE, fp);
-        nic_dropped_pkt_prev = (unsigned long) strtol(buffer, &ptr, 10);
-        fclose(fp);
-        
-        /* Init dev drop. */
-        fp = fopen("/sys/kernel/debug/dev_drop_reader/dropped_packets", "r"); 
-        if (fp == NULL) {
-                perror("fopen dev_drop_reader");
-                fclose(fp);
-                ret = -1;
-                goto error;
-        }
-
-        memset(buffer, '\0', BUFFERSIZE);
-        fgets(buffer, BUFFERSIZE, fp);
-        dev_dropped_pkt_prev = (unsigned long) strtol(buffer, &ptr, 10);
-        fclose(fp);
-        
-        /* Init queue drop. */
-        queue_dropped_pkt_prev = 0;
-
-        printf("Drop has been initialized successfully.\n");
-
- error:
-        return ret;
-}
-
-void destroy_drop() {
-        printf("Drop has been destroyed.\n");
-} 
 
 int if_drop_happened() {
         int ret = 0;
 
-        if (nic_dropped() > 0)
+        if (nic_incr_dropped() > 0)
                 ret += NICDROP;
 
-        if (dev_dropped() > 0)
+        if (dev_incr_dropped() > 0)
                 ret += DEVDROP;
 
-        if (queue_dropped() > 0)
+        if (queue_incr_dropped() > 0)
                 ret += QUEUEDROP;
 
         return ret;
 }
 
-static unsigned long nic_dropped() {
+static unsigned long nic_incr_dropped() {
         FILE *fp;
         char buffer[BUFFERSIZE];
-        unsigned long diff = 0;
         char *ptr;
+        unsigned long nic_incr;
         
         fp = fopen("/sys/kernel/debug/nic_drop_reader/dropped_packets", "r+");
         if (fp == NULL) {
@@ -98,25 +46,21 @@ static unsigned long nic_dropped() {
 
         memset(buffer, '\0', BUFFERSIZE);
         fgets(buffer, BUFFERSIZE, fp);
-        nic_dropped_pkt_current = (unsigned long) strtol(buffer, &ptr, 10);
+        nic_incr = (unsigned long) strtol(buffer, &ptr, 10);
         fclose(fp);
 
-        if ((diff = nic_dropped_pkt_current - nic_dropped_pkt_prev) > 0) {
-                nic_dropped_pkt_prev = nic_dropped_pkt_current;
+        if (nic_incr > 0) {
+                printf("Drop: nic_incr = %lu.\n", nic_incr);
         }
 
-        if (diff > 0) {
-                printf("Drop: nic dropped_pkt = %lu.\n", diff);
-        }
-
-        return diff;
+        return nic_incr;
 }
 
-static unsigned long dev_dropped() {
+static unsigned long dev_incr_dropped() {
         FILE *fp;
         char buffer[BUFFERSIZE];
-        unsigned long diff = 0;
         char *ptr;
+        unsigned long dev_incr;
 
         fp = fopen("/sys/kernel/debug/dev_drop_reader/dropped_packets", "r+"); 
         if (fp == NULL) {
@@ -127,34 +71,30 @@ static unsigned long dev_dropped() {
         
         memset(buffer, '\0', BUFFERSIZE);
         fgets(buffer, BUFFERSIZE, fp);
-        dev_dropped_pkt_current = (unsigned long) strtol(buffer, &ptr, 10);
+        dev_incr = (unsigned long) strtol(buffer, &ptr, 10);
         fclose(fp);
 
-        if ((diff = dev_dropped_pkt_current - dev_dropped_pkt_prev) > 0) {
-                dev_dropped_pkt_prev = dev_dropped_pkt_current;
+        if (dev_incr > 0) {
+                recv_stats.dev_drop_pkts += dev_incr;
+                printf("Drop: dev_incr = %lu.\n", dev_incr);
         }
 
-        if (diff > 0) {
-                recv_stats.dev_drop_pkts ++;
-                printf("Drop: dev dropped_pkt = %lu.\n", diff);
-        }
-
-        return diff;
+        return dev_incr;
 }
 
-static unsigned long queue_dropped() {
-        unsigned long diff = 0;
 
-        if ((diff = queue_dropped_pkt_current - queue_dropped_pkt_prev) > 0) {
-                queue_dropped_pkt_prev = queue_dropped_pkt_current;
-        }
-        
-        if (diff > 0) {
-                recv_stats.queue_drop_pkts ++;
-                printf("Drop: queue dropped_pkt = %lu.\n", diff);
+static unsigned long queue_incr_dropped() {
+        unsigned long queue_incr;
+
+        queue_dropped_pkt_prev = queue_dropped_pkt_current;
+        queue_incr = queue_dropped_pkt_current - queue_dropped_pkt_prev;
+
+        if (queue_incr > 0) {
+                recv_stats.queue_drop_pkts += queue_incr;
+                printf("Drop: queue_incr = %lu.\n", queue_incr);
         }
 
-        return diff;
+        return queue_incr;
 }
 
 /*int main () {
