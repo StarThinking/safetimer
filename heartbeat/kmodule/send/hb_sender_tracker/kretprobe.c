@@ -44,7 +44,7 @@ int block_send(void) {
         if (send_block_timeout < 0)
                 return 0;
         
-        printk("now is %ld, send_block_timeout is %ld\n", now_t, send_block_timeout);
+    //    printk("now is %ld, send_block_timeout is %ld\n", now_t, send_block_timeout);
         return now_t < send_block_timeout ? 0 : 1;
 }
 

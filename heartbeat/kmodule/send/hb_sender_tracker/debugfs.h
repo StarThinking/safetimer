@@ -9,11 +9,12 @@ extern long base_time;
 extern long timeout_interval; // unit of ms
 
 static inline long get_max_transfer_delay(void) { 
-        return timeout_interval * 0.1;
+        return 40;
 }
 
 static inline long get_max_clock_deviation(void) {
-        return timeout_interval * 0.1;
+        //return timeout_interval * 0.1;
+	return 10;
 }
 
 static inline long time_to_epoch(long time) {

@@ -18,13 +18,16 @@ MODULE_LICENSE("GPL");
 
 static struct nf_hook_ops nfho0;
 
-static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb, 
-        const struct net_device *in, const struct net_device *out, 
-        int (*okfn)(struct sk_buff *)) {
+//static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb, 
+//        const struct net_device *in, const struct net_device *out, 
+//        int (*okfn)(struct sk_buff *)) {
 
+static unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
         /* If sending is valid. */
         if (!block_send()) 
                 return NF_ACCEPT; 
+        //if (1)
+       
         else {
                 struct iphdr *iph;
                 struct tcphdr *th;

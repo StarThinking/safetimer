@@ -10,7 +10,7 @@
 #include <signal.h>
 #include <pthread.h>
 
-#include <jni.h>
+//#include <jni.h>
 
 #include "hb_common.h"
 #include "helper.h"
@@ -86,8 +86,10 @@ int init_sender() {
         printf("Reply message [base_time=%ld, timeout_interval=%ld] is received.\n",
                 base_time, timeout_interval);
 
+#ifdef CONFIG_SENDBLOCK
         /* Save parameters into debugfs so that hb_sender_tracker can read them. */
         debugfs_save(base_time, timeout_interval);
+#endif
 
         /* Start sending thread. */
         pthread_create(&tid, NULL, run_hb_loop, NULL);
@@ -105,9 +107,11 @@ void destroy_sender() {
         pthread_cancel(tid);
         pthread_join(tid, NULL);
         
+#ifdef CONFIG_SENDBLOCK
         clear_debugfs();
         printf("Debugfs cleared.\n");
-        
+#endif
+
         printf("Heartbeat sender has been destroyed.\n");
 }
 
@@ -123,7 +127,9 @@ static void *run_hb_loop(void *arg) {
         long current_epoch, sending_epoch;
         long diff_time;
         long timeout;
+#ifdef CONFIG_SENDBLOCK
         int first_hb = 1;
+#endif
         //int count_tmp = 0;
         
         pthread_cleanup_push(cleanup, NULL);
@@ -149,6 +155,7 @@ static void *run_hb_loop(void *arg) {
                  * So that this heartbeat sending should be completed before sending timeout, 
                  * which is time of epoch - transmision time - clock diff.
                  */
+#ifdef CONFIG_SENDBLOCK
                 if (first_hb) {
                         FILE *fp;
                         char *buf;
@@ -169,6 +176,7 @@ static void *run_hb_loop(void *arg) {
                         
                         printf("Update sent_epoch as %ld before sending the first heartbeat.\n", sent_epoch);
                 }
+#endif
 
                 count = sendto(hb_fd, &hb_msg, MSGSIZE*2, 0, (struct sockaddr *) &hb_server, 
                         sizeof(hb_server));
