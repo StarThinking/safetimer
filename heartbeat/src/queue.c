@@ -363,6 +363,7 @@ static void *expire_checker(void *arg) {
         return NULL;
 }
 
+#ifdef CONFIG_BARRIER
 static int barrier_flush(long epoch) {
         struct timespec wait_timeout;
         int s;
@@ -387,6 +388,7 @@ static int barrier_flush(long epoch) {
         printf("\tChecker: all barrier messages for epoch %ld are processed.\n", epoch);
         return 0;
 }
+#endif
 
 /*static int barrier_flush(long epoch) {
         send_barrier_message(epoch);
@@ -396,6 +398,7 @@ static int barrier_flush(long epoch) {
         return 0;
 }*/
 
+#ifdef CONFIG_DROP
 static int check_drop() {
         int ret = 0;
 
@@ -423,6 +426,7 @@ static int check_drop() {
         
         return ret;
 }
+#endif
 
 static void expiration_check_for_epoch(long epoch) {
         list_t **ip_list;

@@ -1,8 +1,8 @@
 #ifndef HB_COMMON
 #define HB_COMMON
 
-#define CONFIG_DROP
-#define CONFIG_BARRIER
+//#define CONFIG_DROP
+//#define CONFIG_BARRIER
 #define CONFIG_SENDBLOCK
 
 #define HB_SERVER_ADDR "10.10.1.1"

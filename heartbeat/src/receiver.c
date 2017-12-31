@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-#include <jni.h>
+//#include <jni.h>
 
 #include "hb_common.h"
 
