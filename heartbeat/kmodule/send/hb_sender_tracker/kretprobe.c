@@ -79,8 +79,10 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
 
 //        if(ri->ret_addr != (void *) 0xffffffffa004a0b5)
 //                return 0;
+	printk("here1\n");
         if (!prepared())
                 return 0;
+	printk("here2\n");
 
         if (regs != NULL) {
             skb = (struct sk_buff *) regs->di;
@@ -91,7 +93,9 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
                     uh = (struct udphdr *) skb_transport_header(skb);
                     if (uh != NULL) {
                         u16 dport = ntohs(uh->dest);
+			printk("dport = %u\n", dport);
                         if (dport == HB_SERVER_PORT) {
+			    printk("@!@!@!@\n");
                             unsigned char *data;
                             long flag, epoch;
                             long exceeding_time;
@@ -106,6 +110,7 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
                             if ((exceeding_time = is_send_hb_timeout()) <= 0) {
                                 epoch_inc = epoch - prev_sent_epoch;
                                 inc_sent_epoch(epoch_inc);
+				printk("inc_sent_epoch\n");
 //                                printk("heartbeat sending completes and set sent_epoch as %ld, int %ld, prev %ld\n", 
  //                                       epoch, epoch_inc, prev_sent_epoch);
                             } else {

@@ -49,6 +49,7 @@ DEFINE_SIMPLE_ATTRIBUTE(clear_fops, NULL, set_to_zero, "%llu\n");
 long get_sent_epoch(void) {
         long epoch_ret = atomic_long_read(&sent_epoch);
 
+	printk("get_sent_epoch = %ld\n", epoch_ret);
         return epoch_ret;
 }
 
@@ -77,7 +78,7 @@ static ssize_t sent_epoch_read(struct file *fp, char __user *user_buffer,
         return simple_read_from_buffer(user_buffer, count, position, sent_epoch_str, BUFFERSIZE);
 }
 
-extern long prev_sent_epoch;
+//extern long prev_sent_epoch;
 
 static ssize_t sent_epoch_write(struct file *fp, const char __user *user_buffer,
                                      size_t count, loff_t *position) {
@@ -92,7 +93,7 @@ static ssize_t sent_epoch_write(struct file *fp, const char __user *user_buffer,
        
         success = kstrtol(sent_epoch_str, 10, &epoch);
         inc_sent_epoch(epoch);
-        prev_sent_epoch = epoch;
+        //prev_sent_epoch = epoch;
         
         if(success != 0)
                 printk(KERN_INFO "sent_epoch_str conversion failed!\n");

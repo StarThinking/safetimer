@@ -129,6 +129,7 @@ static void *run_hb_loop(void *arg) {
         long timeout;
 #ifdef CONFIG_SENDBLOCK
         int first_hb = 1;
+        long prev_sent_epoch = 0;
 #endif
         //int count_tmp = 0;
         
@@ -160,6 +161,7 @@ static void *run_hb_loop(void *arg) {
                         FILE *fp;
                         char *buf;
                         long sent_epoch = sending_epoch -1;
+                        prev_sent_epoch = sent_epoch;
 
                         if ((fp = fopen("/sys/kernel/debug/hb_sender_tracker/sent_epoch", "r+")) == NULL) {
                                 perror("fopen sent_epoch");
@@ -184,7 +186,28 @@ static void *run_hb_loop(void *arg) {
                 if (count != MSGSIZE*2) {
                         perror("heartbeat sendto");
                         break;
+                } 
+
+#ifdef CONFIG_SENDBLOCK
+                else {
+                        FILE *fp;
+                        char *buf;
+                        long increment = sending_epoch - prev_sent_epoch;
+                        prev_sent_epoch = sending_epoch;
+
+                        if ((fp = fopen("/sys/kernel/debug/hb_sender_tracker/sent_epoch", "r+")) == NULL) {
+                                perror("fopen sent_epoch");
+                                fclose(fp);
+                                break;
+                        }
+                        buf = (char*) calloc(20, sizeof(char));
+                        sprintf(buf, "%ld", increment);
+                        fputs(buf, fp);
+                        free(buf);
+                        fclose(fp);
+                        printf("Increase sent_epoch by %ld.\n", increment);
                 }
+#endif
                 
                 printf("Heartbeat message [app_id=%ld, epoch=%ld] has been sent.\n", 
                             hb_msg[0], hb_msg[1]);
