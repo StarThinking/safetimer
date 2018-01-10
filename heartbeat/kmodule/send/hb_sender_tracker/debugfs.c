@@ -49,7 +49,7 @@ DEFINE_SIMPLE_ATTRIBUTE(clear_fops, NULL, set_to_zero, "%llu\n");
 long get_sent_epoch(void) {
         long epoch_ret = atomic_long_read(&sent_epoch);
 
-	printk("get_sent_epoch = %ld\n", epoch_ret);
+	//printk("get_sent_epoch = %ld\n", epoch_ret);
         return epoch_ret;
 }
 
