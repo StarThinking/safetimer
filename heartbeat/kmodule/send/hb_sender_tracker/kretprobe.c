@@ -130,7 +130,7 @@ static struct kretprobe my_kretprobe = {
 int kretprobe_init(void) {
 	int ret;
 
-	my_kretprobe.kp.symbol_name = "consume_skb";
+	my_kretprobe.kp.symbol_name = "napi_consume_skb";
 	ret = register_kretprobe(&my_kretprobe);
 	if (ret < 0) {
 		printk(KERN_INFO "register_kretprobe failed, returned %d\n", ret);
