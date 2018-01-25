@@ -77,6 +77,8 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
         unsigned short iphdr_size;
         unsigned short udphdr_size = 8;
 
+	if (enable == 0)
+		return 0;
 //        if(ri->ret_addr != (void *) 0xffffffffa004a0b5)
 //                return 0;
         if (!prepared())

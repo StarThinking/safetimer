@@ -10,7 +10,7 @@ MODULE_LICENSE("GPL");
 static int __init tracker_init(void) {
         printk("tracker_init\n");
         debugfs_init();
-//        kretprobe_init();
+        kretprobe_init();
         netfilter_init();
         return 0;
 }

@@ -7,6 +7,7 @@
 
 extern long base_time;
 extern long timeout_interval; // unit of ms
+extern long enable;
 
 static inline long get_max_transfer_delay(void) { 
         return 40;

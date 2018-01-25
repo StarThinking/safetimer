@@ -18,7 +18,7 @@ long timeout_interval = 0;
 //static long __rcu *sent_epoch;
 static atomic_long_t sent_epoch;
 
-static int is_intercept_enabled = 0;
+long enable = 0;
 static DEFINE_SPINLOCK(is_intercept_enabled_lock);
 //static DEFINE_SPINLOCK(sent_epoch_lock);
 
@@ -26,12 +26,13 @@ static struct dentry *dir_entry;
 static struct dentry *sent_epoch_entry;
 static struct dentry *base_time_entry;
 static struct dentry *timeout_interval_entry;
+static struct dentry *enable_entry;
 static struct dentry *clear;
-static struct dentry *enable;
 
 static char sent_epoch_str[BUFFERSIZE];
 static char base_time_str[BUFFERSIZE];
 static char timeout_interval_str[BUFFERSIZE];
+static char enable_str[BUFFERSIZE];
 
 static int set_to_zero(void *data, u64 value) {
         long epoch_to_sub = atomic_long_read(&sent_epoch);
@@ -48,27 +49,16 @@ static int set_to_zero(void *data, u64 value) {
         return 0;
 }
 
-static int enable_intercept(void *data, u64 value) {
-	spin_lock(&is_intercept_enabled_lock);
-	if (is_intercept_enabled == 0) {
-		is_intercept_enabled = 1;
-		kretprobe_init();
-	}
-	spin_unlock(&is_intercept_enabled_lock);
-	return 0;
-}
-
 void disable_intercept(void) {
-	spin_lock(&is_intercept_enabled_lock);
-	if (is_intercept_enabled == 1) {
-		is_intercept_enabled = 0;
-		kretprobe_exit();
+	spin_lock_bh(&is_intercept_enabled_lock);
+	if (enable == 1) {
+		enable = 0;
+		//kretprobe_exit();
 	}
-	spin_unlock(&is_intercept_enabled_lock);
+	spin_unlock_bh(&is_intercept_enabled_lock);
 }
 
 DEFINE_SIMPLE_ATTRIBUTE(clear_fops, NULL, set_to_zero, "%llu\n");
-DEFINE_SIMPLE_ATTRIBUTE(enable_fops, NULL, enable_intercept, "%llu\n");
 
 long get_sent_epoch(void) {
         long epoch_ret = atomic_long_read(&sent_epoch);
@@ -164,6 +154,38 @@ static ssize_t timeout_interval_write(struct file *fp, const char __user *user_b
         return ret;
 }
 
+static ssize_t enable_read(struct file *fp, char __user *user_buffer,
+                                    size_t count, loff_t *position) {
+        //printk(KERN_INFO "timeout_interval = %ld\n", timeout_interval);i
+	ssize_t ret;
+	spin_lock_bh(&is_intercept_enabled_lock);
+        ret = simple_read_from_buffer(user_buffer, count, position, enable_str, BUFFERSIZE);
+	spin_unlock_bh(&is_intercept_enabled_lock);
+	return ret;
+}
+
+static ssize_t enable_write(struct file *fp, const char __user *user_buffer,
+                                     size_t count, loff_t *position) {
+        ssize_t ret;
+
+        if(count > BUFFERSIZE)
+                return -EINVAL;
+
+        ret =  simple_write_to_buffer(enable_str, BUFFERSIZE, position, user_buffer, count);
+	
+	spin_lock_bh(&is_intercept_enabled_lock);
+        if(kstrtol(enable_str, 10, &enable) != 0)
+                printk(KERN_INFO "enable_str conversion failed!\n");
+	spin_unlock_bh(&is_intercept_enabled_lock);
+
+        return ret;
+}
+
+static const struct file_operations enable_fops = {
+        .read = enable_read,
+        .write = enable_write
+};
+
 static const struct file_operations sent_epoch_fops = {
         .read = sent_epoch_read,
         .write = sent_epoch_write
@@ -189,8 +211,8 @@ void debugfs_init(void) {
         sent_epoch_entry = debugfs_create_file("sent_epoch", 0644, dir_entry, NULL, &sent_epoch_fops);
         base_time_entry = debugfs_create_file("base_time", 0644, dir_entry, NULL, &base_time_fops);
         timeout_interval_entry = debugfs_create_file("timeout_interval", 0644, dir_entry, NULL, &timeout_interval_fops);
+        enable_entry = debugfs_create_file("enable", 0644, dir_entry, NULL, &enable_fops);
         clear = debugfs_create_file("clear", 0222, dir_entry, NULL, &clear_fops);
-        enable = debugfs_create_file("enable", 0222, dir_entry, NULL, &enable_fops);
 
 	printk(KERN_INFO "debugfs inited\n");
 }

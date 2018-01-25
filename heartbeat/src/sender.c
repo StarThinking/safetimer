@@ -248,13 +248,31 @@ static void clear_debugfs() {
 
 static void enable_intercept() {
         FILE *fp;
+        char *buf;
+	char *ptr;
+        long enable = 1;
+        long enable_read;
+        struct timespec ts = time_to_timespec(50); // 50ms
         
         if ((fp = fopen("/sys/kernel/debug/hb_sender_tracker/enable", "r+")) == NULL) {
                 perror("fopen clear");
 		printf("enable intercept failed!\n");
 		return;
         }
-	printf("intercept enabled\n");
-        fputs("1", fp);
+        buf = (char*) calloc(20, sizeof(char));
+        sprintf(buf, "%ld", enable);
+        fputs(buf, fp);
+
+	while (1) {
+		memset(buf, '\0', 20);
+		fgets(buf, 20, fp);
+		enable_read = (long) strtol(buf, &ptr, 10);
+		if (enable_read == 1) {
+			printf("intercept has been enabled succesfully\n");
+			break;
+		} 
+                nanosleep(&ts, NULL);		
+	}
+	free(buf);
         fclose(fp);
 }
