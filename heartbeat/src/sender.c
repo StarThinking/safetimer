@@ -29,6 +29,7 @@ static pthread_t tid;
 static void *run_hb_loop(void *arg);
 static void debugfs_save(long base_time, long timeout_interval);    
 static void clear_debugfs();
+static void enable_intercept();
 
 int init_sender() {
 
@@ -177,7 +178,7 @@ static void *run_hb_loop(void *arg) {
                         printf("Update sent_epoch as %ld before sending the first heartbeat.\n", sent_epoch);
                 }
 #endif
-
+		enable_intercept();
                 count = sendto(hb_fd, &hb_msg, MSGSIZE*2, 0, (struct sockaddr *) &hb_server, 
                         sizeof(hb_server));
 
@@ -241,6 +242,19 @@ static void clear_debugfs() {
                 perror("fopen clear");
         }
         
+        fputs("1", fp);
+        fclose(fp);
+}
+
+static void enable_intercept() {
+        FILE *fp;
+        
+        if ((fp = fopen("/sys/kernel/debug/hb_sender_tracker/enable", "r+")) == NULL) {
+                perror("fopen clear");
+		printf("enable intercept failed!\n");
+		return;
+        }
+	printf("intercept enabled\n");
         fputs("1", fp);
         fclose(fp);
 }
