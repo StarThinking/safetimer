@@ -12,6 +12,7 @@
 #include <linux/skbuff.h>
 
 #include "kretprobe.h"
+#include "debugfs.h"
 #include "../../../include/hb_common.h"
 
 MODULE_LICENSE("GPL");

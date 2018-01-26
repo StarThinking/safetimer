@@ -124,7 +124,7 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
         return 0;
 }
 
-static struct kretprobe my_kretprobe = {
+struct kretprobe my_kretprobe = {
 	.entry_handler		= entry_handler,
 	// Probe up to 20 instances concurrently. 
 	.maxactive		= 20,
@@ -141,7 +141,7 @@ int kretprobe_init(void) {
 	}
 	printk(KERN_INFO "Planted return probe at %s: %p\n",
 			my_kretprobe.kp.symbol_name, my_kretprobe.kp.addr);
-      
+//	disable_kretprobe(&my_kretprobe);      
         return 0;
 }
 

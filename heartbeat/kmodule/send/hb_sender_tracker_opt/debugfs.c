@@ -6,6 +6,7 @@
 #include <linux/semaphore.h>
 #include <linux/spinlock.h>
 #include <linux/slab.h>
+#include <linux/kprobes.h>
 
 #include "debugfs.h"
 #include "kretprobe.h"
@@ -17,9 +18,10 @@ long timeout_interval = 0;
 //static long sent_epoch = 0;
 //static long __rcu *sent_epoch;
 static atomic_long_t sent_epoch;
+//static atomic64_t enable;
 
 long enable = 0;
-static DEFINE_SPINLOCK(is_intercept_enabled_lock);
+static DEFINE_SPINLOCK(enable_lock);
 //static DEFINE_SPINLOCK(sent_epoch_lock);
 
 static struct dentry *dir_entry;
@@ -50,12 +52,11 @@ static int set_to_zero(void *data, u64 value) {
 }
 
 void disable_intercept(void) {
-	spin_lock_bh(&is_intercept_enabled_lock);
-	if (enable == 1) {
-		enable = 0;
-		//kretprobe_exit();
-	}
-	spin_unlock_bh(&is_intercept_enabled_lock);
+	spin_lock_bh(&enable_lock);
+	enable = 0;
+	snprintf(enable_str, BUFFERSIZE, "%ld", enable);
+	spin_unlock_bh(&enable_lock);
+	return;
 }
 
 DEFINE_SIMPLE_ATTRIBUTE(clear_fops, NULL, set_to_zero, "%llu\n");
@@ -125,8 +126,7 @@ static ssize_t base_time_write(struct file *fp, const char __user *user_buffer,
         ssize_t ret;
 
         if(count > BUFFERSIZE)
-                return -EINVAL;
-
+                return -EINVAL;	
         ret =  simple_write_to_buffer(base_time_str, BUFFERSIZE, position, user_buffer, count);
         if(kstrtol(base_time_str, 10, &base_time) != 0)
                 printk(KERN_INFO "base_time_str conversion failed!\n");
@@ -158,25 +158,34 @@ static ssize_t enable_read(struct file *fp, char __user *user_buffer,
                                     size_t count, loff_t *position) {
         //printk(KERN_INFO "timeout_interval = %ld\n", timeout_interval);i
 	ssize_t ret;
-	spin_lock_bh(&is_intercept_enabled_lock);
-        ret = simple_read_from_buffer(user_buffer, count, position, enable_str, BUFFERSIZE);
-	spin_unlock_bh(&is_intercept_enabled_lock);
+
+//	memset(enable_str, '\0', BUFFERSIZE);
+	//spin_lock_bh(&enable_lock);
+	//snprintf(enable_str, BUFFERSIZE, "%ld", enable);
+        //spin_unlock_bh(&enable_lock);
+        
+	ret = simple_read_from_buffer(user_buffer, count, position, enable_str, BUFFERSIZE);
+	
 	return ret;
 }
 
 static ssize_t enable_write(struct file *fp, const char __user *user_buffer,
                                      size_t count, loff_t *position) {
         ssize_t ret;
+	long no_meaning;
 
         if(count > BUFFERSIZE)
                 return -EINVAL;
 
-        ret =  simple_write_to_buffer(enable_str, BUFFERSIZE, position, user_buffer, count);
-	
-	spin_lock_bh(&is_intercept_enabled_lock);
-        if(kstrtol(enable_str, 10, &enable) != 0)
+	spin_lock_bh(&enable_lock);
+	enable = 1;
+	spin_unlock_bh(&enable_lock);
+        
+	ret =  simple_write_to_buffer(enable_str, BUFFERSIZE, position, user_buffer, count);
+        if(kstrtol(enable_str, 10, &no_meaning) != 0)
                 printk(KERN_INFO "enable_str conversion failed!\n");
-	spin_unlock_bh(&is_intercept_enabled_lock);
+	
+	//printk("enable_write: enable = %ld, enable_str = %s\n", enable, enable_str);	
 
         return ret;
 }

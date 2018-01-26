@@ -30,6 +30,8 @@ static void *run_hb_loop(void *arg);
 static void debugfs_save(long base_time, long timeout_interval);    
 static void clear_debugfs();
 static void enable_intercept();
+//static void disable_intercept();
+static int not_optimized = 0;
 
 int init_sender() {
 
@@ -178,16 +180,21 @@ static void *run_hb_loop(void *arg) {
                         printf("Update sent_epoch as %ld before sending the first heartbeat.\n", sent_epoch);
                 }
 #endif
-		enable_intercept();
-                count = sendto(hb_fd, &hb_msg, MSGSIZE*2, 0, (struct sockaddr *) &hb_server, 
+		if (not_optimized != 1)
+			enable_intercept();
+                
+		count = sendto(hb_fd, &hb_msg, MSGSIZE*2, 0, (struct sockaddr *) &hb_server, 
                         sizeof(hb_server));
 
                 if (count != MSGSIZE*2) {
                         perror("heartbeat sendto");
                         break;
                 }
+
+              //  if (not_optimized != 1)
+	      //		disable_intercept();
                 
-                printf("Heartbeat message [app_id=%ld, epoch=%ld] has been sent.\n", 
+		printf("Heartbeat message [app_id=%ld, epoch=%ld] has been sent.\n", 
                             hb_msg[0], hb_msg[1]);
 
                 /* Adding delay to test kernel module. */
@@ -246,6 +253,27 @@ static void clear_debugfs() {
         fclose(fp);
 }
 
+/*static void enable_intercept() {
+        FILE *fp;
+        char buf[20];
+	char *ptr;
+	long enable_read;
+        
+        if ((fp = fopen("/sys/kernel/debug/hb_sender_tracker/enable", "r+")) == NULL) {
+                perror("fopen enable_intercept");
+		printf("enable intercept failed!\n");
+		not_optimized = 1;
+		return;
+        }
+	
+	memset(buf, '\0', 20);
+	fgets(buf, 20, fp);
+        fclose(fp);
+	while (1) {
+		enable_read = (long) strtol(buf, &ptr, 10);
+	}
+}
+*/
 static void enable_intercept() {
         FILE *fp;
         char *buf;
@@ -253,26 +281,37 @@ static void enable_intercept() {
         long enable = 1;
         long enable_read;
         struct timespec ts = time_to_timespec(50); // 50ms
-        
-        if ((fp = fopen("/sys/kernel/debug/hb_sender_tracker/enable", "r+")) == NULL) {
-                perror("fopen clear");
-		printf("enable intercept failed!\n");
-		return;
+         
+	buf = (char*) calloc(20, sizeof(char));
+	if ((fp = fopen("/sys/kernel/debug/hb_sender_tracker/enable", "r+")) == NULL) {
+                perror("fopen enable_intercept");
+                printf("enable intercept failed!\n");
+                not_optimized = 1;
+                return;
         }
         buf = (char*) calloc(20, sizeof(char));
         sprintf(buf, "%ld", enable);
         fputs(buf, fp);
-
+        fclose(fp);
+	
 	while (1) {
+        	if ((fp = fopen("/sys/kernel/debug/hb_sender_tracker/enable", "r+")) == NULL) {
+                	perror("fopen enable_intercept");
+			printf("enable intercept failed!\n");
+			return;
+       	 	}
 		memset(buf, '\0', 20);
 		fgets(buf, 20, fp);
+//		printf("buf = %s\n", buf);
 		enable_read = (long) strtol(buf, &ptr, 10);
+//		printf("enable_read = %ld\n", enable_read);
+		fclose(fp); 
 		if (enable_read == 1) {
-			printf("intercept has been enabled succesfully\n");
+			printf("enable_read == 1. enabled\n");
 			break;
-		} 
-                nanosleep(&ts, NULL);		
-	}
+		}
+                nanosleep(&ts, NULL);	
+	}	
+	
 	free(buf);
-        fclose(fp);
 }

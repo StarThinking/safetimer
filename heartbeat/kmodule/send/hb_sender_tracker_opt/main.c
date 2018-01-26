@@ -18,6 +18,7 @@ static int __init tracker_init(void) {
 static void __exit tracker_exit(void) {
         netfilter_exit();
         kretprobe_exit();
+//	disable_intercept();
         debugfs_exit();
 }
 
