@@ -7,7 +7,6 @@
 
 extern long base_time;
 extern long timeout_interval; // unit of ms
-extern long enable;
 
 static inline long get_max_transfer_delay(void) { 
         return 40;
@@ -34,11 +33,9 @@ static inline int prepared(void) {
         return (base_time > 0 && timeout_interval > 0) ? 1 : 0;
 }
 
-void disable_intercept(void);
+//long get_sent_epoch(void);
 
-long get_sent_epoch(void);
-
-void inc_sent_epoch(long epoch);
+//void inc_sent_epoch(long epoch);
 
 void debugfs_init(void);
 

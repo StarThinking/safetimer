@@ -12,31 +12,79 @@
 
 //MODULE_LICENSE("GPL");
 
-long now(void) {
+//static long local_sent_epoch[64];
+DEFINE_PER_CPU(long, local_sent_epoch);
+static atomic_long_t global_sent_epoch;
+//static long global_sent_epoch;
+//static DEFINE_SPINLOCK(global_sent_epoch_lock);
+
+static inline long get_local_sent_epoch(void);
+static inline void update_local_sent_epoch(void);
+static inline void set_global_sent_epoch(long epoch);
+static inline long now(void);
+
+//long prev_sent_epoch;
+atomic_long_t enable;
+//DEFINE_SPINLOCK(enable_lock);
+
+extern long base_time;
+extern long timeout_interval;
+
+void public_set_global_sent_epoch(long epoch) {
+	set_global_sent_epoch(epoch);
+}
+
+void reset_sent_epoch(void) {
+	//for (i=0; i<64; i++)
+	this_cpu_write(local_sent_epoch, 0);
+        atomic_long_set(&global_sent_epoch, 0);
+}
+
+static inline long get_local_sent_epoch(void) {
+        return this_cpu_read(local_sent_epoch);
+}
+
+static inline void update_local_sent_epoch(void) {
+	long latest_epoch = atomic_long_read(&global_sent_epoch);
+	this_cpu_write(local_sent_epoch, latest_epoch);
+}
+
+static inline void set_global_sent_epoch(long epoch) {
+	atomic_long_set(&global_sent_epoch, epoch);  
+}
+
+static inline long now(void) {
         //return ktime_to_ms(ktime_get());
         return ktime_to_ms(ktime_get_real());
 }
 
 /* If sent_epoch = 0, return -1 to indicate not prepared. */
-long get_send_hb_timeout(void) {
+static inline long get_send_hb_timeout(int flag) {
         long sent_epoch, recv_timeout;
         
-        /* get_sent_epoch() involves spinlock contention. */
-        if ((sent_epoch = get_sent_epoch()) == 0)
-                return -1;
-        
+	if (flag == 0) {
+        	/* get_local_sent_epoch() NOT involves spinlock contention. */
+       		if ((sent_epoch = get_local_sent_epoch()) == 0)
+                	return -1;
+        } else if (flag == 1) {
+		/* update_local_sent_epoch() involves spinlock contention. */
+		update_local_sent_epoch();
+                if ((sent_epoch = get_local_sent_epoch()) == 0)
+                        return -1;
+	}
+
         recv_timeout = epoch_to_time(sent_epoch + 1);
         
         return recv_timeout - get_max_transfer_delay() - get_max_clock_deviation();
 }
 
-long get_send_block_timeout(void) {
-        return get_send_hb_timeout() + get_max_transfer_delay();
+long get_send_block_timeout(int flag) {
+        return get_send_hb_timeout(flag) + get_max_transfer_delay();
 }
 
-int block_send(void) {
+int block_send(int flag) {
         long now_t = now();
-        long send_block_timeout = get_send_block_timeout();
+        long send_block_timeout = get_send_block_timeout(flag);
 
         if (!prepared())
                 return 0;
@@ -48,14 +96,14 @@ int block_send(void) {
         return now_t < send_block_timeout ? 0 : 1;
 }
 
-long is_send_hb_timeout(void) {
+static inline long is_send_hb_timeout(int flag) {
         long send_timeout = 0;
         long now_t = 0;
         
-        if (!prepared())
-                return 0;
+        //if (!prepared())
+        //        return 0;
 
-        send_timeout = get_send_hb_timeout();
+        send_timeout = get_send_hb_timeout(flag);
 
         /* Not prepared. */
         if (send_timeout < 0)
@@ -66,68 +114,78 @@ long is_send_hb_timeout(void) {
         return now_t - send_timeout;
 }
 
-extern long prev_sent_epoch;
-long prev_sent_epoch;
+//static long count_enable;
+//static long count_disable;
 
 static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
-        struct sk_buff *skb = NULL;
-        struct iphdr *iph = NULL;
-        struct udphdr *uh = NULL;
-        unsigned short offset;
-        unsigned short iphdr_size;
-        unsigned short udphdr_size = 8;
 
-	if (enable == 0)
+	if (atomic_long_read(&enable) == 0 || base_time <= 0 || timeout_interval <= 0) {
+//		count_disable ++;
 		return 0;
-//        if(ri->ret_addr != (void *) 0xffffffffa004a0b5)
-//                return 0;
-        if (!prepared())
-                return 0;
+	}
+	else {
+            	struct sk_buff *skb = NULL;
+            	struct iphdr *iph = NULL;
+            	struct udphdr *uh = NULL;
+		u16 dport;
 
-        if (regs != NULL) {
-            skb = (struct sk_buff *) regs->di;
-            if (skb != NULL) {
-                iph = ip_hdr(skb);
-                if (iph != NULL && iph->protocol == IPPROTO_UDP) {
-                    // change from udp_hdr() to skb_transport_header()
-                    uh = (struct udphdr *) skb_transport_header(skb);
-                    if (uh != NULL) {
-                        u16 dport = ntohs(uh->dest);
-                        if (dport == HB_SERVER_PORT) {
-                            unsigned char *data;
-                            long flag, epoch;
-                            long exceeding_time;
-                            long epoch_inc;
+//		count_enable ++;
+        	
+		if (regs == NULL) 
+			return 0;
+	
+            	if ((skb = (struct sk_buff *) regs->di) == NULL)
+			return 0;
+                
+		if ((iph = ip_hdr(skb)) == NULL)
+			return 0;
+
+                if (iph->protocol != IPPROTO_UDP) 
+			return 0;
+                
+		uh = (struct udphdr *) skb_transport_header(skb);
+                dport = ntohs(uh->dest);
+                if (dport == HB_SERVER_PORT) {
+            		unsigned short offset;
+            		unsigned short iphdr_size;
+            		unsigned short udphdr_size = 8;
+	    		int global_flag;
+          		unsigned char *data;
+                        long epoch;
+                        long exceeding_time;
                             
-                            data = (unsigned char *) iph;
-                            iphdr_size = iph->ihl << 2;
-                            offset = iphdr_size + udphdr_size;
-                            flag = *((long *) (data + offset));
-                            epoch = *((long *) (data + offset + MSGSIZE));
+                        data = (unsigned char *) iph;
+                        iphdr_size = iph->ihl << 2;
+                        offset = iphdr_size + udphdr_size;
+                        epoch = *((long *) (data + offset + MSGSIZE));
+			global_flag = 0;
 
-                            if ((exceeding_time = is_send_hb_timeout()) <= 0) {
-                                epoch_inc = epoch - prev_sent_epoch;
-                                inc_sent_epoch(epoch_inc);
-				disable_intercept();
+			if ((exceeding_time = is_send_hb_timeout(global_flag)) > 0) {
+				global_flag = 1;
+				exceeding_time = is_send_hb_timeout(global_flag);
+			}
+
+                        if (exceeding_time <= 0) {
+                                //epoch_inc = epoch - prev_sent_epoch;
+                                //inc_global_sent_epoch(epoch_inc);
+				atomic_long_set(&enable, 0);
+				atomic_long_set(&global_sent_epoch, epoch);
+				//spin_lock_bh(&enable_lock);
+				//enable = 0;
+				//spin_unlock_bh(&enable_lock);
 //                                printk("heartbeat sending completes and set sent_epoch as %ld, int %ld, prev %ld\n", 
  //                                       epoch, epoch_inc, prev_sent_epoch);
-                            } else {
-                                printk("The completion of heartbeat sending for epoch %ld exceeds sending_timeouts (%ld) by %ld!\n", 
-                                        epoch ,get_send_hb_timeout(), exceeding_time);
-                            } 
-                        }
-                    }
+                        } 
+                       
                 }
-            }
-        }
-        
+	}
         return 0;
 }
 
 struct kretprobe my_kretprobe = {
 	.entry_handler		= entry_handler,
 	// Probe up to 20 instances concurrently. 
-	.maxactive		= 20,
+	.maxactive		= 50,
 };
 
 int kretprobe_init(void) {
@@ -146,6 +204,7 @@ int kretprobe_init(void) {
 }
 
 void kretprobe_exit(void) {
+//	printk("count_enable = %ld, count_disable = %ld", count_enable, count_disable);
         unregister_kretprobe(&my_kretprobe);
 	printk(KERN_INFO "kretprobe at %p unregistered\n",
 			my_kretprobe.kp.addr);

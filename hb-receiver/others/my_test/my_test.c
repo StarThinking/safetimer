@@ -7,7 +7,7 @@
 #include <linux/skbuff.h>
 #include <net/ip.h>
 
-static char func_name[NAME_MAX] = "napi_consume_skb";
+static char func_name[NAME_MAX] = "_kfree_skb_defer";
 module_param_string(func, func_name, NAME_MAX, S_IRUGO);
 MODULE_PARM_DESC(func, "Function to kretprobe; this module will report the"
                     " function's execution time");
@@ -16,9 +16,10 @@ MODULE_PARM_DESC(func, "Function to kretprobe; this module will report the"
 static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs)
 {
     struct sk_buff *skb = NULL;
-    struct iphdr *iph = NULL;
-    printk("entry_handler\n");
-
+    struct iphdr *iph = NULL;	
+    unsigned int cpu = smp_processor_id();
+    printk("entry_handler, cpu id = %u\n", cpu);
+	
     if (regs != NULL) {
         skb = (struct sk_buff *) regs->di;
         if (skb != NULL) {

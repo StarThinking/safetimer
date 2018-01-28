@@ -24,17 +24,25 @@ static struct nf_hook_ops nfho0;
 //        int (*okfn)(struct sk_buff *)) {
 
 static unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
+        struct iphdr *iph;
+        struct tcphdr *th;
+        struct udphdr *uh;
+        unsigned int saddr, daddr;
+        unsigned int sport = 0, dport = 0;
+	
+	int global_flag;
+	
         /* If sending is valid. */
-        if (!block_send()) 
-                return NF_ACCEPT; 
-        //if (1)
+        global_flag = 0;
+	if (!block_send(global_flag)) 
+                return NF_ACCEPT;
+	else {
+		global_flag = 1;
+		if (!block_send(global_flag))
+			return NF_ACCEPT;
+	} 
        
-        else {
-                struct iphdr *iph;
-                struct tcphdr *th;
-                struct udphdr *uh;
-                unsigned int saddr, daddr;
-                unsigned int sport = 0, dport = 0;
+        //else {
 
                 iph = (struct iphdr *) skb_network_header(skb);
                 saddr = (unsigned int) iph->saddr;
@@ -64,7 +72,7 @@ static unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_h
                         printk(KERN_DEBUG "[msx] UDP send to dport 5001 is disabled!\n");       
                         return NF_DROP;
                 } 
-        }
+        //}
         return NF_ACCEPT; 
 }
 

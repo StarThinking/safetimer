@@ -1,5 +1,4 @@
-#include <linux/kernel.h>
-#include <linux/module.h>
+
 #include <linux/debugfs.h>
 #include <linux/fs.h>
 #include <linux/spinlock_types.h>
@@ -11,18 +10,14 @@
 #include "debugfs.h"
 #include "kretprobe.h"
 
-MODULE_LICENSE("GPL");
+//MODULE_LICENSE("GPL");
 
 long base_time = 0;
 long timeout_interval = 0;
-//static long sent_epoch = 0;
-//static long __rcu *sent_epoch;
-static atomic_long_t sent_epoch;
-//static atomic64_t enable;
 
-long enable = 0;
-static DEFINE_SPINLOCK(enable_lock);
-//static DEFINE_SPINLOCK(sent_epoch_lock);
+extern atomic_long_t enable;
+extern void reset_sent_epoch(void);
+void public_set_global_sent_epoch(long epoch);
 
 static struct dentry *dir_entry;
 static struct dentry *sent_epoch_entry;
@@ -37,62 +32,25 @@ static char timeout_interval_str[BUFFERSIZE];
 static char enable_str[BUFFERSIZE];
 
 static int set_to_zero(void *data, u64 value) {
-        long epoch_to_sub = atomic_long_read(&sent_epoch);
-//        unsigned long nr = 0;
-        memset(sent_epoch_str, 0, BUFFERSIZE);   
+	reset_sent_epoch();
+	
+	memset(sent_epoch_str, 0, BUFFERSIZE);   
         memset(base_time_str, 0, BUFFERSIZE);   
         memset(timeout_interval_str, 0, BUFFERSIZE);   
 
         timeout_interval = 0;
         base_time = 0;
-
-        atomic_long_sub(epoch_to_sub, &sent_epoch);
-
         return 0;
 }
 
-void disable_intercept(void) {
-	spin_lock_bh(&enable_lock);
-	enable = 0;
-	snprintf(enable_str, BUFFERSIZE, "%ld", enable);
-	spin_unlock_bh(&enable_lock);
-	return;
-}
-
 DEFINE_SIMPLE_ATTRIBUTE(clear_fops, NULL, set_to_zero, "%llu\n");
-
-long get_sent_epoch(void) {
-        long epoch_ret = atomic_long_read(&sent_epoch);
-
-        return epoch_ret;
-}
-
-void inc_sent_epoch(long inc) {
-         atomic_long_add(inc, &sent_epoch);    
-}
-
-//void set_sent_epoch(long epoch) {
-        /*long *new_sent_epoch;
-        long *old_sent_epoch;
-
-        new_sent_epoch = kmalloc(sizeof(long), GFP_KERNEL);
-        spin_lock_bh(&sent_epoch_lock);
-        old_sent_epoch = rcu_dereference_protected(sent_epoch, lockdep_is_held(&sent_epoch_lock));
-        *new_sent_epoch = epoch;
-        rcu_assign_pointer(sent_epoch, new_sent_epoch);
-        synchronize_rcu_bh();
-        kfree(old_sent_epoch);
-        spin_unlock_bh(&sent_epoch_lock);
-        */
-        //return;
-//}
 
 static ssize_t sent_epoch_read(struct file *fp, char __user *user_buffer,
                                 size_t count, loff_t *position) {
         return simple_read_from_buffer(user_buffer, count, position, sent_epoch_str, BUFFERSIZE);
 }
 
-extern long prev_sent_epoch;
+extern void public_inc_global_sent_epoch(long inc);
 
 static ssize_t sent_epoch_write(struct file *fp, const char __user *user_buffer,
                                      size_t count, loff_t *position) {
@@ -106,8 +64,7 @@ static ssize_t sent_epoch_write(struct file *fp, const char __user *user_buffer,
         ret =  simple_write_to_buffer(sent_epoch_str, BUFFERSIZE, position, user_buffer, count);
        
         success = kstrtol(sent_epoch_str, 10, &epoch);
-        inc_sent_epoch(epoch);
-        prev_sent_epoch = epoch;
+        public_set_global_sent_epoch(epoch);
         
         if(success != 0)
                 printk(KERN_INFO "sent_epoch_str conversion failed!\n");
@@ -159,10 +116,7 @@ static ssize_t enable_read(struct file *fp, char __user *user_buffer,
         //printk(KERN_INFO "timeout_interval = %ld\n", timeout_interval);i
 	ssize_t ret;
 
-//	memset(enable_str, '\0', BUFFERSIZE);
-	//spin_lock_bh(&enable_lock);
-	//snprintf(enable_str, BUFFERSIZE, "%ld", enable);
-        //spin_unlock_bh(&enable_lock);
+	snprintf(enable_str, BUFFERSIZE, "%ld", atomic_long_read(&enable));
         
 	ret = simple_read_from_buffer(user_buffer, count, position, enable_str, BUFFERSIZE);
 	
@@ -177,9 +131,7 @@ static ssize_t enable_write(struct file *fp, const char __user *user_buffer,
         if(count > BUFFERSIZE)
                 return -EINVAL;
 
-	spin_lock_bh(&enable_lock);
-	enable = 1;
-	spin_unlock_bh(&enable_lock);
+	atomic_long_set(&enable, 1);
         
 	ret =  simple_write_to_buffer(enable_str, BUFFERSIZE, position, user_buffer, count);
         if(kstrtol(enable_str, 10, &no_meaning) != 0)
@@ -213,9 +165,6 @@ static const struct file_operations base_time_fops = {
 void debugfs_init(void) {
 	printk(KERN_INFO "debugfs init\n");
 
-        //sent_epoch = kmalloc(sizeof(long), GFP_KERNEL);
-        //*sent_epoch = 0;
-        
         dir_entry = debugfs_create_dir("hb_sender_tracker", NULL);
         sent_epoch_entry = debugfs_create_file("sent_epoch", 0644, dir_entry, NULL, &sent_epoch_fops);
         base_time_entry = debugfs_create_file("base_time", 0644, dir_entry, NULL, &base_time_fops);
