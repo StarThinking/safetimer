@@ -29,13 +29,17 @@
 #include <net/ip.h>
 
 //static char func_name[NAME_MAX] = "foobar2";
-static char func_name[NAME_MAX] = "napi_consume_skb";
+//static char func_name[NAME_MAX] = "napi_consume_skb";
+static char func_name[NAME_MAX] = "dev_hard_start_xmit";
 module_param_string(func, func_name, NAME_MAX, S_IRUGO);
 MODULE_PARM_DESC(func, "Function to kretprobe; this module will report the"
 			" function's execution time");
+
+atomic_long_t enable;
 static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
 //	printk("entry_handler\n");
-	struct sk_buff *skb = NULL;
+//	if (atomic_long_read(&enable) != 0) {
+/*	struct sk_buff *skb = NULL;
 	struct iphdr *iph = NULL;
         struct udphdr *uh = NULL;
         u16 dport;
@@ -57,7 +61,7 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
 	
 	//if (dport == 5001) {
 	//}
-	
+//	}*/
 	return 0;
 }
 

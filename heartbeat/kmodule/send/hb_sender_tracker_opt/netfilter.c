@@ -11,7 +11,7 @@
 #include <linux/ktime.h>
 #include <linux/skbuff.h>
 
-#include "kretprobe.h"
+#include "kprobe.h"
 #include "debugfs.h"
 #include "../../../include/hb_common.h"
 
@@ -24,25 +24,21 @@ static struct nf_hook_ops nfho0;
 //        int (*okfn)(struct sk_buff *)) {
 
 static unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
-        struct iphdr *iph;
-        struct tcphdr *th;
-        struct udphdr *uh;
-        unsigned int saddr, daddr;
-        unsigned int sport = 0, dport = 0;
-	
 	int global_flag;
-	
         /* If sending is valid. */
         global_flag = 0;
-	if (!block_send(global_flag)) 
+	if (likely(!block_send(global_flag))) 
                 return NF_ACCEPT;
-	else {
-		global_flag = 1;
-		if (!block_send(global_flag))
-			return NF_ACCEPT;
-	} 
-       
-        //else {
+	
+	global_flag = 1;
+	if (likely(!block_send(global_flag))) {
+		return NF_ACCEPT;
+	} else { 
+        	struct iphdr *iph;
+        	struct tcphdr *th;
+        	struct udphdr *uh;
+        	unsigned int saddr, daddr;
+        	unsigned int sport = 0, dport = 0;
 
                 iph = (struct iphdr *) skb_network_header(skb);
                 saddr = (unsigned int) iph->saddr;
@@ -59,20 +55,12 @@ static unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_h
                         dport = (size_t) ntohs(uh->dest);
                 } 
         
-                //        if(iph->protocol == IPPROTO_TCP || iph->protocol == IPPROTO_UDP)
-                //                printk(KERN_DEBUG "[msx] POST_ROUTING %pI4:%u --> %pI4:%u, skb->data_len = %u\n", &saddr, sport, &daddr, dport, skb->data_len);
-        
-                /* 
-                * 0 if not timeout; positive if timeout 
-                * The value means the exceeding time beyond timeout.
-                */
-        
                 /* Rule matching. */
                 if (iph->protocol == IPPROTO_UDP && dport == HB_SERVER_PORT) {
                         printk(KERN_DEBUG "[msx] UDP send to dport 5001 is disabled!\n");       
                         return NF_DROP;
                 } 
-        //}
+        }
         return NF_ACCEPT; 
 }
 

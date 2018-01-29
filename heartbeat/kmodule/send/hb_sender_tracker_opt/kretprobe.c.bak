@@ -19,16 +19,20 @@ static atomic_long_t global_sent_epoch;
 //static DEFINE_SPINLOCK(global_sent_epoch_lock);
 
 static inline long get_local_sent_epoch(void);
-static inline void update_local_sent_epoch(void);
+static inline long updateget_local_sent_epoch(void);
 static inline void set_global_sent_epoch(long epoch);
 static inline long now(void);
 
 //long prev_sent_epoch;
-atomic_long_t enable;
+//atomic_long_t enable;
 //DEFINE_SPINLOCK(enable_lock);
 
 extern long base_time;
 extern long timeout_interval;
+
+static struct kprobe kp = {
+    .symbol_name    = "napi_consume_skb",
+};
 
 void public_set_global_sent_epoch(long epoch) {
 	set_global_sent_epoch(epoch);
@@ -44,9 +48,10 @@ static inline long get_local_sent_epoch(void) {
         return this_cpu_read(local_sent_epoch);
 }
 
-static inline void update_local_sent_epoch(void) {
+static inline long updateget_local_sent_epoch(void) {
 	long latest_epoch = atomic_long_read(&global_sent_epoch);
 	this_cpu_write(local_sent_epoch, latest_epoch);
+	return latest_epoch;
 }
 
 static inline void set_global_sent_epoch(long epoch) {
@@ -62,15 +67,12 @@ static inline long now(void) {
 static inline long get_send_hb_timeout(int flag) {
         long sent_epoch, recv_timeout;
         
-	if (flag == 0) {
+	if (likely(flag == 0)) {
         	/* get_local_sent_epoch() NOT involves spinlock contention. */
-       		if ((sent_epoch = get_local_sent_epoch()) == 0)
-                	return -1;
-        } else if (flag == 1) {
+       		sent_epoch = get_local_sent_epoch();
+        } else if (unlikely(flag == 1)) {
 		/* update_local_sent_epoch() involves spinlock contention. */
-		update_local_sent_epoch();
-                if ((sent_epoch = get_local_sent_epoch()) == 0)
-                        return -1;
+		sent_epoch = updateget_local_sent_epoch();
 	}
 
         recv_timeout = epoch_to_time(sent_epoch + 1);
@@ -78,13 +80,9 @@ static inline long get_send_hb_timeout(int flag) {
         return recv_timeout - get_max_transfer_delay() - get_max_clock_deviation();
 }
 
-long get_send_block_timeout(int flag) {
-        return get_send_hb_timeout(flag) + get_max_transfer_delay();
-}
-
-int block_send(int flag) {
+inline int block_send(int flag) {
         long now_t = now();
-        long send_block_timeout = get_send_block_timeout(flag);
+        long send_block_timeout = get_send_hb_timeout(flag) + get_max_transfer_delay();
 
         if (!prepared())
                 return 0;
@@ -100,15 +98,7 @@ static inline long is_send_hb_timeout(int flag) {
         long send_timeout = 0;
         long now_t = 0;
         
-        //if (!prepared())
-        //        return 0;
-
         send_timeout = get_send_hb_timeout(flag);
-
-        /* Not prepared. */
-        if (send_timeout < 0)
-                return 0;
-        
         now_t = now();
         
         return now_t - send_timeout;
@@ -119,10 +109,10 @@ static inline long is_send_hb_timeout(int flag) {
 
 static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
 
-	if (atomic_long_read(&enable) == 0 || base_time <= 0 || timeout_interval <= 0) {
+	if (base_time <= 0 || timeout_interval <= 0) {
 //		count_disable ++;
 		return 0;
-	}
+//	}
 	else {
             	struct sk_buff *skb = NULL;
             	struct iphdr *iph = NULL;
@@ -149,35 +139,18 @@ static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs) {
             		unsigned short offset;
             		unsigned short iphdr_size;
             		unsigned short udphdr_size = 8;
-	    		int global_flag;
           		unsigned char *data;
                         long epoch;
-                        long exceeding_time;
                             
                         data = (unsigned char *) iph;
                         iphdr_size = iph->ihl << 2;
                         offset = iphdr_size + udphdr_size;
                         epoch = *((long *) (data + offset + MSGSIZE));
-			global_flag = 0;
 
-			if ((exceeding_time = is_send_hb_timeout(global_flag)) > 0) {
-				global_flag = 1;
-				exceeding_time = is_send_hb_timeout(global_flag);
-			}
 
-                        if (exceeding_time <= 0) {
-                                //epoch_inc = epoch - prev_sent_epoch;
-                                //inc_global_sent_epoch(epoch_inc);
-				atomic_long_set(&enable, 0);
-				atomic_long_set(&global_sent_epoch, epoch);
-				//spin_lock_bh(&enable_lock);
-				//enable = 0;
-				//spin_unlock_bh(&enable_lock);
-//                                printk("heartbeat sending completes and set sent_epoch as %ld, int %ld, prev %ld\n", 
- //                                       epoch, epoch_inc, prev_sent_epoch);
-                        } 
-                       
-                }
+			if (is_send_hb_timeout() <= 0) {
+                        	atomic_long_add(1, &global_sent_epoch);
+               	 	}
 	}
         return 0;
 }
