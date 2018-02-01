@@ -3,7 +3,7 @@
 
 //#define CONFIG_DROP
 //#define CONFIG_BARRIER
-#define CONFIG_SENDBLOCK
+//#define CONFIG_SENDBLOCK
 
 #define HB_SERVER_ADDR "10.10.1.1"
 #define HB_SERVER_PORT 5001
@@ -44,10 +44,6 @@ struct receiver_stats {
 };
 
 extern struct receiver_stats recv_stats;
-
-extern long base_time;
-
-extern long timeout_interval;
 
 extern sem_t init_done;
 

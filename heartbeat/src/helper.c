@@ -16,23 +16,6 @@ struct timespec time_to_timespec(long time_ms) {
         return ts;
 }
 
-/*
- * Round up to the epoch id that time belongs to.
- * If error happens, reruen -1.
- */
-long time_to_epoch(long time) {
-        if(timeout_interval == 0)
-                return -1;
-
-        time -= base_time;
-        return time < 0 ? -1 : (long)(time / timeout_interval + 1);
-}
-
-/* Convert epoch id to time. */
-long epoch_to_time(long id) {
-        return base_time + (id * timeout_interval);
-}
-
 /* Return now time. */
 long now_time() {
         struct timespec spec;

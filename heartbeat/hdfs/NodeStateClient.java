@@ -3,7 +3,7 @@ import java.net.*;
 import java.nio.*;
 
 class NodeStateClient {
-   private static String stateServer = "10.0.0.11";
+   private static String stateServer = "10.10.1.1";
    private static int port = 5003;
    
    public static Long getNodeState(String nodeIp) throws Exception {
@@ -59,10 +59,10 @@ class NodeStateClient {
    }
 
    public static void main(String[] args) throws Exception {
-      System.out.println("10.0.0.11: ");
-      NodeStateClient.getNodeState("10.0.0.11");
+      System.out.println("10.10.1.2: ");
+      NodeStateClient.getNodeState("10.10.1.2");
       
-      System.out.println("10.0.0.12: ");
-      NodeStateClient.getNodeState("10.0.0.12");
+      //System.out.println("10.0.0.12: ");
+      //NodeStateClient.getNodeState("10.0.0.12");
    }
 }

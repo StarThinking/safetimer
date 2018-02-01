@@ -11,7 +11,7 @@ receiver: src/receiver.o src/barrier.o src/hb_server.o src/state_server.o src/qu
 	$(CC) $(CFLAGS) -o build/libreceiver.so $^ -lc
 	#$(CC) $^ -L./lib -lnfnetlink -lnetfilter_queue -lpthread -lrt ./lib/liblist.a -lhashtable -o $@
 
-sender: src/sender.o src/helper.o
+sender: src/sender.o src/request_server.o src/helper.o
 	@mkdir -p build
 	$(CC) $(CFLAGS) -o build/libsender.so $^ -lc
 
