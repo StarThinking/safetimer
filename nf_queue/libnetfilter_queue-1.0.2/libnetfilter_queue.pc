@@ -12,5 +12,5 @@ Version: 1.0.2
 Requires: libnfnetlink
 Conflicts:
 Libs: -L${libdir} -lnetfilter_queue
-Libs.private: -L/usr/local/lib -lnfnetlink  
+Libs.private: -L/usr/local/lib -lnfnetlink
 Cflags: -I${includedir}

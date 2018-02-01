@@ -53,54 +53,21 @@ static void cleanup(void *arg) {
         close(server_fd);
 }
 
-/*
- * Entry function of heartbeat server.
- * Messages consist of two parts: [flag, epoch_id].
- * If flag is 0, it indicates a request message;
- * If flag is 1, it indicates a heartbeat message.
- */
 static void *hb_server(void *arg) {
-        long msg_buffer[2];
-        long flag;
+        long msg_buffer;
         struct sockaddr_in client;
         unsigned int len = sizeof(client);
 
         pthread_cleanup_push(cleanup, NULL);
 
         while (1) {
-                if((recvfrom(server_fd, &msg_buffer, MSGSIZE*2, 0, (struct sockaddr *) &client, &len)) != MSGSIZE*2) {
+                if((recvfrom(server_fd, &msg_buffer, MSGSIZE*1, 0, (struct sockaddr *) &client, &len)) != MSGSIZE*1) {
                         perror("recvfrom");
                         break;
                 }
-
-                flag = msg_buffer[0];
-
-                if (flag == 0) {
-                        /* For requests, reply [base_time, timeout_interval]. */
-                        long reply[2];
-
-                        //printf("Heartbeat server: request from %s:%u.\n", 
-                        //        inet_ntoa(client.sin_addr), ntohs(client.sin_port));
                         
-                        reply[0] = base_time;
-                        reply[1] = timeout_interval;
-
-                        if(sendto(server_fd, reply, MSGSIZE*2, 0, (struct sockaddr *) &client, 
-                                        sizeof(client)) != MSGSIZE*2) {
-                                perror("send reply");
-                                break;
-                        }           
-                } else if (flag == 1) {
-                        /* Heartbeats. */
-                        /*
-                        long epoch_id;
-                        epoch_id = msg_buffer[1];
-                        
-                        printf("Heartbeat server: heartbeat from %s:%u for epoch %ld.\n",
-                                inet_ntoa(client.sin_addr), ntohs(client.sin_port), epoch_id);
-                        */
-                }
-
+                printf("Heartbeat server: heartbeat from %s:%u with meesage %ld.\n",
+                                inet_ntoa(client.sin_addr), ntohs(client.sin_port), msg_buffer);
         }
 
         pthread_cleanup_pop(1);

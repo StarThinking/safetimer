@@ -18,37 +18,10 @@
 #include "hb_common.h"
 #include "queue.h"
 #include "helper.h"
-#include "barrier.h" // for send_barrier_message()
-#include "drop.h"
 #include "state_server.h" // for node_state
 
 #include "hashtable.h"
 #include "list.h"
-
-#ifdef CONFIG_BARRIER
-
-static sem_t barrier_all_processed;
-static int barrier_flush(long epoch);
-static long epoch_no_sem_post;
-
-#define ARRAY_SIZE 100
-/* Recond the round so that clear is not needed for new round. */
-static int array_round = 1;
-static int received_barrier_msg_array[ARRAY_SIZE][IRQ_NUM];
-
-#endif
-
-#ifdef CONFIG_DROP
-
-static long epoch_dropped = 0;
-static int check_drop();
-
-#endif
-
-static int init_done_flag = 0;
-
-static hash_table epoch_list_ht;
-static pthread_mutex_t epoch_list_ht_lock;
 
 static struct nfq_handle *h;
 static struct nfq_q_handle *qh;
@@ -58,17 +31,9 @@ static pthread_t queue_tid;
 static void *queue_recv_loop(void *arg);
 static void cleanup(void *arg);
 
-static pthread_t expire_checker_tid;
-static void *expire_checker(void *arg);
-static void expiration_check_for_epoch(long epoch);
-
 static u_int32_t process_packet(struct nfq_data *tb);
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, 
         struct nfq_data *nfa, void *data);
-static int ip_equal(void *a, void *b);
-static void free_val(void *val);
-
-//cb_t timeout_cb;
 
 int init_queue() {
         int ret = 0;
@@ -104,36 +69,19 @@ int init_queue() {
         read_timeout.tv_usec = 0;
         setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
         
-        ht_init(&epoch_list_ht, HT_NONE, 0.05);
-
-#ifdef CONFIG_BARRIER
-        sem_init(&barrier_all_processed, 0, 0);
-#endif
-
         /* Start thread for queue receiving. */
         pthread_create(&queue_tid, NULL, queue_recv_loop, NULL);
         printf("Queue: receive loop thread started.\n");
-
-        /* Start expiration checker thread. */
-        pthread_create(&expire_checker_tid, NULL, expire_checker, NULL);
-        //timeout_cb = callback;
-        printf("Queue: expire checker thread started.\n");
-       
-        printf("Queue has been initialized successfully.\n");
 
 error:
         return ret;
 }
 
 void cancel_queue() {
-	pthread_cancel(expire_checker_tid);
 	pthread_cancel(queue_tid);
 }
 
 void join_queue() {
-	pthread_join(expire_checker_tid, NULL);
-	printf("Queue expire_checker thread joined.\n");
-	
 	pthread_join(queue_tid, NULL);
 	printf("Queue queue recv thread joined.\n");
 }
@@ -141,20 +89,13 @@ void join_queue() {
 static void cleanup(void *arg) {
         printf("Clean up queue.\n");
 
-        nfq_destroy_queue(qh);
-
 #ifdef INSANE
         /* normally, applications SHOULD NOT issue this command, since
          * it detaches other programs/sockets from AF_INET, too ! */
         nfq_unbind_pf(h, AF_INET);
 #endif
         nfq_close(h);
-        
-        ht_destroy(&epoch_list_ht);
 }
-
-/* For correctness test. */
-//static int count = 1;
 
 static u_int32_t process_packet(struct nfq_data *tb) {
 	int id = 0;
@@ -169,10 +110,6 @@ static u_int32_t process_packet(struct nfq_data *tb) {
         if (ph)
                 id = ntohl(ph->packet_id);
 
-        /* Initialization is NOT done. */
-        if(init_done_flag == 0) 
-                goto ret;
-
         payload_len = nfq_get_payload(tb, &nf_packet);
         if (payload_len >= 0) {
                 iph = (struct iphdr *) nf_packet;
@@ -181,319 +118,24 @@ static u_int32_t process_packet(struct nfq_data *tb) {
         }      
 
         if (iph->protocol == IPPROTO_UDP) {
-        //if (iph->protocol == IPPROTO_UDP && strcmp(saddr, BARRIER_SERVER_ADDR) != 0) {
                 unsigned short udphdr_size = 8;
                 unsigned short offset = iphdr_size + udphdr_size;
-                long flag = -1;
-                long epoch = -1;
-                long app_id;
-                size_t value_size;
-                list_t **ip_list;
-
-                //printf("payload_len = %d, offset = %d\n", payload_len, offset);
-                // payload size check
-                if (payload_len >= offset + MSGSIZE*2) {
-                        flag = *((long*)(nf_packet + offset));
-                        epoch = *((long *)(nf_packet + offset + MSGSIZE));
-                } else {
-                        printf("Queue: UDP payload size less than %ld!\n", MSGSIZE*2);
-                        goto ret;
-                }
-                
-                /* Skip furthur process for requests. */
-                if (flag == 0 || epoch == 0) {
-                        printf("Queue: request [flag=%ld, epoch=%ld] from node %s.\n", flag, epoch, saddr);
-                        goto ret;
-                } 
- 
-                if (epoch < 0) {
-                        fprintf(stderr, "Queue error: epoch < 0.\n");
-                        goto ret;
-                }
-                
-                /* 
-                 * If it's not request, then it must be heartbeat.
-                 * The flag field now indicates app_id.
-                 */
-                app_id = flag;
-                
-                /* For correctness test. */
-                /*if (0 == (count++ % 20)) {
-                        struct timespec ts = time_to_timespec(2500);
-                        printf("sleep 2.5s\n");
-                        nanosleep(&ts, NULL);
-                }*/ 
-                
-                printf("Queue: heartbeat for [app_id=%ld, epoch=%ld] from node %s.\n", app_id, epoch, saddr);
-                put_state(app_id, saddr, 0);
-
-                recv_stats.hb_cnt ++;
- 
-                pthread_mutex_lock(&epoch_list_ht_lock);
-
-                // Touch the node for the epoch
-                ip_list = (list_t**) ht_get(&epoch_list_ht, &epoch, sizeof(long), &value_size);
-                if (ip_list != NULL) {
-                        list_node_t *ip_to_remove = list_find(*ip_list, saddr);
-                        if (ip_to_remove != NULL) {
-                                list_remove(*ip_list, ip_to_remove);
-                                printf("Queue: remove node %s from epoch list %ld.\n", saddr, epoch);
-                        }
-                }
-
-                // Insert Ip into the Ip list of the next epoch
-                epoch ++;
-
-                ip_list = (list_t**) ht_get(&epoch_list_ht, &epoch, sizeof(long), &value_size);
-                if (ip_list == NULL) {
-                        list_t *tmp = list_new();
-                        tmp->match = ip_equal;
-                        tmp->free = free_val;
-                        ip_list = &tmp;
-                        ht_insert(&epoch_list_ht, &epoch, sizeof(long), ip_list, sizeof(list_t*));
-                        //printf("Queue: create new node list for epoch %ld.\n", epoch);
-                } 
-	
-		if (list_find(*ip_list, saddr) == NULL) {
-                        // Allocate the memory of _saddr in heap
-                        char *_saddr = (char*) calloc(INET_ADDRSTRLEN, sizeof(char));
-                        strcpy(_saddr, saddr);
-                        list_rpush(*ip_list, list_node_new(_saddr));
-                        printf("Queue: add node %s into the node list for epoch %ld.\n", saddr, epoch);
-                }
-
-                pthread_mutex_unlock(&epoch_list_ht_lock);
-        }
-
-#ifdef CONFIG_BARRIER
-	
-        //if (iph->protocol == IPPROTO_TCP && strcmp(saddr, BARRIER_CLIENT_ADDR) == 0) {
-        if (iph->protocol == IPPROTO_TCP) {
-		int i, array_index;
-                struct tcphdr *tcp = ((struct tcphdr *) (nf_packet + iphdr_size));
-                unsigned short tcphdr_size = (tcp->doff << 2);
-                unsigned short offset = iphdr_size + tcphdr_size;
-                long epoch = -1;
-                long queue_index = -1;
+                long message;
 
                 // payload size check
-                if (payload_len >= offset + MSGSIZE*2) {
-                        epoch = *((long *)(nf_packet + offset));
-                        queue_index = *((long *)(nf_packet + offset + MSGSIZE));
-                        
-                        if(epoch <= 0 || queue_index < 0) {
-                                fprintf(stderr, "Queue: epoch or queue_index values wrong.\n");
-                                goto ret;
-                        }
-                        
-                        printf("Queue: epoch = %ld, queue_index = %ld\n", epoch, queue_index);
+                if (payload_len >= offset + MSGSIZE) {
+                        message = *((long*)(nf_packet + offset));
                 } else {
-                        printf("Queue: error happens as tcp payload size less than %ld!\n", MSGSIZE*2);
-                }
-
-                // get array index; if it's a new round, increase round
-                array_index = epoch % ARRAY_SIZE;
-
-                if (received_barrier_msg_array[array_index][queue_index] != array_round) {
-                        received_barrier_msg_array[array_index][queue_index] = array_round;
-                } else { // the S2S message for the ring is redundant
+                        printf("Queue: UDP payload size less than %ld!\n", MSGSIZE);
                         goto ret;
                 }
-
-                for (i=0; i<IRQ_NUM; i++) {
-                        if(received_barrier_msg_array[array_index][i] != array_round)
-                                goto ret;
-                }
-
-                printf("Queue: all barrier messages for epoch %ld are received.\n", epoch);
-
-                // reach the end of a round
-                if(array_index == (ARRAY_SIZE -1))
-                        array_round ++;
                 
-                // ignore outdated barriers
-                if (epoch_no_sem_post && epoch <= epoch_no_sem_post) 
-                        printf("no sem post for barriers for epoch <= %ld.\n", epoch_no_sem_post);
-                else
-                        sem_post(&barrier_all_processed);
+                printf("Queue: heartbeat with message %ld from node %s.\n", message, saddr);
+                //put_state(app_id, saddr, 0);
+ 
         }
-
-#endif
-
 ret:
-        //printf("process_packet id = %d.\n", id);
         return id;
-}
-
-/*
- * Thread for expiration check
- */
-static void *expire_checker(void *arg) {
-        long timeout;
-        long epoch_to_check, epoch_now;
-        long diff_time;
-        
-        sem_wait(&init_done);
-        /* So that queue recv thread will perform packet processing. */
-        init_done_flag = 1;
-        printf("Checker: initialization is done and start to expiration check loop.\n");
-
-        while (1) {
-                epoch_to_check = time_to_epoch(now_time());
-                timeout = epoch_to_time(epoch_to_check);
-
-                if ((diff_time = timeout - now_time()) > 0) {
-                        struct timespec ts = time_to_timespec(diff_time);
-                        nanosleep(&ts, NULL);
-                }
-               
-                do {
-                        printf("\tChecker: checking epoch %ld\n", epoch_to_check);
-                        expiration_check_for_epoch(epoch_to_check);
-                        epoch_now = time_to_epoch(now_time());
-
-                        if (epoch_to_check + 1 < epoch_now)
-                                printf("\tChecker: more than 1 epoch should be checked!\n");
-
-                        epoch_to_check ++;
-                } while (epoch_to_check < epoch_now);
-
-        }
-        
-        return NULL;
-}
-
-#ifdef CONFIG_BARRIER
-static int barrier_flush(long epoch) {
-        struct timespec wait_timeout;
-        int s;
-
-        wait_timeout = time_to_timespec(epoch_to_time(time_to_epoch(now_time())));
-        send_barrier_message(epoch);
-        printf("\tChecker: barrier messages for epoch %ld are sent, waiting for sem post.\n", epoch);
-        while ((s = sem_timedwait(&barrier_all_processed, &wait_timeout)) == -1 && errno == EINTR) 
-                continue; // Restart if interrupted by handler 
-
-        if (s == -1) {
-                if (errno == ETIMEDOUT)
-                        printf("sem_timedwait() timed out\n");
-                else
-                        perror("sem_timedwait");
-                epoch_no_sem_post = epoch;
-                printf("set epoch_no_sem_post as %ld\n", epoch_no_sem_post);
-                return 1;
-        } else {
-                printf("sem_timedwait() succeeded\n");
-        }
-        printf("\tChecker: all barrier messages for epoch %ld are processed.\n", epoch);
-        return 0;
-}
-#endif
-
-/*static int barrier_flush(long epoch) {
-        send_barrier_message(epoch);
-        printf("\tChecker: barrier messages for epoch %ld are sent, waiting for sem post.\n", epoch);
-        sem_wait(&barrier_all_processed);
-        printf("\tChecker: all barrier messages for epoch %ld are processed.\n", epoch);
-        return 0;
-}*/
-
-#ifdef CONFIG_DROP
-static int check_drop() {
-        int ret = 0;
-
-        if ((ret = if_drop_happened()) > 0) {
-                printf("\tChecker: drop happened in");
-                if (ret / NICDROP) {
-                        ret = ret % NICDROP;
-                        recv_stats.nic_drop_cnt ++;
-                        printf(" NIC");
-                }
-
-                if (ret / DEVDROP) {
-                        ret = ret % DEVDROP;
-                        recv_stats.dev_drop_cnt ++;
-                        printf(" driver/kernel_dev");
-                }
-                
-                if (ret / QUEUEDROP) {
-                        recv_stats.queue_drop_cnt ++;
-                        printf(" NFQueue");
-                } 
-                recv_stats.hb_drop_cnt ++;
-        } else 
-                printf("\tChecker: no drop.\n");
-        
-        return ret;
-}
-#endif
-
-static void expiration_check_for_epoch(long epoch) {
-        list_t **ip_list;
-        size_t value_size;
-        int drop = 0;
-        int triger_timeout = 1;
- 
-        /* Before perfroming expiration check, grab the lock. */ 
-        pthread_mutex_lock(&epoch_list_ht_lock);
-                
-        ip_list = (list_t**) ht_get(&epoch_list_ht, &epoch, sizeof(long), &value_size);
-        
-#ifdef CONFIG_BARRIER
-        /* First, exclude pending packets */
-        if (ip_list != NULL)  {
-                list_iterator_t *it = list_iterator_new(*ip_list, LIST_HEAD);
-                list_node_t *next = list_iterator_next(it);
-                if (next != NULL) {
-                        if(barrier_flush(epoch))
-                                triger_timeout = 0;
-                        ip_list = (list_t**) ht_get(&epoch_list_ht, &epoch, sizeof(long), &value_size);
-                }
-                list_iterator_destroy(it);
-                recv_stats.barrier_cnt ++;
-        }
-#endif
-
-        if (ip_list != NULL) {
-                list_iterator_t *it = list_iterator_new(*ip_list, LIST_HEAD);
-                list_node_t *next = list_iterator_next(it);
-
-#ifdef CONFIG_DROP
-                if (next != NULL && triger_timeout != 0) { // skip if barrier timeouts
-                        drop = check_drop();
-                        if (drop == 0 && epoch_dropped < epoch) {
-                                triger_timeout = 1;
-                        } else if (drop > 0) {
-                                triger_timeout = 0;
-                                epoch_dropped = time_to_epoch(now_time());
-                                printf("update epoch_dropped as %ld\n", epoch_dropped);
-                        }
-                }
-#endif
-                
-                printf("\tChecker: now safe to check expiration for epoch %ld.\n", epoch);
-                
-                while (next != NULL) {  
-                        if (triger_timeout) {
-                                recv_stats.timeout_cnt ++;
-                                printf("\n\tChecker: node %s timeout for epoch %ld !\n\n", 
-                                        (char*) next->val, epoch);
-                               
-                                // app_id = 1. state = 1 to indicate node crash. 
-                                put_state(1, (char*) next->val, 1);
-                        }
-                        
-                        list_remove(*ip_list, next);
-                        next = list_iterator_next(it);
-                }
-
-                // Delete iterator, list and hashtable kv entry.
-                list_iterator_destroy(it);
-                list_destroy(*ip_list);
-                ht_remove(&epoch_list_ht, &epoch, sizeof(long));
-        } 
-        
-        pthread_mutex_unlock(&epoch_list_ht_lock);
 }
 
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
@@ -518,7 +160,7 @@ static void *queue_recv_loop(void *arg) {
                 err = errno;
 
                 if (rv < 0 && err == ENOBUFS) {
-                        queue_dropped_pkt_current ++;
+                        //queue_dropped_pkt_current ++;
                         fprintf(stderr, "Queue is dropping packets.\n");
                         continue;
                 }
@@ -537,12 +179,3 @@ static void *queue_recv_loop(void *arg) {
 
         return NULL;
 }
-
-static int ip_equal(void *a, void *b) {
-        return 0 == strcmp((char*)a, (char*)b);
-}
-
-static void free_val(void *val) {
-        free(val);
-}
-

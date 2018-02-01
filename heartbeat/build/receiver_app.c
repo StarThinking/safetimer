@@ -11,12 +11,6 @@ void sig_handler(int signo) {
         exit(0);
 }
 
-void callback() {
-        printf("This is a callback function.\n");
-        
-        return;
-}
-
 int main(int argc, char *argv[]) {
         signal(SIGINT, sig_handler);
         signal(SIGTERM, sig_handler);

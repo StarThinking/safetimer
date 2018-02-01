@@ -75,7 +75,6 @@ static unsigned long dev_incr_dropped() {
         fclose(fp);
 
         if (dev_incr > 0) {
-                recv_stats.dev_drop_pkts += dev_incr;
                 printf("Drop: dev_incr = %lu.\n", dev_incr);
         }
 
@@ -90,7 +89,6 @@ static unsigned long queue_incr_dropped() {
         queue_incr = queue_dropped_pkt_current - queue_dropped_pkt_prev;
 
         if (queue_incr > 0) {
-                recv_stats.queue_drop_pkts += queue_incr;
                 printf("Drop: queue_incr = %lu.\n", queue_incr);
         }
 
