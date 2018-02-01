@@ -55,32 +55,46 @@ static void cleanup(void *arg) {
 }
 
 static void *request_server(void *arg) {
-        long msg_buffer;
-        long reply;
+        long msg_buffer[2];
+        long reply = 0;
         struct sockaddr_in client;
         unsigned int len = sizeof(client);
 
         pthread_cleanup_push(cleanup, NULL);
 
         while (1) {
-                if((recvfrom(server_fd, &msg_buffer, MSGSIZE, 0, \
-                                (struct sockaddr *) &client, &len)) != MSGSIZE) {
+                long request_type;
+
+                if((recvfrom(server_fd, msg_buffer, MSGSIZE*2, 0, \
+                                (struct sockaddr *) &client, &len)) != MSGSIZE*2) {
                         perror("recvfrom");
                         break;
                 }
-                printf("Request received, msg = %ld\n", msg_buffer);
-
-                safetimer_send_heartbeat();
+                printf("Request received, request_type = %ld, data = %ld\n", 
+                            msg_buffer[0], msg_buffer[1]);
                 
-                reply = 0;
+                request_type = msg_buffer[0];
+                if (request_type == 0) {
+                        long timeout_t = msg_buffer[1];
+                        int ret = safetimer_send_heartbeat(timeout_t);
+                        if (ret == 0)
+                            printf("safetimer_send_heartbeat() succeed\n");
+                        else if (ret < 0) {
+                            printf("safetimer_send_heartbeat() timeouts\n");
+                            reply = ret;
+                        }
+                } else if (request_type == 1) {
+                        long valid_time = msg_buffer[1];
+                        update_st_valid_time(valid_time);
+                }
+
+                // send reply
                 if(sendto(server_fd, &reply, MSGSIZE, 0, (struct sockaddr *) &client, \
                             sizeof(client)) != MSGSIZE) {
                         perror("send reply");
                         break;
                 } 
-                
-                // to send heartbeat
-
+                printf("response %ld has been sent\n", reply);
         }
 
         pthread_cleanup_pop(1);

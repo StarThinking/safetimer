@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <semaphore.h>
 
 #include "hb_common.h"
 #include "helper.h"
@@ -17,6 +18,7 @@
 #include "request_server.h"
 
 #define SIG_TEST 44 
+static sem_t sent_wait;
 
 static long const app_id = 1; // Unique positive value.
 
@@ -27,6 +29,7 @@ static void clear_debugfs();
 
 static void receive_signal(int n, siginfo_t *info, void *unused) {
         printf("signal handler received value %i\n", info->si_int);
+        sem_post(&sent_wait);
 }
 
 int init_sender() {
@@ -34,6 +37,7 @@ int init_sender() {
         char buf[20];
         struct sigaction sig;
 
+        sem_init(&sent_wait, 0, 0);
         sig.sa_sigaction = receive_signal;
         sig.sa_flags = SA_SIGINFO;
         sigaction(SIG_TEST, &sig, NULL);
@@ -71,10 +75,13 @@ void destroy_sender() {
 }
 
 /* heartbeat sending. */
-void safetimer_send_heartbeat() {
+int safetimer_send_heartbeat(long timeout_time) {
         long hb_msg;
         int count;
+        struct timespec wait_timeout;
+        int s;
         
+        wait_timeout = time_to_timespec(timeout_time);
         hb_msg= 1;
         count = sendto(hb_fd, &hb_msg, MSGSIZE, 0, \
                 (struct sockaddr *) &hb_server, sizeof(hb_server));
@@ -82,8 +89,37 @@ void safetimer_send_heartbeat() {
         if (count != MSGSIZE) 
                 perror("heartbeat sendto");
 
-	printf("Heartbeat message %ld has been sent.\n", hb_msg);
+	printf("Heartbeat message %ld has been sent and now wait for completion signal.\n", hb_msg);
+    
+        // wait for signal
+        while ((s = sem_timedwait(&sent_wait, &wait_timeout)) == -1 && errno == EINTR) 
+                continue; // Restart if interrupted by handler 
 
+        if (s == -1) {
+                if (errno == ETIMEDOUT)
+                        printf("sem_timedwait() timed out\n");
+                else
+                        perror("sem_timedwait");
+                return -1;
+        } else {
+                printf("sem_timedwait() succeeded\n");
+        }
+
+        return 0;
+}
+
+void update_st_valid_time(long t) {
+        FILE *fp;
+        char buffer[20];
+        
+        if ((fp = fopen("/sys/kernel/debug/st_debugfs/st_valid_time", "r+")) == NULL) {
+                perror("fopen st_valid_time");
+        }
+        memset(buffer, '\0', 20);
+        sprintf(buffer, "%ld", t);
+        fputs(buffer, fp);
+        fclose(fp);
+        printf("st_valid_time has been updated to %ld\n", t);
 }
 
 static void clear_debugfs() {

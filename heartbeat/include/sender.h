@@ -2,4 +2,6 @@ int init_sender();
 
 void destroy_sender();
 
-void safetimer_send_heartbeat();
+int safetimer_send_heartbeat();
+
+void update_st_valid_time();
