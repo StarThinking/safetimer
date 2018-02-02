@@ -5,7 +5,7 @@ import java.net.*;
 import java.nio.*;
 
 class StSenderWrapper {
-   private static String stateServer = "10.10.1.2";
+   private static String stateServer = "127.0.0.1";
    private static int port = 5003;
    
    public static long stSendHeartbeat(long timeout) {
