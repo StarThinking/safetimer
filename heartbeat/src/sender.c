@@ -28,7 +28,7 @@ static struct sockaddr_in hb_server;
 static void clear_debugfs();
 
 static void receive_signal(int n, siginfo_t *info, void *unused) {
-        printf("signal handler received value %i\n", info->si_int);
+//        printf("signal handler received value %i\n", info->si_int);
         sem_post(&sent_wait);
 }
 
@@ -102,7 +102,8 @@ int safetimer_send_heartbeat(long timeout_time) {
                         perror("sem_timedwait");
                 return -1;
         } else {
-                printf("sem_timedwait() succeeded\n");
+                //printf("sem_timedwait() succeeded\n");
+                printf("signal received.");
         }
 
         return 0;

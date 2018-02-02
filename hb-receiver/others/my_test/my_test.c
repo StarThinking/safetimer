@@ -7,7 +7,8 @@
 #include <linux/skbuff.h>
 #include <net/ip.h>
 
-static char func_name[NAME_MAX] = "_kfree_skb_defer";
+//static char func_name[NAME_MAX] = "__dev_kfree_skb_any";
+static char func_name[NAME_MAX] = "napi_consume_skb";
 module_param_string(func, func_name, NAME_MAX, S_IRUGO);
 MODULE_PARM_DESC(func, "Function to kretprobe; this module will report the"
                     " function's execution time");
