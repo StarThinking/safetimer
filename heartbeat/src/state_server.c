@@ -34,7 +34,7 @@ static long get_state(long app_id, char *node_ip) {
                 node_states_ht_p = *node_states_ht_pp;
                 node_state = (long *) ht_get(node_states_ht_p, node_ip, strlen(node_ip), &value_size);
                 if (node_state != NULL) {
-                        printf("The state of node %s for app %ld is %ld.\n",
+                        printf("\nThe state of node %s for app %ld is %ld.\n\n",
                                     node_ip, app_id, *node_state);
                 } else {
                         printf("error: get_state can't find entry for app_id %ld node_ip %s\n", 

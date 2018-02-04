@@ -121,6 +121,7 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                 unsigned short udphdr_size = 8;
                 unsigned short offset = iphdr_size + udphdr_size;
                 long message;
+                long app_id;
 
                 // payload size check
                 if (payload_len >= offset + MSGSIZE) {
@@ -131,7 +132,8 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                 }
                 
                 printf("Queue: heartbeat with message %ld from node %s.\n", message, saddr);
-                //put_state(app_id, saddr, 0);
+                app_id = message;
+                put_state(app_id, saddr, now_time());
  
         }
 ret:
