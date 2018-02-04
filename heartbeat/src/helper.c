@@ -19,7 +19,7 @@ struct timespec time_to_timespec(long time_ms) {
 /* Return now time. */
 long now_time() {
         struct timespec spec;
-        clock_gettime(CLOCK_REALTIME, &spec);
+        clock_gettime(CLOCK_MONOTONIC, &spec);
         
         return spec.tv_sec * 1000 + spec.tv_nsec/1.0e6;
 }
