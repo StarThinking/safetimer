@@ -47,7 +47,7 @@ static int handler_pre(struct kprobe *p, struct pt_regs *regs) {
                 if (ret < 0) {
                         pr_err("error sending signal\n");
                 }
-                printk("signal sent!\n");
+//                printk("signal sent!\n");
             	//unsigned short offset;
             	//unsigned short iphdr_size;
             	//unsigned short udphdr_size = 8;
