@@ -11,27 +11,17 @@
 #include <linux/ktime.h>
 #include <linux/skbuff.h>
 
-#include "kprobe.h"
-#include "debugfs.h"
-#include "../../../include/hb_common.h"
+#include "../../../../include/hb_common.h"
 
 MODULE_LICENSE("GPL");
 
+extern atomic_long_t st_valid_time;
+
 static struct nf_hook_ops nfho0;
 
-//static unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb, 
-//        const struct net_device *in, const struct net_device *out, 
-//        int (*okfn)(struct sk_buff *)) {
-
 static unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
-	int global_flag;
-        /* If sending is valid. */
-        global_flag = 0;
-	if (likely(!block_send(global_flag))) 
-                return NF_ACCEPT;
-	
-	global_flag = 1;
-	if (likely(!block_send(global_flag))) {
+        long _st_valid_time = atomic_long_read(&st_valid_time);	
+	if (_st_valid_time == 0 || ktime_to_ms(ktime_get_boottime()) <= _st_valid_time) {
 		return NF_ACCEPT;
 	} else { 
         	struct iphdr *iph;
@@ -57,6 +47,7 @@ static unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_h
         
                 /* Rule matching. */
                 if (iph->protocol == IPPROTO_UDP && dport == HB_SERVER_PORT) {
+                    //    printk("ktime_to_ms(ktime_get_boottime()) = %lld\n", ktime_to_ms(ktime_get_boottime()));
                         printk(KERN_DEBUG "[msx] UDP send to dport 5001 is disabled!\n");       
                         return NF_DROP;
                 } 
@@ -64,7 +55,7 @@ static unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_h
         return NF_ACCEPT; 
 }
 
-int netfilter_init(void) {
+static int __init st_netfilter_init(void) {
         nfho0.hook = hook_func;        
         nfho0.hooknum = NF_INET_POST_ROUTING; 
         nfho0.pf = PF_INET; // IPV4 packets
@@ -73,6 +64,9 @@ int netfilter_init(void) {
         return 0; 
 }
 
-void netfilter_exit(void) {
+static void __exit st_netfilter_exit(void) {
         nf_unregister_hook(&nfho0);   
 }
+
+module_init(st_netfilter_init);
+module_exit(st_netfilter_exit);

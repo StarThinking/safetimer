@@ -388,23 +388,7 @@ class BPServiceActor implements Runnable {
     return cmd;
   }
   
-  HeartbeatResponse sendHeartBeat() throws IOException {
-    // msx, Ask SafeTimer to send heartbeat 
-    long ret;
-    long now_t = monotonicNow();
-    long send_timeout = 50;
-    long stValidTime = now_t + 30000;
-    long sendTimeoutTime = now_t + send_timeout;
-
-
-    System.out.println("[msx] call stSendHeartbeat() with send_timeout " + sendTimeoutTime);
-    ret = StSenderWrapper.stSendHeartbeat(sendTimeoutTime);
-    System.out.println("[msx] stSendHeartbeat() returns " + ret);
-    
-    System.out.println("[msx] call stUpdateValidTime() with valid time " + stValidTime);
-    ret = StSenderWrapper.stUpdateValidTime(stValidTime);
-    System.out.println("[msx] stUpdateValidTime() returns " + ret);
-    
+  HeartbeatResponse sendHeartBeat() throws IOException { 
     scheduler.scheduleNextHeartbeat();
     StorageReport[] reports =
         dn.getFSDataset().getStorageReports(bpos.getBlockPoolId());
@@ -498,6 +482,8 @@ class BPServiceActor implements Runnable {
     //
     // Now loop for a long time....
     //
+    // msx init
+    StSenderWrapper.stUpdateValidTime(monotonicNow() + 30000);
     while (shouldRun()) {
       try {
         final long startTime = scheduler.monotonicNow();
@@ -515,8 +501,21 @@ class BPServiceActor implements Runnable {
           // -- Bytes remaining
           //
           if (!dn.areHeartbeatsDisabledForTests()) {
+            // msx, Ask SafeTimer to send heartbeat 
+            long ret;
+            long now_t = monotonicNow();
+            long send_timeout = 50;
+            long stValidTime = now_t + 30000;
+            long sendTimeoutTime = now_t + send_timeout;
+            ret = StSenderWrapper.stSendHeartbeat(sendTimeoutTime);
+            if (ret == 0)
+                StSenderWrapper.stUpdateValidTime(stValidTime);
+            
             HeartbeatResponse resp = sendHeartBeat();
             assert resp != null;
+            // msx update
+            if (resp != null)
+                StSenderWrapper.stUpdateValidTime(startTime + 30000);
             dn.getMetrics().addHeartbeat(scheduler.monotonicNow() - startTime);
 
             // If the state of this NN has changed (eg STANDBY->ACTIVE)

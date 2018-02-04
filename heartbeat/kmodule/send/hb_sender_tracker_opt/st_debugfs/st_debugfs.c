@@ -16,7 +16,7 @@ MODULE_LICENSE("GPL");
 
 static struct dentry *dir_entry;
 
-long st_valid_time = 0;
+atomic_long_t st_valid_time;
 EXPORT_SYMBOL(st_valid_time);
 static char st_valid_time_str[BUFFERSIZE];
 static struct dentry *st_valid_time_entry;
@@ -37,12 +37,14 @@ static ssize_t st_valid_time_write(struct file *fp, const char __user *user_buff
                                      size_t count, loff_t *position) {
         ssize_t ret;
         int success;
+        long _st_valid_time;
 
         if(count > BUFFERSIZE)
                 return -EINVAL;
 
         ret =  simple_write_to_buffer(st_valid_time_str, BUFFERSIZE, position, user_buffer, count);
-        success = kstrtol(st_valid_time_str, 10, &st_valid_time);
+        success = kstrtol(st_valid_time_str, 10, &_st_valid_time);
+        atomic_long_set(&st_valid_time, _st_valid_time);
         if(success != 0)
                 printk(KERN_INFO "valid_time_str conversion failed!\n");
 
@@ -83,7 +85,7 @@ static const struct file_operations st_pid_fops = {
 static int set_to_zero(void *data, u64 value) {
         memset(st_valid_time_str, 0, BUFFERSIZE); 
         memset(st_pid_str, 0, BUFFERSIZE); 
-        st_valid_time = 0;
+        atomic_long_set(&st_valid_time, 0);
         st_pid = 0;
 
         return 0;

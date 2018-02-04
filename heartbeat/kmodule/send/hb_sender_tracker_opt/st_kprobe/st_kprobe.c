@@ -41,6 +41,7 @@ static int handler_pre(struct kprobe *p, struct pt_regs *regs) {
                 
 	uh = (struct udphdr *) skb_transport_header(skb);
         dport = ntohs(uh->dest);
+//        printk("handler_pre dport = %u\n", dport);
         if (dport == HB_SERVER_PORT) {
                 int ret = send_sig_info(SIG_TEST, &info, t); 
                 if (ret < 0) {
@@ -63,7 +64,12 @@ static int handler_pre(struct kprobe *p, struct pt_regs *regs) {
 
 static int __init st_kprobe_init(void) {
 	int ret;
-	
+    
+        if (st_pid == 0) {
+                printk("st_pid == 0)\n");
+                return 0;
+        }
+        
 	printk(KERN_INFO "st_kprobe_init\n");
     	kp.pre_handler = handler_pre;
     	ret = register_kprobe(&kp);

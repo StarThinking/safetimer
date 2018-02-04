@@ -56,7 +56,6 @@ static void cleanup(void *arg) {
 
 static void *request_server(void *arg) {
         long msg_buffer[2];
-        long reply = 0;
         struct sockaddr_in client;
         unsigned int len = sizeof(client);
 
@@ -64,13 +63,14 @@ static void *request_server(void *arg) {
 
         while (1) {
                 long request_type;
+                long reply = 0;
 
                 if((recvfrom(server_fd, msg_buffer, MSGSIZE*2, 0, \
                                 (struct sockaddr *) &client, &len)) != MSGSIZE*2) {
                         perror("recvfrom");
                         break;
                 }
-                printf("Request received, request_type = %ld, data = %ld\n", 
+                printf("\nRequest received, request_type = %ld, data = %ld\n", 
                             msg_buffer[0], msg_buffer[1]);
                 
                 request_type = msg_buffer[0];
