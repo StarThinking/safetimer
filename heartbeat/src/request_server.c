@@ -74,16 +74,16 @@ static void *request_server(void *arg) {
                             msg_buffer[0], msg_buffer[1]);
                 
                 request_type = msg_buffer[0];
-                if (request_type == 0) {
+                if (request_type < 2) {
                         long timeout_t = msg_buffer[1];
-                        int ret = safetimer_send_heartbeat(timeout_t);
+                        int ret = safetimer_send_heartbeat(timeout_t, request_type);
                         if (ret == 0)
                             printf("safetimer_send_heartbeat() succeed\n");
                         else if (ret < 0) {
                             printf("safetimer_send_heartbeat() timeouts\n");
                             reply = ret;
                         }
-                } else if (request_type == 1) {
+                } else if (request_type == 2) {
                         long valid_time = msg_buffer[1];
                         update_st_valid_time(valid_time);
                 }

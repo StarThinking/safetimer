@@ -22,8 +22,8 @@ static sem_t sent_wait;
 
 static long const app_id = 1; // Unique positive value.
 
-static int hb_fd;
-static struct sockaddr_in hb_server;
+static int peer_fd0, peer_fd1;
+static struct sockaddr_in hb_peer0, hb_peer1;
 
 static void clear_debugfs();
 
@@ -50,12 +50,17 @@ int init_sender() {
                 perror("fwrite");
         }
 
-        memset(&hb_server, '0', sizeof(hb_server));
-        hb_server.sin_addr.s_addr = inet_addr(HB_SERVER_ADDR);
-        hb_server.sin_family = AF_INET;
-        hb_server.sin_port = htons(HB_SERVER_PORT);
+        memset(&hb_peer0, '0', sizeof(hb_peer0));
+        hb_peer0.sin_addr.s_addr = inet_addr("10.10.1.2");
+        hb_peer0.sin_family = AF_INET;
+        hb_peer0.sin_port = htons(HB_SERVER_PORT);
+        peer_fd0 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         
-        hb_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        memset(&hb_peer1, '0', sizeof(hb_peer1));
+        hb_peer1.sin_addr.s_addr = inet_addr("10.10.1.3");
+        hb_peer1.sin_family = AF_INET;
+        hb_peer1.sin_port = htons(HB_SERVER_PORT);
+        peer_fd1 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
         /* Start request server thread. */
         init_request_server();
@@ -69,13 +74,14 @@ int init_sender() {
 void destroy_sender() {
         cancel_request_server();
         join_request_server();
-        close(hb_fd);
+        close(peer_fd0);
+        close(peer_fd1);
         clear_debugfs();
         printf("Heartbeat sender has been destroyed.\n");
 }
 
 /* heartbeat sending. */
-int safetimer_send_heartbeat(long timeout_time) {
+int safetimer_send_heartbeat(long timeout_time, int node) {
         long hb_msg;
         int count;
         struct timespec wait_timeout;
@@ -83,13 +89,19 @@ int safetimer_send_heartbeat(long timeout_time) {
         
         wait_timeout = time_to_timespec(timeout_time);
         hb_msg= 1;
-        count = sendto(hb_fd, &hb_msg, MSGSIZE, 0, \
-                (struct sockaddr *) &hb_server, sizeof(hb_server));
+        if (node == 0)
+            count = sendto(peer_fd0, &hb_msg, MSGSIZE, 0, \
+                    (struct sockaddr *) &hb_peer0, sizeof(hb_peer0));
+        
+        if (node == 1)
+            count = sendto(peer_fd1, &hb_msg, MSGSIZE, 0, \
+                    (struct sockaddr *) &hb_peer1, sizeof(hb_peer1));
 
         if (count != MSGSIZE) 
                 perror("heartbeat sendto");
 
-	printf("Heartbeat message %ld has been sent and now wait for completion signal.\n", hb_msg);
+	printf("Heartbeat message %ld has been sent to node %d and now wait for completion signal.\n", 
+                hb_msg, node);
     
         // wait for signal
         while ((s = sem_timedwait(&sent_wait, &wait_timeout)) == -1 && errno == EINTR) 
