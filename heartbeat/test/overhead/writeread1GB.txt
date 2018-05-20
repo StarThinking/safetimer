@@ -1,0 +1,90 @@
+----- TestDFSIO ----- : write
+            Date & time: Sat May 19 23:56:33 MDT 2018
+        Number of files: 5
+ Total MBytes processed: 5120
+      Throughput mb/sec: 205.73
+ Average IO rate mb/sec: 210.64
+  IO rate std deviation: 28.9
+     Test exec time sec: 26.67
+
+----- TestDFSIO ----- : read
+            Date & time: Sat May 19 23:56:46 MDT 2018
+        Number of files: 5
+ Total MBytes processed: 5120
+      Throughput mb/sec: 597.01
+ Average IO rate mb/sec: 608.2
+  IO rate std deviation: 79.88
+     Test exec time sec: 10.58
+
+----- TestDFSIO ----- : write
+            Date & time: Sat May 19 23:58:04 MDT 2018
+        Number of files: 5
+ Total MBytes processed: 5120
+      Throughput mb/sec: 180.84
+ Average IO rate mb/sec: 185.08
+  IO rate std deviation: 26.53
+     Test exec time sec: 29.61
+
+----- TestDFSIO ----- : read
+            Date & time: Sat May 19 23:58:15 MDT 2018
+        Number of files: 5
+ Total MBytes processed: 5120
+      Throughput mb/sec: 641.76
+ Average IO rate mb/sec: 645.98
+  IO rate std deviation: 49.78
+     Test exec time sec: 9.55
+
+----- TestDFSIO ----- : write
+            Date & time: Sat May 19 23:58:56 MDT 2018
+        Number of files: 5
+ Total MBytes processed: 5120
+      Throughput mb/sec: 206.19
+ Average IO rate mb/sec: 206.61
+  IO rate std deviation: 9.31
+     Test exec time sec: 26.58
+
+----- TestDFSIO ----- : read
+            Date & time: Sat May 19 23:59:08 MDT 2018
+        Number of files: 5
+ Total MBytes processed: 5120
+      Throughput mb/sec: 632.72
+ Average IO rate mb/sec: 636.49
+  IO rate std deviation: 48.36
+     Test exec time sec: 9.6
+
+----- TestDFSIO ----- : write
+            Date & time: Sat May 19 23:59:47 MDT 2018
+        Number of files: 5
+ Total MBytes processed: 5120
+      Throughput mb/sec: 211.06
+ Average IO rate mb/sec: 211.9
+  IO rate std deviation: 13.37
+     Test exec time sec: 25.64
+
+----- TestDFSIO ----- : read
+            Date & time: Sat May 19 23:59:59 MDT 2018
+        Number of files: 5
+ Total MBytes processed: 5120
+      Throughput mb/sec: 624.09
+ Average IO rate mb/sec: 632.56
+  IO rate std deviation: 72.97
+     Test exec time sec: 9.62
+
+----- TestDFSIO ----- : write
+            Date & time: Sun May 20 00:00:39 MDT 2018
+        Number of files: 5
+ Total MBytes processed: 5120
+      Throughput mb/sec: 210.89
+ Average IO rate mb/sec: 212.16
+  IO rate std deviation: 15.81
+     Test exec time sec: 25.62
+
+----- TestDFSIO ----- : read
+            Date & time: Sun May 20 00:00:50 MDT 2018
+        Number of files: 5
+ Total MBytes processed: 5120
+      Throughput mb/sec: 640.8
+ Average IO rate mb/sec: 648.36
+  IO rate std deviation: 65.5
+     Test exec time sec: 9.63
+
