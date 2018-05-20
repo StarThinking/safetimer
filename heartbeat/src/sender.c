@@ -28,7 +28,7 @@ static struct sockaddr_in hb_peer0, hb_peer1;
 static void clear_debugfs();
 
 static void receive_signal(int n, siginfo_t *info, void *unused) {
-//        printf("signal handler received value %i\n", info->si_int);
+        printf("signal handler received value %i\n", info->si_int);
         sem_post(&sent_wait);
 }
 

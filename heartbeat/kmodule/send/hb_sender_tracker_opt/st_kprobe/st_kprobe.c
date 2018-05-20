@@ -18,7 +18,7 @@ static struct siginfo info;
 static struct task_struct *t;
 
 static struct kprobe kp = {
-    .symbol_name    = "napi_consume_skb", //__dev_kfree_skb_irq
+    .symbol_name    = "napi_consume_skb" // __dev_kfree_skb_irq
 };
 
 static int handler_pre(struct kprobe *p, struct pt_regs *regs) {
@@ -47,6 +47,7 @@ static int handler_pre(struct kprobe *p, struct pt_regs *regs) {
                 if (ret < 0) {
                         pr_err("error sending signal\n");
                 }
+
 //                printk("signal sent!\n");
             	//unsigned short offset;
             	//unsigned short iphdr_size;

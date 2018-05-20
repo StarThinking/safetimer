@@ -3,7 +3,7 @@
 
 //#define CONFIG_DROP
 //#define CONFIG_BARRIER
-//#define CONFIG_SENDBLOCK
+#define CONFIG_SENDBLOCK
 
 #define HB_SERVER_ADDR "10.10.1.4"
 #define HB_SERVER_PORT 5001
