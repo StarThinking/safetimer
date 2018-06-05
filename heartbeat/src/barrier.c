@@ -412,6 +412,7 @@ static int setup_rx_queue_flows() {
                         /* Save client socket fd. */
                         client_fds[rx_queue - BASE_IRQ] = fd;
                         count ++;
+			printf("valid rx connection count is %d\n", count);
                 } else {
                         close(fd);
                         sleep(1);

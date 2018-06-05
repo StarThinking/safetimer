@@ -41,9 +41,10 @@ static int write_op(void *data, u64 value) {
 DEFINE_SIMPLE_ATTRIBUTE(clear_fops, NULL, write_op, "%llu\n");
 
 /*hook function*/
-unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb, 
-        const struct net_device *in, const struct net_device *out, 
-        int (*okfn)(struct sk_buff *)) {
+//unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb, 
+//        const struct net_device *in, const struct net_device *out, 
+//        int (*okfn)(struct sk_buff *)) {
+unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
         struct iphdr *ip;
         struct tcphdr *tcp;
         unsigned int sport, dport, saddr, daddr;
@@ -60,21 +61,22 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
         irq_vec = skb->napi_id; // this value is modified to be irq in driver
         queue_mapping = skb->queue_mapping; // it's always 0
         proto = ip->protocol;
-        in_name = in->name;
-        out_name = out->name;
+        in_name = state->in->name;
+        out_name = state->out->name;
 
-        if(ip->protocol == IPPROTO_TCP) { 
+	printk(KERN_DEBUG "[msx] hooknum %u, %pI4 --> %pI4, irq_vec = %u\n", state->hook, &saddr, &daddr, irq_vec);
+/*        if(ip->protocol == IPPROTO_TCP) { 
                 tcp = (struct tcphdr *) skb_transport_header(skb);
                 sport = (size_t) ntohs(tcp->source);
                 dport = (size_t) ntohs(tcp->dest);
 
                 sprintf(str, "%pI4", &saddr);
+                  
+		printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, irq_vec = %u, cpu = %d, prot = %u, in = %s, out = %s\n", state->hook, &saddr, sport, &daddr, dport, irq_vec, cpu, proto, in_name, out_name);
                 
                 if(dport == BARRIER_SERVER_PORT && strcmp(str, BARRIER_CLIENT_ADDR) == 0) {
                         int index;
-                        
-                        //printk(KERN_DEBUG "[msx] hooknum %u, %pI4:%u --> %pI4:%u, irq_vec = %u, cpu = %d, prot = %u, in = %s, out = %s\n", ops->hooknum, &saddr, sport, &daddr, dport, irq_vec, cpu, proto, in_name, out_name);
-                        
+                         
                         index = irq_vec - BASE_IRQ;
                         if(index < 0 || index > 4)
                                 printk("[msx] Error: irq index out of bound!\n");
@@ -86,6 +88,7 @@ unsigned int hook_func(const struct nf_hook_ops *ops, struct sk_buff *skb,
                         }
                 }
         } 
+*/
         return NF_ACCEPT; 
 }
 

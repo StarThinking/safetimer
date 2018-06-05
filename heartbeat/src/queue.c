@@ -23,6 +23,19 @@
 #include "hashtable.h"
 #include "list.h"
 
+#ifdef CONFIG_BARRIER
+static sem_t barrier_all_processed;
+static int barrier_flush(long epoch);
+static long epoch_no_sem_post;
+
+#define ARRAY_SIZE 100
+/* Recond the round so that clear is not needed for new round. */
+static int array_round = 1;
+static int received_barrier_msg_array[ARRAY_SIZE][IRQ_NUM];
+#endif
+
+
+
 static struct nfq_handle *h;
 static struct nfq_q_handle *qh;
 static int fd;
@@ -38,6 +51,10 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 int init_queue() {
         int ret = 0;
         struct timeval read_timeout;
+
+#ifdef CONFIG_BARRIER
+        sem_init(&barrier_all_processed, 0, 0);
+#endif
 
         h = nfq_open();
         if (!h) {
@@ -136,6 +153,61 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                 put_state(app_id, saddr, now_time());
  
         }
+
+#ifdef CONFIG_BARRIER
+	
+        //if (iph->protocol == IPPROTO_TCP && strcmp(saddr, BARRIER_CLIENT_ADDR) == 0) {
+        if (iph->protocol == IPPROTO_TCP) {
+		int i, array_index;
+                struct tcphdr *tcp = ((struct tcphdr *) (nf_packet + iphdr_size));
+                unsigned short tcphdr_size = (tcp->doff << 2);
+                unsigned short offset = iphdr_size + tcphdr_size;
+                long epoch = -1;
+                long queue_index = -1;
+
+                // payload size check
+                if (payload_len >= offset + MSGSIZE*2) {
+                        epoch = *((long *)(nf_packet + offset));
+                        queue_index = *((long *)(nf_packet + offset + MSGSIZE));
+                        
+                        if(epoch <= 0 || queue_index < 0) {
+                                fprintf(stderr, "Queue: epoch or queue_index values wrong.\n");
+                                goto ret;
+                        }
+                        
+                        printf("Queue: epoch = %ld, queue_index = %ld\n", epoch, queue_index);
+                } else {
+                        printf("Queue: error happens as tcp payload size less than %ld!\n", MSGSIZE*2);
+                }
+
+                // get array index; if it's a new round, increase round
+                array_index = epoch % ARRAY_SIZE;
+
+                if (received_barrier_msg_array[array_index][queue_index] != array_round) {
+                        received_barrier_msg_array[array_index][queue_index] = array_round;
+                } else { // the S2S message for the ring is redundant
+                        goto ret;
+                }
+
+                for (i=0; i<IRQ_NUM; i++) {
+                        if(received_barrier_msg_array[array_index][i] != array_round)
+                                goto ret;
+                }
+
+                printf("Queue: all barrier messages for epoch %ld are received.\n", epoch);
+
+                // reach the end of a round
+                if(array_index == (ARRAY_SIZE -1))
+                        array_round ++;
+                
+                // ignore outdated barriers
+                if (epoch_no_sem_post && epoch <= epoch_no_sem_post) 
+                        printf("no sem post for barriers for epoch <= %ld.\n", epoch_no_sem_post);
+                else
+                        sem_post(&barrier_all_processed);
+         }
+#endif
+
 ret:
         return id;
 }
@@ -181,3 +253,32 @@ static void *queue_recv_loop(void *arg) {
 
         return NULL;
 }
+
+/*
+#ifdef CONFIG_BARRIER
+static int barrier_flush(long epoch) {
+        struct timespec wait_timeout;
+        int s;
+
+        wait_timeout = time_to_timespec(epoch_to_time(time_to_epoch(now_time())));
+        send_barrier_message(epoch);
+        printf("\tChecker: barrier messages for epoch %ld are sent, waiting for sem post.\n", epoch);
+        while ((s = sem_timedwait(&barrier_all_processed, &wait_timeout)) == -1 && errno == EINTR) 
+                continue; // Restart if interrupted by handler 
+
+        if (s == -1) {
+                if (errno == ETIMEDOUT)
+                        printf("sem_timedwait() timed out\n");
+                else
+                        perror("sem_timedwait");
+                epoch_no_sem_post = epoch;
+                printf("set epoch_no_sem_post as %ld\n", epoch_no_sem_post);
+                return 1;
+        } else {
+                printf("sem_timedwait() succeeded\n");
+        }
+        printf("\tChecker: all barrier messages for epoch %ld are processed.\n", epoch);
+        return 0;
+}
+#endif
+*/

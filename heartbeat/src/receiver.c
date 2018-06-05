@@ -15,6 +15,8 @@
 #include "state_server.h"
 #include "queue.h"
 
+#include "barrier.h"
+
 int init_receiver() {
          int ret = 0;
 
@@ -22,6 +24,13 @@ int init_receiver() {
                 fprintf(stderr, "Heartbeat receiver failed to init queue.\n");
                 goto error;
          }
+
+#ifdef CONFIG_BARRIER         
+         if ((ret = init_barrier()) < 0) {
+                fprintf(stderr, "Heartbeat receiver failed to init barrier.\n");
+                goto error;
+         }
+#endif
 
          if ((ret = init_hb()) < 0) {
                 fprintf(stderr, "Heartbeat receiver failed to init heartbeat server.\n");
@@ -40,6 +49,10 @@ error:
 }
 
 void destroy_receiver() {
+#ifdef CONFIG_BARRIER
+        cancel_barrier();
+        join_barrier();
+#endif
         cancel_hb();
         join_hb();
         
