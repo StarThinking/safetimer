@@ -21,35 +21,43 @@ static int server_fd;
 static void *state_server(void *arg);
 static void cleanup(void *arg);
 
-static long get_state(long app_id, char *node);
+static int safetimer_check(long app_id, char *node, long start);
 
-static long get_state(long app_id, char *node_ip) {
+// return 0, if failure is not sure;
+// return 1, if it is sure that failure occurs.
+static int safetimer_check(long app_id, char *node_ip, long start) {
         size_t value_size;
         hash_table * node_states_ht_p;
         hash_table ** node_states_ht_pp;
         long * node_state;
+        long st_timestamp;
 
         node_states_ht_pp = (hash_table **) ht_get(&app_nodes_ht, &app_id, sizeof(long), &value_size);
-        if (node_states_ht_pp != NULL) {
+
+	if (node_states_ht_pp == NULL) {
+                printf("error: get_state can't find app_id %ld\n", app_id);
+                return 0;
+	} else {
                 node_states_ht_p = *node_states_ht_pp;
                 node_state = (long *) ht_get(node_states_ht_p, node_ip, strlen(node_ip), &value_size);
-                if (node_state != NULL) {
-                        printf("\nThe state of node %s for app %ld is %ld.\n\n",
-                                    node_ip, app_id, *node_state);
-                } else {
+                if (node_state == NULL) {
                         printf("error: get_state can't find entry for app_id %ld node_ip %s\n", 
                                 app_id, node_ip);
                         return 0;
+                } else {
+                        printf("\nThe state of node %s for app %ld is %ld.\n\n",
+                                    node_ip, app_id, *node_state);
+                        st_timestamp = *node_state;
                 }
-        } else {
-                printf("error: get_state can't find for app_id %ld\n", app_id);
-                return 0;
         }
 
-        return *node_state;
+        if (st_timestamp < start)
+                return 1;
+
+        return 0;
 }
 
-void put_state(long app_id, char *node_ip, long state) {
+void receive_heartbeat(long app_id, char *node_ip, long state) { // state is timestamp
         size_t value_size;
         hash_table * node_states_ht_p;
         hash_table **node_states_ht_pp; // pointer of pointer
@@ -150,8 +158,8 @@ static void cleanup(void *arg) {
  * If not stale, returns 0; if stale, returns 1.
  */
 static void *state_server(void *arg) {
-        long msg_buffer[2];
-        long app_id;
+        long msg_buffer[3];
+        long app_id, start;
         unsigned int node_ip_bytes;
         struct in_addr ip_addr;
         struct sockaddr_in client;
@@ -160,7 +168,7 @@ static void *state_server(void *arg) {
         pthread_cleanup_push(cleanup, NULL);
 
         while (1) {
-                if((recvfrom(server_fd, &msg_buffer, MSGSIZE*2, 0, (struct sockaddr *) &client, &len)) != MSGSIZE*2) {
+                if((recvfrom(server_fd, &msg_buffer, MSGSIZE*3, 0, (struct sockaddr *) &client, &len)) != MSGSIZE*3) {
                         perror("recvfrom");
                         break;
                 }
@@ -168,9 +176,10 @@ static void *state_server(void *arg) {
                 app_id = msg_buffer[0];
                 node_ip_bytes = (unsigned int) (ntohl(msg_buffer[1]));
                 ip_addr.s_addr = node_ip_bytes;
+                start = msg_buffer[2];
 
-                printf("State request received, app_id = %ld, node_ip_bytes = %u, node_ip = %s\n",
-                            app_id, node_ip_bytes, inet_ntoa(ip_addr));
+                printf("State request received, app_id = %ld, node_ip_bytes = %u, node_ip = %s, start = %ld\n",
+                            app_id, node_ip_bytes, inet_ntoa(ip_addr), start);
 
                 //get_state(app_id, inet_ntoa(ip_addr));
 
@@ -178,7 +187,7 @@ static void *state_server(void *arg) {
                         /* For requests, reply the state of that app. */
                         long reply[1];
 
-                        reply[0] = get_state(app_id, inet_ntoa(ip_addr));
+                        reply[0] = safetimer_check(app_id, inet_ntoa(ip_addr), start);
 
                         if(sendto(server_fd, reply, MSGSIZE, 0, (struct sockaddr *) &client, 
                                         sizeof(client)) != MSGSIZE) {

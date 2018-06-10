@@ -150,7 +150,7 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                 
                 printf("Queue: heartbeat with message %ld from node %s.\n", message, saddr);
                 app_id = message;
-                put_state(app_id, saddr, now_time());
+                receive_heartbeat(app_id, saddr, now_time());
  
         }
 
