@@ -1,1 +1,0 @@
-cmd_/root/hb-latency/no-hb-drop/read_drop/ring-checker.ko := ld -r -m elf_x86_64 -T /usr/src/linux-3.14.33-regular/scripts/module-common.lds --build-id  -o /root/hb-latency/no-hb-drop/read_drop/ring-checker.ko /root/hb-latency/no-hb-drop/read_drop/ring-checker.o /root/hb-latency/no-hb-drop/read_drop/ring-checker.mod.o
