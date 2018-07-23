@@ -1,4 +1,4 @@
-BASE_IRQ=49
+BASE_IRQ=33
 
 echo 01 > /proc/irq/$BASE_IRQ/smp_affinity
 echo 02 > /proc/irq/$(( $BASE_IRQ + 1 ))/smp_affinity

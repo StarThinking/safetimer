@@ -18,7 +18,8 @@
 
 #define HB_SERVER_ADDR "10.0.0.11"
 #define HB_SERVER_PORT 6789
-#define STATE_SERVER_PORT 5003
+#define ST_RECV_SERVER_ADDR "127.0.0.1"
+#define ST_RECV_SERVER_PORT 5003
 #define MSGSIZE sizeof(long)
 #define APP_ID 1
 
@@ -66,8 +67,8 @@ static int init_receiver() {
         /* Init SafeTimer server */
         memset(&st_server, '0', sizeof(st_server));
         st_server.sin_family = AF_INET;
-        st_server.sin_addr.s_addr = inet_addr(HB_SERVER_ADDR);
-        st_server.sin_port = htons(STATE_SERVER_PORT);
+        st_server.sin_addr.s_addr = inet_addr(ST_RECV_SERVER_ADDR);
+        st_server.sin_port = htons(ST_RECV_SERVER_PORT);
         st_client_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
         /* Start heartbeat server thread. */

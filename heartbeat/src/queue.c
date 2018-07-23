@@ -15,17 +15,16 @@
 #include <libnetfilter_queue/libnetfilter_queue.h>
 #include <semaphore.h>
 
-#include "hb_common.h"
-#include "queue.h"
-#include "helper.h"
-#include "state_server.h" // for node_state
-
 #include "hashtable.h"
 #include "list.h"
 
+#include "hb_common.h"
+#include "helper.h"
+#include "st_receiver_api.h"
+
 #ifdef CONFIG_BARRIER
 static sem_t barrier_all_processed;
-static int barrier_flush(long epoch);
+//static int barrier_flush(long epoch);
 static long epoch_no_sem_post;
 
 #define ARRAY_SIZE 100
@@ -33,8 +32,6 @@ static long epoch_no_sem_post;
 static int array_round = 1;
 static int received_barrier_msg_array[ARRAY_SIZE][IRQ_NUM];
 #endif
-
-
 
 static struct nfq_handle *h;
 static struct nfq_q_handle *qh;
@@ -141,10 +138,10 @@ static u_int32_t process_packet(struct nfq_data *tb) {
                 long app_id;
 
                 // payload size check
-                if (payload_len >= offset + MSGSIZE) {
+                if (payload_len >= offset + ST_HB_MSGSIZE) {
                         message = *((long*)(nf_packet + offset));
                 } else {
-                        printf("Queue: UDP payload size less than %ld!\n", MSGSIZE);
+                        printf("Queue: UDP payload size less than %ld!\n", ST_HB_MSGSIZE);
                         goto ret;
                 }
                 

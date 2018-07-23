@@ -25,8 +25,8 @@ int init_hb() {
 
         memset(&server, '0', sizeof(server));
         server.sin_family = AF_INET;
-        server.sin_addr.s_addr = inet_addr(HB_SERVER_ADDR);
-        server.sin_port = htons(HB_SERVER_PORT);
+        server.sin_addr.s_addr = inet_addr(ST_HB_SERVER_ADDR);
+        server.sin_port = htons(ST_HB_SERVER_PORT);
 
         server_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         bind(server_fd, (struct sockaddr*) &server, sizeof(server));
