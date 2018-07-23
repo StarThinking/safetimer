@@ -8,4 +8,3 @@ Slides describe the fundamental ideas of SafeTimer are avilable, [pdf](https://w
 
 ### Building
 The document about how to build and use SafeTimer will be accomplished shortly.
-
